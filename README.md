@@ -108,3 +108,11 @@ O material enrolado recebe faces de fechamento nas extremidades, com a mesma cor
 Arraste a **barra pontilhada abaixo do canvas 3D** para ajustar sua altura entre 240 e 1000 px. Com a barra focada, as setas ajustam em passos de 20 px; Home/End selecionam os limites. A altura é lembrada junto das preferências de layout, quando o navegador permite. Canvas e projeção acompanham a altura real, inclusive em telas com densidade de pixels dupla, sem alterar controles, câmera, progresso, campo de material ou `.nc`. Os painéis laterais continuam recolhíveis e fixáveis.
 
 As capturas e verificações desta alteração estão em [docs/evidencias/fixacao-altura/README.md](docs/evidencias/fixacao-altura/README.md). O G-code continua experimental e não homologado para execução física.
+
+## Homologação antes do merge
+
+**Testes automatizados aprovados não homologam uma atualização.** Toda PR precisa de uma prévia navegável do commit atual e da avaliação funcional de Juarez Jr. antes da incorporação à main. Uma nova correção exige nova avaliação; não há merge automático.
+
+O processo preparado usa **Cloudflare Pages independente do GitHub Pages oficial**, com prévias por branch e atualização de link/SHA/resultados na descrição da PR. O projeto Cloudflare precisa ser conectado pelo proprietário; não há URL de preview ativa garantida apenas pelos arquivos deste repositório. A primeira configuração e as permissões administrativas necessárias estão descritas em [docs/homologacao-preview.md](docs/homologacao-preview.md).
+
+Após testar a versão correta, o proprietário registra `Homologado funcionalmente: <SHA completo>` na PR. O check `homologacao-funcional` exige prévia verificada, CI e confirmação humana para o mesmo commit. A exigência desse check na proteção da main precisa ser configurada pelo administrador conforme o roteiro. Isso não homologa G-code para execução física.

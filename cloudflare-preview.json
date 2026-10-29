@@ -1,0 +1,7 @@
+{
+  "project": "makernauta-editor-preview",
+  "productionBranch": "main",
+  "functionalReviewer": "jsjrnet",
+  "cloudflareApps": ["cloudflare-pages", "cloudflare-workers-and-pages", "cloudflare"],
+  "validationWorkflow": "pages.yml"
+}
