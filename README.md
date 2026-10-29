@@ -96,3 +96,15 @@ A regressão após importação vinha da seleção automática de **STL alvo**, 
 O controle de desenrolar/enrolar permanece ativo também com STL e durante a simulação. Os controles Simular/Pausar, Reiniciar e progresso atuam no mesmo material calculado, sem criar trajetórias CAM a partir do STL. A geometria de remoção, as estratégias e as validações Z0 do PR #1 são mantidas.
 
 As evidências visuais estão em [docs/evidencias/README.md](docs/evidencias/README.md). Os testes de navegador também cobrem pinagem individual, abertura temporária, persistência, accordions por teclado, modais, layout móvel, redimensionamento sem reinício, progressão STL com/sem Aspire, desenrolamento e ausência de remoção sem percurso de corte.
+
+## Fixação ilustrativa, bruto maciço e altura 3D
+
+A vista totalmente enrolada mostra um chuck escuro no lado X0, com três castanhas que acompanham a rotação da peça, e um contraponto com ponta cônica próximo de X=L. No referencial da máquina o contraponto permanece fixo; no referencial da peça sua posição relativa é transformada pela mesma mudança de referencial. A opção **Fixação visual** permite ocultar esses elementos para inspecionar a peça. No desenrolamento eles ficam ocultos, pois a representação plana não corresponde à montagem física.
+
+Os elementos são apenas uma ilustração: não definem limites de movimento, não participam da remoção de material e não verificam colisões. A geração de percursos, as referências Z0/A0 e a exportação permanecem iguais.
+
+O material enrolado recebe faces de fechamento nas extremidades, com a mesma cor âmbar e os raios do campo visualizado. Elas integram a ordenação de profundidade das faces para que o bruto pareça sólido nas vistas frontal, lateral e isométrica. Não é preenchida uma cavidade fictícia no motor de remoção: apenas se fecha o desenho da superfície existente. STL alvo continua sendo referência, e Só linhas continua sendo uma representação sem superfície do material.
+
+Arraste a **barra pontilhada abaixo do canvas 3D** para ajustar sua altura entre 240 e 1000 px. Com a barra focada, as setas ajustam em passos de 20 px; Home/End selecionam os limites. A altura é lembrada junto das preferências de layout, quando o navegador permite. Canvas e projeção acompanham a altura real, inclusive em telas com densidade de pixels dupla, sem alterar controles, câmera, progresso, campo de material ou `.nc`. Os painéis laterais continuam recolhíveis e fixáveis.
+
+As capturas e verificações desta alteração estão em [docs/evidencias/fixacao-altura/README.md](docs/evidencias/fixacao-altura/README.md). O G-code continua experimental e não homologado para execução física.
