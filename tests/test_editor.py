@@ -139,6 +139,24 @@ class EditorTests(unittest.TestCase):
             else:
                 self.assertAlmostEqual(result['z'], 9, places=8)
 
+    def test_ballnose_shank_removes_material_above_spherical_tip(self):
+        # This off-axis ray misses the sphere and first meets its cylindrical shank.
+        radius = self.js("cutterRadiusAt(0,Math.atan(2/20),{x:0,y:5,z:9,a:0},{diameter:6,ball:true})")
+        self.assertAlmostEqual(radius, math.hypot(2, 20), places=7)
+
+    def test_material_removal_matches_indexed_path_in_all_references(self):
+        result = self.js('''() => {
+          const failures=[];$('ql').value='0';$('TS').value=3;$('TY').value='0';
+          for(const dir of [1,-1])for(const origin of ['0','1'])for(const angle of [0,90,180,270]){
+            $('DIR').value=dir;$('Z0').value=origin;grid();
+            const i=Math.round((NXG-1)/2),x=i*P().L/(NXG-1),q={x,y:0,z:9-(+origin?15:0),a:angle*dir};
+            carveSeg({p:q,q,r:false,h:0},0,1);
+            const j=Math.round(angle/360*NPG)%NPG,at=FLD[i*NPG+j],opposite=FLD[i*NPG+(j+NPG/2)%NPG];
+            if(Math.abs(at-9)>1e-6||opposite!==15)failures.push({dir,origin,angle,at,opposite});
+          }return failures;
+        }''')
+        self.assertEqual(result, [])
+
     def test_aspire_xza_import_phase_tools_and_combined_mach3(self):
         code = '(Aspire XZA)\nG21 G90 G17\nG0 X10 Y0 Z23 A0\nS18000 M3\nG1 X20 Z12 A90 F1000\ng1 x30 z11 a180\nN100 M30\n'
         self.page.locator('#fsc').set_input_files({'name':'aspire.nc','mimeType':'text/plain','buffer':code.encode()})
@@ -149,7 +167,7 @@ class EditorTests(unittest.TestCase):
         self.assertIn('M0 (Troque a fresa e confirme)', output)
         self.assertEqual(output.count('M30'), 1)
         self.assertTrue(self.js('sg.some(s=>!s.h&&s.q.a===180)&&sg.some(s=>s.h)'))
-        self.assertTrue(self.js('sg.some(s=>!s.h&&!toolFor(s).ball===false)'))
+        self.assertTrue(self.js('sg.some(s=>!s.h&&toolFor(s).ball)'))
         self.page.locator('#OM').select_option('0')
         self.page.wait_for_timeout(250)
         self.assertNotIn('FIM DA ESCULTURA', self.page.locator('#out').input_value())

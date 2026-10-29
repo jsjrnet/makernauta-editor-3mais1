@@ -291,11 +291,14 @@ function cutterRadiusAt(dx,phi,q,tool){
  const rt=tool.diameter/2;if(Math.abs(dx)>rt)return Infinity;
  const angle=q.a*P().dir*Math.PI/180,delta=phi-angle,sy=Math.sin(delta),cz=Math.cos(delta),z=q.z+(+$('Z0').value?P().D/2:0);
  if(cz<=1e-8)return Infinity;
- if(tool.ball){const center=z+rt,b=sy*q.y+cz*center,disc=b*b-(q.y*q.y+center*center+dx*dx-rt*rt);return disc>=0?Math.max(0,b-Math.sqrt(disc)):Infinity}
- const width=Math.sqrt(Math.max(0,rt*rt-dx*dx));let lo=Math.max(0,z/cz),hi=Infinity;
- if(Math.abs(sy)<1e-8){if(Math.abs(q.y)>width)return Infinity}
- else{const a=(q.y-width)/sy,b=(q.y+width)/sy;lo=Math.max(lo,Math.min(a,b));hi=Math.max(a,b)}
- return lo<=hi?lo:Infinity
+ const cylinderEntry=bottom=>{
+  const width=Math.sqrt(Math.max(0,rt*rt-dx*dx));let lo=Math.max(0,bottom/cz),hi=Infinity;
+  if(Math.abs(sy)<1e-8){if(Math.abs(q.y)>width)return Infinity}
+  else{const a=(q.y-width)/sy,b=(q.y+width)/sy;lo=Math.max(lo,Math.min(a,b));hi=Math.max(a,b)}
+  return lo<=hi?lo:Infinity
+ };
+ if(tool.ball){const center=z+rt,b=sy*q.y+cz*center,disc=b*b-(q.y*q.y+center*center+dx*dx-rt*rt),sphere=disc>=0?Math.max(0,b-Math.sqrt(disc)):Infinity;return Math.min(sphere,cylinderEntry(center))}
+ return cylinderEntry(z)
 }
 function carveSeg(g,u0,u1){if(g.r)return;if(g.h&&g.o!=null)pcut(g,u0,u1);
  const p=P(),R=p.D/2,dxc=p.L/(NXG-1),dc=2*Math.PI/NPG,tool=toolFor(g),Rt=tool.diameter/2,a=lerpq(g.p,g.q,u0),b=lerpq(g.p,g.q,u1),len=Math.hypot(b.x-a.x,b.y-a.y,b.z-a.z,(b.a-a.a)*Math.PI/180*R),n=Math.max(1,Math.ceil(len/(Math.min(dxc,R*dc,Rt)*.8)));
