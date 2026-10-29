@@ -58,7 +58,7 @@ class EditorTests(unittest.TestCase):
         return self.page.evaluate(expression)
 
     def test_original_controls_desktop_mobile_and_export(self):
-        self.assertEqual(self.page.locator('canvas').count(), 4)
+        self.assertEqual(self.page.locator('canvas').count(), 5)
         self.assertIn('G91.1', self.page.locator('#out').input_value())
         self.page.locator('#addR').click()
         self.page.locator('#r45').click()
@@ -193,6 +193,57 @@ class EditorTests(unittest.TestCase):
         self.page.locator('#SX').check()
         self.page.wait_for_timeout(100)
         self.assertIn('/90/true', self.js('GK'))
+
+    def test_rendered_line_groove_retains_ballnose_curvature(self):
+        # Measure the same Cartesian heights used by the mesh and the enlarged section.
+        result = self.js('''() => {
+          ops.splice(0,ops.length,{t:'r',ln:true,cm:'on',x:30,a:0,w:6,l:20,d:4});sel=0;
+          $('T').value=6;$('SD').value=4;$('ql').value='0';
+          const results={};
+          for(const type of ['0','1']){
+            $('HT').value=type;draw();v3();tt=tot;dr3();
+            const K=PK[0];results[type]=[0,.75,1.5,2.25].map(y=>pocketSample(K,30,y,ops[0]));
+          }
+          return results;
+        }''')
+        for height in result['0']:
+            self.assertAlmostEqual(height, 11, delta=.001)
+        for y, height in zip([0,.75,1.5,2.25], result['1']):
+            self.assertAlmostEqual(height, 14-math.sqrt(9-y*y), delta=.02)
+        self.assertGreater(result['1'][-1]-result['1'][0], .9)
+        self.assertIn('Ballnose', self.page.locator('#cutStatus').text_content())
+        self.page.locator('#cutProfile').screenshot(path='/tmp/makernauta-ballnose-profile.png')
+        self.page.locator('#c3').screenshot(path='/tmp/makernauta-ballnose-3d.png')
+
+    def test_pocket_sculpture_baseline_is_not_overwritten_between_layers(self):
+        result = self.js('''() => {
+          $('ql').value='0';$('HT').value='1';draw();v3();
+          tt=tot;dr3();const first=Array.from(BS);
+          return {baselineUncut:first.every(r=>r===15),changed:FLD.some(r=>r<15)};
+        }''')
+        self.assertTrue(result['baselineUncut'])
+        self.assertTrue(result['changed'])
+
+    def test_information_covers_all_controls_and_preserves_checkbox_values(self):
+        self.page.locator('#helpToggle').click()
+        self.assertEqual(self.page.locator('#helpToggle').get_attribute('aria-pressed'),'true')
+        missing=self.js('''[...document.querySelectorAll('input[id],select[id],textarea[id],button[id]')].filter(e=>e.id!=='helpToggle'&&!parameterHelp[e.id]).map(e=>e.id)''')
+        self.assertEqual(missing, [])
+        self.page.locator('[data-help-for="HT"]').click()
+        self.assertTrue(self.page.locator('#paramHelp').is_visible())
+        self.assertIn('ponta hemisférica', self.page.locator('#helpBody').text_content())
+        self.page.keyboard.press('Escape')
+        before=self.page.locator('#ST').is_checked()
+        self.page.locator('[data-help-for="ST"]').click()
+        self.assertEqual(self.page.locator('#ST').is_checked(),before)
+        self.page.get_by_role('button',name='Fechar',exact=True).click()
+        self.page.locator('[data-help-for="vm"]').click()
+        self.assertIn('não o resultado da fresa',self.page.locator('#helpBody').text_content())
+        self.page.keyboard.press('Escape')
+        self.page.set_viewport_size({'width':390,'height':844})
+        self.assertTrue(self.js('document.documentElement.scrollWidth<=innerWidth'))
+        self.page.locator('#helpToggle').click()
+        self.assertEqual(self.page.locator('.param-info:visible').count(),0)
 
     def test_invalid_step_cannot_hang_generation(self):
         self.page.locator('#SD').fill('0')

@@ -1,6 +1,6 @@
 # Makernauta — Editor de Usinagem Indexada 3+1
 
-Editor visual estático para Vectric Aspire e Mach3, baseado no **HTML original do protótipo Claude fornecido por Juarez Jr.** A interface, os quatro canvases e os fluxos originais foram mantidos em `editor-usinagem-indexada.html`. Não requer backend, pacotes JavaScript ou serviços externos.
+Editor visual estático para Vectric Aspire e Mach3, baseado no **HTML original do protótipo Claude fornecido por Juarez Jr.** A interface, os quatro canvases originais e os fluxos foram mantidos em `editor-usinagem-indexada.html`. Não requer backend, pacotes JavaScript ou serviços externos.
 
 **Protótipo: G-code não homologado para execução física.** Os testes deste repositório verificam o software e sua geometria, sem validar máquina, pós-processador, fixação, colisões ou condições de corte.
 
@@ -53,3 +53,11 @@ Endereço previsto após a publicação bem-sucedida:
 A presença do workflow ou do endereço previsto não confirma uma publicação; confira o job de deploy e a resposta HTTP pública.
 
 Ideia e desenvolvimento: **Juarez Jr. — Makernauta** · https://makernauta.com.br
+
+## Inspeção do corte e ajuda
+
+O botão **Informações dos parâmetros** revela ícones `i` nos campos, seletores, caixas de marcação e ações. Cada ícone abre uma explicação com unidades, efeito das opções e limitações. A ajuda funciona por teclado, fecha com Escape e não altera os valores dos controles.
+
+A seção ampliada abaixo do 3D usa as mesmas alturas da malha detalhada do alojamento, em escala horizontal e vertical iguais. Uma linha isolada produz fundo reto com topo plano e perfil arredondado com ballnose. Bolsões com várias passadas de ballnose podem apresentar fundo quase plano com pequenas cristas. A referência de profundidade não deve ser confundida com o material realmente removido.
+
+A malha detalhada é limitada pela superfície capturada **antes** de executar os alojamentos. Não é achatada pela malha radial mais grosseira já usinada. Trocar a ferramenta reinicia a simulação; avance a barra ou simule novamente. O modo **STL alvo** mostra o modelo desejado e, por definição, não muda com a seleção da fresa.
