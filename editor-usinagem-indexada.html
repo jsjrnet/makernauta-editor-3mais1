@@ -32,10 +32,18 @@ textarea{width:100%;height:230px;font:12px/1.35 Consolas,"Courier New",monospace
 
 .info-toggle{margin-top:10px}.param-info{font-size:12px;border-radius:50%;width:23px;height:23px;padding:0;flex:none;color:var(--ac);vertical-align:middle}.param-info[hidden]{display:none}
 .help-target{display:inline-flex;align-items:center;gap:5px;max-width:100%}dialog{max-width:min(560px,calc(100vw - 28px));max-height:85vh;overflow:auto;color:var(--tx);background:var(--pn);border:1px solid var(--ln);border-radius:10px;padding:20px}dialog::backdrop{background:#0008}dialog h2{font-size:18px}dialog p{white-space:pre-line}#cutProfile{height:220px;margin-top:8px}#cutStatus{min-height:2em}
+header{display:flex;align-items:center;gap:12px 22px;flex-wrap:wrap}header h1{width:100%;margin-bottom:0}header p{max-width:none;flex:1 1 50ch}header .info-toggle{margin:0;flex:0 0 auto}.safety-strip{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 18px;color:var(--mu);font-size:12px}.safety-strip button{font-size:12px;border-color:var(--op);color:var(--op)}
+main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template-columns:var(--left-width) minmax(0,1fr) var(--right-width);grid-template-areas:'left center right';gap:10px;padding:4px 12px 22px;align-items:start}.workspace[data-left-pinned="false"]{--left-width:34px}.workspace[data-right-pinned="false"]{--right-width:34px}.workspace-center{grid-area:center;min-width:0;gap:10px;container-type:inline-size}.dock.left{grid-area:left}.dock.right{grid-area:right}.dock{position:sticky;top:8px;min-width:0;z-index:5}.dock-frame{background:var(--bg);border:1px solid var(--ln);border-radius:7px;overflow:hidden}.dock-bar{display:flex;align-items:center;gap:5px;padding:7px;background:var(--ok)}.dock-bar strong{flex:1;font-size:13px}.dock-bar button{padding:3px 9px}.dock-content{display:flex;flex-direction:column;gap:8px;padding:6px;max-height:calc(100vh - 90px);overflow:auto;scrollbar-gutter:stable}.dock:not(.pinned) .dock-frame{display:none}.dock.temporary .dock-frame{display:block;position:absolute;top:0;width:330px;max-width:calc(100vw - 60px);box-shadow:0 8px 30px #0003;z-index:20}.dock.left.temporary .dock-frame{left:34px}.dock.right.temporary .dock-frame{right:34px}.dock-tab{writing-mode:vertical-rl;width:32px;padding:12px 5px;min-height:130px;white-space:nowrap}.dock.pinned .dock-tab{display:none}.dock.pinned .dock-frame{position:static}.pn{padding:0}.pn>summary{cursor:pointer;padding:10px 12px;font-weight:600;font-size:14px;background:var(--pn);border-radius:7px;list-style-position:inside}.pn>summary:focus-visible{outline:2px solid var(--ac);outline-offset:1px}.pn[open]>summary{border-bottom:1px solid var(--ln);border-radius:7px 7px 0 0}.section-body{padding:10px;min-width:0}.auxiliary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}.auxiliary-grid .section-body{min-width:0}#sec{margin:0}#cutProfile,#toolProfile{height:220px;margin:0}.stl-depth{grid-column:1/-1;align-items:flex-start!important;padding:6px 0;line-height:1.5}.stl-depth input{flex:none;margin-top:4px}.stl-depth .param-info{flex:none}.dock .g{column-gap:7px}canvas{max-width:100%}
+@container(min-width:1000px){.auxiliary-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:1050px){main.workspace{--left-width:240px;--right-width:280px;gap:6px;padding-inline:8px}.workspace[data-left-pinned="false"]{--left-width:32px}.workspace[data-right-pinned="false"]{--right-width:32px}}
+@media(max-width:800px){main.workspace{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:'center' 'left' 'right';padding:4px 8px 18px}.dock{position:static}.dock-content{max-height:none}.dock-tab{writing-mode:horizontal-tb;width:auto;min-height:0;padding:7px 12px}.dock.temporary .dock-frame{position:fixed;top:12vh;left:10px!important;right:10px!important;width:auto;max-width:none;max-height:80vh;overflow:auto}.dock.temporary .dock-content{max-height:65vh}.auxiliary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}header{padding:12px;gap:10px}header p{flex-basis:100%}.safety-strip{margin:8px 12px}}
+@media(max-width:500px){.auxiliary-grid{grid-template-columns:minmax(0,1fr)}}
+
 </style></head><body>
 <header><h1>Editor de usinagem indexada (3+1)</h1>
 <p>O eixo A gira a peça e fica parado; X, Y e Z fazem o recorte. Arraste os alojamentos sobre o cilindro desenrolado: horizontal = posição ao longo da peça, vertical = ângulo do A.</p><button id="helpToggle" class="info-toggle" aria-pressed="false">ⓘ Informações dos parâmetros</button></header>
-<div class="aviso" role="note"><b>Protótipo, não validado em máquina.</b> O G-code gerado não é homologado para execução física e nunca foi testado numa CNC real. Antes de usinar, confira no backplot do Mach3 e rode no ar. Uso por sua conta e risco.</div>
+<div class="safety-strip"><button id="safetyButton" type="button" aria-haspopup="dialog">Aviso de segurança — Protótipo não homologado</button><small>G-code experimental · não homologado para CNC</small></div>
+<dialog id="safetyDialog" aria-labelledby="safetyTitle"><h2 id="safetyTitle">Aviso de segurança</h2><p><b>Protótipo, não validado em máquina.</b> O G-code gerado não é homologado para execução física e nunca foi testado numa CNC real. Antes de usinar, confira no backplot do Mach3 e rode no ar. Uso por sua conta e risco.</p><form method="dialog"><button autofocus>Fechar aviso</button></form></dialog>
 <main>
 <div class="col">
 <div class="pn"><h2>Cilindro desenrolado (ângulo × comprimento)</h2><div class="row" style="margin:0 0 8px"><button id="addC">+ Círculo</button><button id="addR">+ Retângulo</button><button id="addL">+ Linha (encaixe)</button><button id="del">Remover selecionado</button></div><canvas id="cv" height="330"></canvas>
@@ -66,7 +74,7 @@ textarea{width:100%;height:230px;font:12px/1.35 Consolas,"Courier New",monospace
 <div class="g" style="margin-top:8px">
 <label>Girar STL (°)<input id="SR" type="number" value="0" step="5"></label>
 
-<label>Vista 3D<select id="vm"><option value="1" selected>Material (esculpindo)</option><option value="2">STL alvo</option><option value="3">Comparar material × STL</option><option value="0">Só linhas</option></select></label></div>
+<label>Vista 3D<select id="vm"><option value="4">STL + Desbaste</option><option value="1" selected>Material (esculpindo)</option><option value="2">STL alvo</option><option value="3">Comparar material × STL</option><option value="0">Só linhas</option></select></label></div>
 <label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx);margin-top:8px"><input id="SX" type="checkbox">Inverter o comprimento do STL</label>
 
 <p class="warn" id="sti">Sem STL: o material é o cilindro bruto. Comparar: vermelho = sobrou material; azul = cortou além do STL; verde = dentro de ±0,6 mm.</p></div>
@@ -91,7 +99,7 @@ textarea{width:100%;height:230px;font:12px/1.35 Consolas,"Courier New",monospace
 <label>Y desenrolado (mm)<input id="yy" type="number" step="0.5"></label>
 <label id="lw">Diâmetro (mm)<input id="w" type="number" step="0.5"></label>
 <label id="ll">Comprimento (mm)<input id="l" type="number" step="0.5"></label>
-<label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx);margin-top:4px"><input id="ST" type="checkbox">Usar STL como referência de profundidade (opcional)</label><label>Profundidade (mm)<input id="d" type="number" step="0.5"></label>
+<label class="stl-depth" style="flex-direction:row;align-items:center;gap:6px;color:var(--tx);margin-top:4px"><input id="ST" type="checkbox">Usar STL como referência de profundidade (opcional)</label><label>Profundidade (mm)<input id="d" type="number" step="0.5"></label>
 <label>Piso Z no Mach3 (mm)<input id="fz" readonly></label>
 <label id="rotw">Ângulo da forma (°)<input id="rot" type="number" step="5" value="0"></label><label>Tipo de corte<select id="cm"><option value="p">Esvaziar (bolsão)</option><option value="on">Contorno sobre a linha</option><option value="in">Contorno por dentro</option><option value="out">Contorno por fora</option></select></label></div>
 <div class="row" id="rotb"><button id="r0">Horizontal</button><button id="r90">Vertical</button><button id="r45">Diagonal 45°</button></div>
@@ -109,7 +117,7 @@ const f=n=>(Math.round(n*1000)/1000).toString();
 function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
 function fit(c){const r=c.getBoundingClientRect(),k=devicePixelRatio||1;c.width=r.width*k;c.height=(c.height||r.height);return k}
 let M={l:40,r:12,t:12,b:22},W,H;
-function draw(){const p=P(),c=$('cv'),k=fit(c),av=c.width-(M.l+M.r)*k,sm=Math.min(av/p.L,(430*k-(M.t+M.b)*k)/(Math.PI*p.D)),g=(c.height=Math.round(sm*Math.PI*p.D+(M.t+M.b)*k),c.getContext('2d'));W=c.width;H=c.height;
+function drawMap(){if($('cv').getBoundingClientRect().width<=M.l+M.r+2)return;const p=P(),c=$('cv'),k=fit(c),av=c.width-(M.l+M.r)*k,sm=Math.min(av/p.L,(430*k-(M.t+M.b)*k)/(Math.PI*p.D)),g=(c.height=Math.round(sm*Math.PI*p.D+(M.t+M.b)*k),c.getContext('2d'));W=c.width;H=c.height;
  g.clearRect(0,0,W,H);g.font=(11*k)+'px sans-serif';const pw=sm*p.L,ph=sm*Math.PI*p.D,ox=M.l*k+(av-pw)/2,oy=M.t*k;LY={ox:ox,oy:oy,pw:pw,ph:ph};
  g.strokeStyle=css('--ln');g.fillStyle=css('--mu');g.lineWidth=1;
  for(let a=0;a<=360;a+=10){const y=oy+ph*a/360;g.beginPath();g.moveTo(ox,y);g.lineTo(ox+pw,y);g.globalAlpha=a%90==0?1:.45;g.stroke();g.globalAlpha=1;if(a%30==0)g.fillText(a+'°',4*k,y+4*k)}
@@ -121,15 +129,18 @@ if(o.ln){const A=Q2(-o.l/2,0),B=Q2(o.l/2,0);g.moveTo(A[0],A[1]);g.lineTo(B[0],B[
 else if(o.t=='c')g.ellipse(px,py,wx/2,wy/2,0,0,7);
 else{[[-1,-1],[1,-1],[1,1],[-1,1]].forEach((c2,i)=>{const q=Q2(c2[0]*o.l/2,c2[1]*o.w/2);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1])});g.closePath()}
 if(pc=='p'&&!o.ln)g.fill();g.globalAlpha=1;g.stroke();g.beginPath();g.moveTo(px-6*k,py);g.lineTo(px+6*k,py);g.moveTo(px,py-6*k);g.lineTo(px,py+6*k);g.stroke();});
- const s=$('sec'),k2=fit(s),h=s.getContext('2d'),cx=s.width/2,cy=s.height/2,rr=Math.min(s.height/2-14*k2,s.width/2)*.78;
+}
+function drawSection(){if($('sec').getBoundingClientRect().width<1)return;const p=P(),R=p.D/2;const s=$('sec'),k2=fit(s),h=s.getContext('2d'),cx=s.width/2,cy=s.height/2,rr=Math.min(s.height/2-14*k2,s.width/2)*.78;
  h.clearRect(0,0,s.width,s.height);h.strokeStyle=css('--mu');h.lineWidth=k2;h.beginPath();h.arc(cx,cy,rr,0,7);h.stroke();
  for(let a=0;a<360;a+=10){const t2=(a-90)*Math.PI/180,l=(a%30==0?9:5)*k2;h.beginPath();h.moveTo(cx+rr*Math.cos(t2),cy+rr*Math.sin(t2));h.lineTo(cx+(rr+l)*Math.cos(t2),cy+(rr+l)*Math.sin(t2));h.stroke();if(a%30==0){h.fillStyle=css('--mu');h.font=(9*k2)+'px sans-serif';h.fillText(a+'°',cx+(rr+22*k2)*Math.cos(t2)-8*k2,cy+(rr+22*k2)*Math.sin(t2)+3*k2)}}
  h.fillStyle=css('--mu');h.font=(11*k2)+'px sans-serif';h.fillText('A=0° em cima',6*k2,14*k2);
  ops.forEach((o,i)=>{const th=(o.a-90)*Math.PI/180,r0=rr*(1-o.d/R);h.strokeStyle=i==sel?css('--op'):css('--ac');h.lineWidth=(i==sel?3:2)*k2;
   h.beginPath();h.moveTo(cx+rr*Math.cos(th),cy+rr*Math.sin(th));h.lineTo(cx+Math.max(r0,0)*Math.cos(th),cy+Math.max(r0,0)*Math.sin(th));h.stroke()});
- gen();clearTimeout(vt);vt=setTimeout(v3,$('sc').value.length>2e4?200:0)}
+}
+function draw(regenerate=true){drawMap();drawSection();if(regenerate){gen();clearTimeout(vt);vt=setTimeout(v3,$('sc').value.length>2e4?200:0)}else{dr3();xyv2();if(m3.getBoundingClientRect().width<1)profileView()}}
+
 function lst(){const u=$('list');u.innerHTML='';ops.forEach((o,i)=>{const li=document.createElement('li'),b=document.createElement('button');b.textContent=`${o.ln?'Linha':o.t=='c'?'Círculo':'Retângulo'} ${i+1}: X${f(o.x)}  A${f(o.a)}° · ${operationTool(o).ball?'ballnose':'topo reto'} Ø${f(operationTool(o).diameter)}`;b.className=i==sel?'on':'';b.onclick=()=>{sel=i;lst();form();draw()};li.appendChild(b);u.appendChild(li)})}
-function form(){const o=ops[sel];if(!o)return;$('T').value=operationTool(o).diameter;$('HT').value=operationTool(o).ball?'1':'0';$('x').value=o.x;$('a').value=o.a;$('yy').value=f(o.a*Math.PI*P().D/360);$('w').value=o.w;$('l').value=o.l;$('d').value=o.d;$('ll').style.display=o.t=='r'?'':'none';$('lw').style.display=o.ln?'none':'';$('rot').value=o.rot||0;$('cm').value=o.ln&&(o.cm||'p')=='p'?'on':(o.cm||'p');$('rotw').style.display=$('rotb').style.display=o.t=='c'?'none':'';$('pt').textContent='Propriedades: '+(o.ln?'Linha':o.t=='c'?'Círculo':'Retângulo')+' '+(sel+1);$('lw').firstChild.textContent=o.t=='c'?'Diâmetro (mm)':'Largura tangencial (mm)';$('fz').value=f(P().D/2-o.d-machineOffset())}
+function form(){const o=ops[sel];if(!o)return;$('ST').checked=!!o.stlDepth;$('T').value=operationTool(o).diameter;$('HT').value=operationTool(o).ball?'1':'0';$('x').value=o.x;$('a').value=o.a;$('yy').value=f(o.a*Math.PI*P().D/360);$('w').value=o.w;$('l').value=o.l;$('d').value=o.d;$('ll').style.display=o.t=='r'?'':'none';$('lw').style.display=o.ln?'none':'';$('rot').value=o.rot||0;$('cm').value=o.ln&&(o.cm||'p')=='p'?'on':(o.cm||'p');$('rotw').style.display=$('rotb').style.display=o.t=='c'?'none':'';$('pt').textContent='Propriedades: '+(o.ln?'Linha':o.t=='c'?'Círculo':'Retângulo')+' '+(sel+1);$('lw').firstChild.textContent=o.t=='c'?'Diâmetro (mm)':'Largura tangencial (mm)';$('fz').value=f(P().D/2-o.d-machineOffset())}
 ['x','a','w','l','d'].forEach(k=>$(k).oninput=()=>{const o=ops[sel];if(!o)return;o[k]=+$(k).value;$('fz').value=f(P().D/2-o.d-machineOffset());lst();draw()});
 ['D','L','S','F','FP','SD','SF','DIR'].forEach(k=>$(k).oninput=()=>{form();draw()});
 ['T','HT'].forEach(id=>$(id).oninput=()=>{const o=ops[sel];if(!o)return;o.toolDiameter=+$('T').value;o.toolType=$('HT').value;lst();draw()});
@@ -179,7 +190,7 @@ m3.onwheel=e=>{e.preventDefault();zm=Math.max(.3,Math.min(6,zm*(e.deltaY<0?1.1:.
 $('mo').oninput=()=>{mv=$('mo').value/100;dr3()};
 $('sl3').oninput=()=>{tt=$('sl3').value/1000*tot;dr3()};
 $('rs3').onclick=()=>{tt=0;pl=false;$('pl3').textContent='Simular G-code';dr3()};
-$('pl3').onclick=()=>{if(!sg.length)return;if(tt>=tot)tt=0;pl=!pl;$('pl3').textContent=pl?'Pausar':'Simular G-code';lt=performance.now();if(pl)requestAnimationFrame(tk)};
+$('pl3').onclick=()=>{if(!sg.length)return;if($('vm').value==='2'&&TRI)$('vm').value='4';if(tt>=tot)tt=0;pl=!pl;$('pl3').textContent=pl?'Pausar':'Simular G-code';lt=performance.now();if(pl)requestAnimationFrame(tk)};
 function tk(ts){if(!pl)return;tt+=(ts-lt)/1000*tot/12;lt=ts;if(tt>=tot){tt=tot;pl=false;$('pl3').textContent='Simular G-code'}dr3();if(pl)requestAnimationFrame(tk)}
 function mph(x,f,r,t){const R=P().D/2,TP=2*Math.PI,u=((f%TP)+TP)%TP;return[x,(u*R-Math.PI*R)*(1-t)+r*Math.sin(u)*t,r*(1-t)+r*Math.cos(u)*t,u]}
 function operationTool(o=ops[sel]){return {diameter:o?.toolDiameter??3,ball:o?.toolType==='1'}}
@@ -188,22 +199,22 @@ function indexedPoint(x,y,z,angle,t,fo){return mpt({x,y,z:z-(+$('Z0').value?P().
 function mpt(q,t,fo){const th=-q.a*(q.ad??P().dir)*Math.PI/180,c=Math.cos(th),s=Math.sin(th),zq=q.z+(q.zo??machineOffset()),yy=q.y*c-zq*s,zz=q.y*s+zq*c;return mph(q.x,Math.atan2(yy,zz)-(fo||0),Math.hypot(yy,zz),t)}
 function curp(){let ci=0;while(ci<cm.length-1&&cm[ci]<tt)ci++;const s=sg[ci],b=ci?cm[ci-1]:0,u=cm[ci]>b?Math.min(1,Math.max(0,(tt-b)/(cm[ci]-b))):1,cur={};for(const q of 'xyza')cur[q]=s.p[q]+(s.q[q]-s.p[q])*u;cur.zo=s.q.zo;cur.ad=s.q.ad;return{cur,ci,u}}
 let parsedSource='';
-function pg(){const code=simulationSource();const source=code+'|'+sourceReference()+'|'+$('simStage').value+'|'+JSON.stringify(ops)+'|'+$('TS').value+'|'+$('TY').value+'|'+$('SR').value+'|'+$('SX').checked+'|'+$('ST').checked;
+function pg(){const code=simulationSource();const source=code+'|'+sourceReference()+'|'+$('simStage').value+'|'+JSON.stringify(ops)+'|'+$('TS').value+'|'+$('TY').value;
  if(source!==parsedSource){parsedSource=source;FLD=null;tt=0;pl=false;$('pl3').textContent='Simular G-code'}
  sg=[];cm=[];let s={x:0,y:0,z:0,a:0},m=0,acc=0,oi=0,ph=($('simStage').value==='pockets'||!$('sc').value.trim())?1:0;
  code.split('\n').forEach(l=>{if(/FIM DA ESCULTURA/.test(l))ph=1;const mo=l.match(/Alojamento (\d+)/);if(mo)oi=+mo[1]-1;l=l.replace(/\([^)]*\)/g,'').split(';')[0].toUpperCase();const g=l.match(/G0*([0123])(?!\d)/);if(g)m=+g[1];const v=k=>{const r=l.match(new RegExp(k+'\\s*([-+]?\\d*\\.?\\d+)'));return r?+r[1]:null},n={};for(const k of 'xyza')n[k]=v(k.toUpperCase());if(n.x==null&&n.y==null&&n.z==null&&n.a==null)return;
   const t={zo:ph?machineOffset():(sourceReference()==='1'?P().D/2:0),ad:P().dir};for(const k of 'xyza')t[k]=n[k]==null?s[k]:n[k];if(!('zo' in s)){s.zo=t.zo;s.ad=t.ad;}const I=v('I'),J=v('J');
   if(m>=2&&I!=null){const cx=s.x+I,cy=s.y+(J||0),r=Math.hypot(s.x-cx,s.y-cy);let a0=Math.atan2(s.y-cy,s.x-cx),a1=Math.atan2(t.y-cy,t.x-cx);if(m==3){if(a1<=a0+1e-9)a1+=2*Math.PI}else if(a1>=a0-1e-9)a1-=2*Math.PI;const N=Math.max(8,Math.ceil(Math.abs(a1-a0)/.15));let p=s;for(let i=1;i<=N;i++){const u=i/N,q={x:cx+r*Math.cos(a0+(a1-a0)*u),y:cy+r*Math.sin(a0+(a1-a0)*u),z:s.z+(t.z-s.z)*u,a:s.a,zo:t.zo,ad:t.ad};sg.push({p:p,q:q,r:false,h:ph,o:oi});p=q}}
   else sg.push({p:{...s},q:t,r:m==0,h:ph,o:oi});s=t});
- const R=P().D/2;sg.forEach(e=>{acc+=(Math.hypot(e.q.x-e.p.x,e.q.y-e.p.y,e.q.z-e.p.z,(e.q.a-e.p.a)*Math.PI/180*R)+.01)*(e.r?.15:1);cm.push(acc)});tot=acc;tt=Math.min(tt,tot);SP=sg.findIndex(e=>e.h);if(SP<0)SP=sg.length;if(FLD&&CV.ci>=SP){FLD.fill(P().D/2);CV={ci:0,u:0};PK={}}}
+ const R=P().D/2;sg.forEach(e=>{acc+=(Math.hypot(e.q.x-e.p.x,e.q.y-e.p.y,e.q.z-e.p.z,(e.q.a-e.p.a)*Math.PI/180*R)+.01)*(e.r?.15:1);cm.push(acc)});tot=acc;tt=Math.min(tt,tot);SP=sg.findIndex(e=>e.h);if(SP<0)SP=sg.length;}
 function v3(){pg();dr3();xyv2()}
-function dr3(){const k=devicePixelRatio||1,rc=m3.getBoundingClientRect();m3.width=rc.width*k;m3.height=340*k;
- const g=m3.getContext('2d'),W=m3.width,H=m3.height,p=P(),R=p.D/2,L=p.L,TP=2*Math.PI,t=rfv()=='1'?1:mv,sc=zm*k*rc.width/(Math.max(L,TP*R)*1.3),cw=Math.cos(ya),sw=Math.sin(ya),cp=Math.cos(pa),sp=Math.sin(pa),mu=css('--mu'),ac=css('--ac'),op=css('--op'),tx=css('--tx');
+function dr3(){const k=devicePixelRatio||1,rc=m3.getBoundingClientRect();if(rc.width<1)return;m3.width=rc.width*k;m3.height=340*k;
+ const g=m3.getContext('2d'),W=m3.width,H=m3.height,p=P(),R=p.D/2,L=p.L,TP=2*Math.PI,t=mv,cw=Math.cos(ya),sw=Math.sin(ya),cp=Math.cos(pa),sp=Math.sin(pa),ey=(1-t)*Math.PI*R+t*R,sc=zm*k*Math.min(rc.width/(Math.max(1,L*Math.abs(cw)+2*ey*Math.abs(sw))*1.2),340/(Math.max(1,L*Math.abs(sw*sp)+2*ey*Math.abs(cw*sp)+2*R*Math.abs(cp))*1.2)),mu=css('--mu'),ac=css('--ac'),op=css('--op'),tx=css('--tx');
  const pj=q=>{const x=q[0]-L/2,x1=x*cw-q[1]*sw,y1=x*sw+q[1]*cw;return[W/2+PX+x1*sc,H/2+PY-(y1*sp+q[2]*cp)*sc]};
  const poly=(a,col,al,w)=>{g.beginPath();a.forEach((q,i)=>{const s=pj(q);if(i&&!(t<.999&&Math.abs(q[3]-a[i-1][3])>Math.PI))g.lineTo(s[0],s[1]);else g.moveTo(s[0],s[1])});g.strokeStyle=col;g.globalAlpha=al;g.lineWidth=w*k;g.stroke();g.globalAlpha=1};
  const mm=rfv()=='1',C=sg.length?curp():null,fo=mm&&C?C.cur.a*(C.cur.ad??p.dir)*Math.PI/180:0;
- VW={g,W,H,sc,cw,sw,cp,sp,L,t,fo};const vmd=$('vm').value;$('viewStatus').textContent=vmd==='2'?'STL de referência: geometria alvo, não é o resultado de uma usinagem.':vmd==='3'?'Comparação geométrica: material simulado × STL de referência.':vmd==='0'?'Percursos em linhas, sem representar a superfície removida.':'Material simulado: remoção calculada somente a partir dos percursos selecionados.';if(!FLD||GK!=gridKey())grid();
- if(vmd=='1'||vmd=='3'){if(C)carveTo(C.ci,C.u);msh(FLD,vmd=='1'?0:2)}else if(vmd=='2'&&TGT)msh(TGT,1);
+ VW={g,W,H,sc,cw,sw,cp,sp,L,t,fo};const vmd=$('vm').value;$('viewStatus').textContent=vmd==='4'?(TRI?'STL + Desbaste: material âmbar removido pelos percursos; STL azul tracejado em raio X, sem remover material por si só.':'STL + Desbaste: importe um STL para sobrepor a referência; somente os percursos removem material.'):vmd==='2'?'STL de referência: geometria alvo, não é o resultado de uma usinagem.':vmd==='3'?'Comparação geométrica: material simulado × STL de referência.':vmd==='0'?'Percursos em linhas, sem representar a superfície removida.':'Material simulado: remoção calculada somente a partir dos percursos selecionados.';if(!FLD||GK!=gridKey())grid();
+ if(vmd=='1'||vmd=='3'||vmd=='4'){if(C)carveTo(C.ci,C.u);msh(FLD,vmd=='3'?2:0);if(vmd==='4'&&TRI)drawSTLReference(poly,t,fo)}else if(vmd=='2'&&TGT)msh(TGT,1);
  if(vmd=='0'||vmd=='2')for(let j=0;j<24;j++)poly(Array.from({length:13},(_,i)=>mph(L*i/12,TP*j/24-fo,R,t)),mu,.4,1);
  poly(Array.from({length:13},(_,i)=>mph(L*i/12,-fo,R,t)),tx,.9,2.4);
  if(vmd=='0'||vmd=='2')for(let i=0;i<=12;i++)poly(Array.from({length:49},(_,j)=>mph(L*i/12,j==48?TP-1e-6:TP*j/48,R,t)),mu,.4,1);
@@ -235,7 +246,7 @@ function ring2(o,p,z,out){const T=operationTool(o).diameter,cx=o.x,rt=(o.rot||0)
   const rc=o.w/2+off;if(rc<=.01)return;out.push('G0 X'+f(cx+rc)+' Y0','G1 Z'+f(z)+' F'+p.FP,'G3 X'+f(cx+rc)+' Y0 I'+f(-rc)+' J0 F'+p.F);return}
  if(cm=='p'){const hx=(o.l-T)/2,hy=(o.w-T)/2,n=Math.ceil(Math.min(hx,hy)/st);out.push('G0 X'+f(cx)+' Y0','G1 Z'+f(z)+' F'+p.FP);for(let i=n;i>=0;i--){const ax=Math.max(hx-i*st,0),ay=Math.max(hy-i*st,0);[[-1,-1],[1,-1],[1,1],[-1,1],[-1,-1]].forEach((q,j)=>out.push('G1 '+Rt(q[0]*ax,q[1]*ay)+(j?'':' F'+p.F)))}out.push('G1 X'+f(cx)+' Y0');return}
  const hx=o.l/2+off,hy=o.w/2+off;if(hx<=0||hy<=0)return;start(-hx,-hy);[[1,-1],[1,1],[-1,1],[-1,-1]].forEach((q,j)=>out.push('G1 '+Rt(q[0]*hx,q[1]*hy)+(j?'':' F'+p.F)))}
-function xyv2(){const c=$('xy'),r=c.getBoundingClientRect(),k=devicePixelRatio||1,o=ops[sel],p=P();c.width=r.width*k;c.height=200*k;if(!o)return;
+function xyv2(){if($('xy').getBoundingClientRect().width<1)return;const c=$('xy'),r=c.getBoundingClientRect(),k=devicePixelRatio||1,o=ops[sel],p=P();c.width=r.width*k;c.height=200*k;if(!o)return;
  const g=c.getContext('2d'),W=c.width,H=c.height,T=operationTool(o).diameter,rt=(o.rot||0)*Math.PI/180,cr=Math.cos(rt),sr=Math.sin(rt),cm=o.ln&&(o.cm||'p')=='p'?'on':(o.cm||'p'),off=cm=='in'?-T/2:cm=='out'?T/2:0,hx0=o.t=='c'?o.w/2:o.l/2,hy0=o.w/2,sc=Math.min(W,H)*.42/(Math.hypot(hx0,hy0)+T),Q=(u,v)=>[W/2+(u*cr-v*sr)*sc,H/2-(u*sr+v*cr)*sc];
  const path=(pts,cl)=>{g.beginPath();pts.forEach((q,i)=>{const z=Q(q[0],q[1]);i?g.lineTo(z[0],z[1]):g.moveTo(z[0],z[1])});if(cl)g.closePath();g.stroke()},rect=(a,b)=>[[-a,-b],[a,-b],[a,b],[-a,b]];
  g.lineWidth=k;g.strokeStyle=css('--ln');for(let x=-30;x<=30;x+=5){g.beginPath();g.moveTo(W/2+x*sc,0);g.lineTo(W/2+x*sc,H);g.moveTo(0,H/2-x*sc);g.lineTo(W,H/2-x*sc);g.stroke()}
@@ -287,9 +298,9 @@ m3.oncontextmenu=e=>e.preventDefault();
 function warn3(g,W,H,k){const t=$('err').textContent.trim();if(!t)return;g.font=(11*k)+'px sans-serif';g.fillStyle=css('--op');g.textAlign='start';const mx=Math.floor((W-20*k)/(5.6*k)),Ls=[];let c='';t.split(' ').forEach(w=>{if((c+' '+w).length>mx){Ls.push(c);c=w}else c=c?c+' '+w:w});Ls.push(c);Ls.slice(-4).forEach((s,i,a)=>g.fillText(s,10*k,H-(a.length-i)*14*k+6*k))}
 $('hm').onclick=()=>{PX=0;PY=0;zm=1;goView([-.6,.55])};
 $('fit').onclick=()=>{if(!TRI)return;$('D').value=Math.ceil(SMD*2)/2;$('L').value=Math.ceil(TLEN);FLD=null;form();draw()};
-$('rf').onchange=dr3;$('vm').onchange=dr3;$('ST').onchange=draw;
-['TS','TY','SR','SX','ql'].forEach(i=>$(i).onchange=()=>{FLD=null;draw()});
-function gridKey(){const p=P();return [p.L,p.D,p.dir,$('Z0').value,$('ql').value,$('SR').value,$('SX').checked].join('/')}
+$('rf').onchange=dr3;$('vm').onchange=dr3;$('ST').onchange=()=>{if(ops[sel])ops[sel].stlDepth=$('ST').checked;draw()};
+['TS','TY','ql'].forEach(i=>$(i).onchange=()=>{FLD=null;draw()});
+function gridKey(){const p=P();return [p.L,p.D,p.dir,$('Z0').value,$('ql').value].join('/')}
 function grid(){const p=P();const q=+$('ql').value;NXG=Math.max(20,Math.min([200,300,480][q],Math.round(p.L*[1.5,2.5,4][q])));NPG=[96,144,240][q];GK=gridKey();FLD=new Float32Array(NXG*NPG).fill(p.D/2);CV={ci:0,u:0};BS=null;NB=true;PK={};mkT()}
 function mkT(){if(!TRI){TGT=null;return}const p=P(),TP=2*Math.PI,T=new Float32Array(NXG*NPG),dx=p.L/(NXG-1),dc=TP/NPG,st=Math.min(dx,p.D/2*dc)*.7,v=TRI,fl=$('SX').checked,sr=(+$('SR').value||0)*Math.PI/180;
  for(let t=0;t<v.length;t+=9){const e=(a,b)=>Math.hypot(v[t+a]-v[t+b],v[t+a+1]-v[t+b+1],v[t+a+2]-v[t+b+2]),n=Math.max(1,Math.min(400,Math.ceil(Math.max(e(0,3),e(3,6),e(0,6))/st)));
@@ -303,8 +314,8 @@ function stl(buf){let v;const dv=new DataView(buf),n=buf.byteLength>=84?dv.getUi
  const d=[0,1,2].map(k=>mx[k]-mn[k]),la=d.indexOf(Math.max(...d)),o=[la,(la+1)%3,(la+2)%3];TLEN=d[la];SMD=Math.max(d[o[1]],d[o[2]]);
  TRI=new Float32Array(v.length);for(let i=0;i<v.length;i+=3){TRI[i]=v[i+o[0]]-mn[o[0]];TRI[i+1]=v[i+o[1]]-(mn[o[1]]+mx[o[1]])/2;TRI[i+2]=v[i+o[2]]-(mn[o[2]]+mx[o[2]])/2}
  const p=P();$('sti').textContent='STL lido: '+Math.floor(v.length/9)+' triângulos, comprimento '+TLEN.toFixed(1)+' mm, Ø máx. aprox. '+Math.max(d[o[1]],d[o[2]]).toFixed(1)+' mm. O eixo foi alinhado a X e centrado, com X começando em 0. Bruto atual: L '+p.L+', Ø '+p.D+'. Se a posição ou o lado estiverem trocados, use Girar STL e Inverter o comprimento.'+(SMD>p.D+.01?' ATENÇÃO: o STL é mais largo que o bruto, e a fresa cortaria fora do cilindro. Use "Ajustar" ou confira a escala.':'')}
-$('fst').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{stl(r.result);$('vm').value='2';tt=0;pl=false;FLD=null;dr3();draw()}catch(x){$('sti').textContent='Não consegui ler o STL: '+x.message}};r.readAsArrayBuffer(f)};
-function sR(o){const R=P().D/2;if(!TGT||!$('ST').checked)return R;const i=Math.max(0,Math.min(NXG-1,Math.round(o.x/P().L*(NXG-1)))),j=Math.floor((((o.a%360)+360)%360)/360*NPG)%NPG,r=TGT[i*NPG+j];return r>0?Math.min(r,R):R}
+$('fst').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{stl(r.result);$('vm').value='4';if(!FLD)grid();else mkT();if(ops.some(o=>o.stlDepth))draw();else draw(false)}catch(x){$('sti').textContent='Não consegui ler o STL: '+x.message}};r.readAsArrayBuffer(f)};
+function sR(o){const R=P().D/2;if(!TGT||!o.stlDepth)return R;const i=Math.max(0,Math.min(NXG-1,Math.round(o.x/P().L*(NXG-1)))),j=Math.floor((((o.a%360)+360)%360)/360*NPG)%NPG,r=TGT[i*NPG+j];return r>0?Math.min(r,R):R}
 const lerpq=(a,b,u)=>({...b,x:a.x+(b.x-a.x)*u,y:a.y+(b.y-a.y)*u,z:a.z+(b.z-a.z)*u,a:a.a+(b.a-a.a)*u});
 function cutterRadiusAt(dx,phi,q,tool){
  const rt=tool.diameter/2;if(Math.abs(dx)>rt)return Infinity;
@@ -332,13 +343,9 @@ function pocketSample(K,x,y,o){const gx=(x-K.x0)/.15,gy=(y-K.y0)/.15;if(gx<0||gy
  const i=Math.min(K.nx-2,Math.floor(gx)),j=Math.min(K.ny-2,Math.floor(gy)),u=gx-i,v=gy-j;
  return (pocketHeight(K,i,j,o)*(1-u)+pocketHeight(K,i+1,j,o)*u)*(1-v)+(pocketHeight(K,i,j+1,o)*(1-u)+pocketHeight(K,i+1,j+1,o)*u)*v
 }
-function profileView(){const canvas=$('cutProfile'),k=devicePixelRatio||1;canvas.width=canvas.getBoundingClientRect().width*k;canvas.height=220*k;const g=canvas.getContext('2d'),w=canvas.width/k,h=220;
- g.scale(k,k);const tool=toolFor({h:1}),rt=tool.diameter/2,iconWidth=Math.min(160,w*.36),scale=Math.min(16,(iconWidth-24)/Math.max(tool.diameter,1)),cx=iconWidth/2,tip=118;
- g.font='12px sans-serif';g.fillStyle=css('--tx');g.fillText('Fresa alojam.',8,18);g.fillText(tool.ball?'Ballnose':'Topo plano',8,36);
- g.beginPath();g.moveTo(cx-rt*scale,60);g.lineTo(cx-rt*scale,tip-(tool.ball?rt*scale:0));
- if(tool.ball)g.arc(cx,tip-rt*scale,rt*scale,Math.PI,0,true);else g.lineTo(cx+rt*scale,tip);
- g.lineTo(cx+rt*scale,60);g.closePath();g.fillStyle=css('--pn');g.fill();g.strokeStyle=css('--ac');g.lineWidth=2;g.stroke();g.fillStyle=css('--mu');g.fillText('Ø '+tool.diameter+' mm',8,150);
- const o=ops[sel],K=PK[sel],left=iconWidth+12,right=w-12,top=50,bottom=177;
+function profileView(){drawToolProfile();if($('cutProfile').getBoundingClientRect().width<1)return;const canvas=$('cutProfile'),k=devicePixelRatio||1;canvas.width=canvas.getBoundingClientRect().width*k;canvas.height=220*k;const g=canvas.getContext('2d'),w=canvas.width/k,h=220;
+ g.scale(k,k);const tool=toolFor({h:1});g.font='12px sans-serif';
+ const o=ops[sel],K=PK[sel],left=12,right=w-12,top=50,bottom=177;
  g.fillStyle=css('--tx');g.fillText('Material: seção transversal',left,18);
  if(!o){$('cutStatus').textContent='Adicione ou selecione um alojamento para inspecionar o corte.';return}
  const rtShape=(o.rot||0)*Math.PI/180,span=Math.max(tool.diameter*2,o.ln?tool.diameter*2:o.w+tool.diameter),radius=P().D/2,low=Math.max(0,sR(o)-o.d-1),zScale=Math.min((bottom-top)/Math.max(1,radius-low),(right-left)/span),X=v=>(left+right)/2+v*zScale,Y=z=>bottom-(z-low)*zScale;
@@ -386,13 +393,15 @@ $('sc').oninput=()=>{FLD=null;sci();draw()};
 ['Z0','OM','PZ'].forEach(i=>$(i).onchange=draw);
 $('fsc').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('sc').value=r.result;FLD=null;sci();draw()};r.readAsText(f)};
 const parameterHelp={
+ safetyButton:['Aviso de segurança','Abre a advertência completa sobre o protótipo não homologado. Feche com o botão Fechar aviso ou Escape. O aviso discreto permanece visível.'],
+ toolProfile:['Perfil da ferramenta','Mostra a ponta real da fresa do alojamento selecionado. Ballnose tem ponta hemisférica; topo reto tem base plana. Recolher o painel não altera a ferramenta.'],
  simStage:['Etapas simuladas','Aspire + alojamentos: exige referências Z0 confirmadas e compatíveis. Somente escultura: usa a ferramenta e a referência original do Aspire. Somente alojamentos: parte do cilindro bruto. Esta escolha não altera o conteúdo exportado. STL nunca executa desbaste automaticamente.'],
  confirmCenter:['Confirmar referência original: centro','Use apenas após conferir no trabalho ou pós-processador Aspire que Z0 foi definido no centro do eixo A. Confirma a interpretação; não converte nenhuma coordenada do arquivo. Editar o texto exige nova confirmação.'],
  confirmSurface:['Confirmar referência original: superfície','Use apenas após conferir no Aspire que Z0 foi definido na superfície do bruto. Não desloca o G-code. Para combinar programas, o Z0 dos alojamentos deve usar a mesma referência.'],
  list:['Lista de alojamentos','Clique em um item para selecionar o alojamento que será editado. A seleção destaca os contornos e atualiza a inspeção XY e a seção ampliada do corte.'],
  c3:['Câmera e simulação 3D','Arraste para girar a câmera; use a roda para ampliar. Shift + arraste ou arraste com botão direito desloca a vista. Clique nas faces do cubo para orientar. O modo Material mostra a remoção simulada, enquanto STL alvo mostra apenas a geometria desejada.'],
  cv:['Posicionar no cilindro desenrolado','Arraste o centro de um alojamento: horizontal altera X; vertical altera o ângulo A. A grade opcional controla o encaixe. O desenho é um mapa do cilindro, não a seção final produzida pela ferramenta.'],
- cutProfile:['Perfil da ferramenta e seção do material','À esquerda aparece a geometria da fresa dos alojamentos. À direita, a seção transversal no centro da forma selecionada usa as mesmas alturas exibidas no material 3D, com escala horizontal igual à vertical. Laranja é a superfície simulada; tracejado é a superfície antes dos alojamentos. Avance a simulação para ver o corte. Várias passadas de ballnose podem deixar um fundo quase plano com cristas; uma linha isolada evidencia o sulco arredondado.'],
+ cutProfile:['Perfil da ferramenta e seção do material','O painel Perfil da ferramenta mostra a fresa; este painel mostra a seção transversal no centro da forma selecionada usa as mesmas alturas exibidas no material 3D, com escala horizontal igual à vertical. Laranja é a superfície simulada; tracejado é a superfície antes dos alojamentos. Avance a simulação para ver o corte. Várias passadas de ballnose podem deixar um fundo quase plano com cristas; uma linha isolada evidencia o sulco arredondado.'],
  D:['Diâmetro do bruto','Diâmetro externo do cilindro inicial, em milímetros. Define o raio do material, a escala do desenrolamento e a referência de Z0 na superfície. Informe a medida usada no Aspire.'],
  L:['Comprimento do bruto','Comprimento do cilindro no eixo X, em milímetros. A posição dos alojamentos e o STL devem caber nessa extensão.'],
  T:['Diâmetro da fresa dos alojamentos','Diâmetro em milímetros da ferramenta usada somente no alojamento selecionado. Cada círculo, retângulo ou linha mantém sua própria ferramenta. Afeta compensação dos contornos, largura do sulco e remoção simulada. Não altera a ferramenta da escultura Aspire.'],
@@ -425,10 +434,10 @@ const parameterHelp={
  fst:['Importar STL','Abre STL ASCII ou binário como geometria alvo. O maior eixo é alinhado a X e a seção é centralizada. O STL não gera percurso CAM nem remove material sozinho. As unidades são interpretadas como mm.'],
  SR:['Rotação do STL','Gira somente o modelo STL ao redor do eixo X, em graus, para alinhar sua orientação angular. Não altera o G-code Aspire nem os ângulos dos alojamentos.'],
  SX:['Inverter comprimento do STL','Marcado: espelha a posição do STL ao longo de X para trocar as extremidades.\nDesmarcado: mantém o sentido inicial. Não espelha o programa Aspire.'],
- ST:['Referência de profundidade no STL','Desmarcado por padrão: importar STL não muda a estratégia de corte. Marcado explicitamente e com STL: calcula a profundidade do alojamento a partir do raio alvo na sua posição X/A.\nDesmarcado ou sem STL: usa o raio do bruto. Confira avisos de limite e o piso calculado.'],
+ ST:['Referência de profundidade no STL','Esta opção pertence somente ao alojamento selecionado e é restaurada ao trocar de figura. Desmarcado por padrão: importar STL não muda a estratégia de corte. Marcado explicitamente e com STL: calcula a profundidade do alojamento a partir do raio alvo na sua posição X/A.\nDesmarcado ou sem STL: usa o raio do bruto. Confira avisos de limite e o piso calculado.'],
  ql:['Qualidade da simulação','Rápida: malha radial mais leve e menos detalhada.\nMédia: equilíbrio entre velocidade e detalhes.\nAlta: mais pontos, maior custo e melhor resolução.\nA seção detalhada dos alojamentos usa passo de 0,15 mm. A qualidade não muda o G-code exportado.'],
- vm:['Modo de visualização 3D','Material: mostra a remoção acumulada da simulação.\nSTL alvo: mostra a peça desejada, não o resultado da fresa; por isso trocar a fresa não muda essa vista.\nComparar: destaca diferenças em relação ao STL, quando presente; a representação é aproximada.\nSó linhas: oculta a superfície e permite inspecionar os percursos.'],
- mo:['Desenrolar ou enrolar','À esquerda, desenrola a circunferência como ângulo × raio; à direita, mostra o cilindro. Em referência Máquina, a visualização permanece enrolada. Não altera os percursos exportados.'],
+ vm:['Modo de visualização 3D','Material: mostra a remoção acumulada da simulação.\nSTL + Desbaste: sobrepõe o STL em azul tracejado, em raio X, ao material âmbar removido somente pelos percursos disponíveis. Não gera CAM.\nSTL alvo: mostra a peça desejada, não o resultado da fresa; por isso trocar a fresa não muda essa vista.\nComparar: destaca diferenças em relação ao STL, quando presente; a representação é aproximada.\nSó linhas: oculta a superfície e permite inspecionar os percursos.'],
+ mo:['Desenrolar ou enrolar','À esquerda, desenrola a circunferência como ângulo × raio; à direita, mostra o cilindro. Não altera os percursos exportados.'],
  rf:['Referencial da vista','Automática: peça fixa durante edição, referência da máquina durante a simulação.\nMáquina: a peça gira com A e a ferramenta mantém sua orientação de máquina.\nPeça: mantém o cilindro fixo e transforma os movimentos da ferramenta ao redor dele.'],
  tp:['Mostrar percurso','Marcado: desenha a trajetória do centro/ponta da ferramenta e os movimentos rápidos. Essas linhas não representam a largura total removida.\nDesmarcado: oculta as linhas para ver melhor o material.'],
  oc:['Mostrar contornos','Marcado: mostra o contorno solicitado dos alojamentos. Antes de usinar, também mostra uma referência de profundidade.\nDesmarcado: oculta as referências geométricas para inspecionar o resultado real da simulação.'],
@@ -458,7 +467,30 @@ function installParameterHelp(){
  $('helpToggle').onclick=()=>{const enabled=$('helpToggle').getAttribute('aria-pressed')!=='true';$('helpToggle').setAttribute('aria-pressed',String(enabled));document.querySelectorAll('.param-info').forEach(b=>b.hidden=!enabled)};
  $('paramHelp').addEventListener('click',e=>{if(e.target===$('paramHelp')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close()}})
 }
-installParameterHelp();updateReferenceUI();
+updateReferenceUI();
 
-addEventListener('resize',draw);lst();form();draw();
+const workspaceKey='makernauta.workspace.v1';let workspaceState={sections:{},panels:{left:true,right:true}},workspaceFrame=0;
+function rememberWorkspace(){try{localStorage.setItem(workspaceKey,JSON.stringify(workspaceState))}catch(_){}}
+function redrawWorkspace(){if(workspaceFrame)return;workspaceFrame=requestAnimationFrame(()=>{workspaceFrame=0;draw(false)})}
+function accordion(node,key){const heading=node.querySelector(':scope > h2');if(!heading)return node;const details=document.createElement('details'),summary=document.createElement('summary'),body=document.createElement('div');details.className=node.className;details.id=node.id;details.dataset.section=key;details.open=workspaceState.sections[key]!==false;summary.textContent=heading.textContent;body.className='section-body';heading.remove();while(node.firstChild)body.append(node.firstChild);details.append(summary,body);node.replaceWith(details);details.addEventListener('toggle',()=>{workspaceState.sections[key]=details.open;rememberWorkspace();redrawWorkspace()});return details}
+function installWorkspace(){
+ try{const saved=JSON.parse(localStorage.getItem(workspaceKey)||'{}');for(const side of ['left','right'])if(typeof saved.panels?.[side]==='boolean')workspaceState.panels[side]=saved.panels[side];if(saved.sections&&typeof saved.sections==='object')for(const [key,value]of Object.entries(saved.sections))if(typeof value==='boolean')workspaceState.sections[key]=value}catch(_){}
+ const main=document.querySelector('main'),center=main.firstElementChild,oldRight=main.lastElementChild;main.className='workspace';center.id='workspaceCenter';center.classList.add('workspace-center');
+ const map=$('cv').closest('.pn'),simulation=$('c3').closest('.pn'),section=$('sec').closest('.pn'),xy=$('xy').closest('.pn'),code=$('out').closest('.pn'),aux=document.createElement('div');aux.className='auxiliary-grid';
+ const cut=document.createElement('div'),tool=document.createElement('div');cut.className=tool.className='pn';cut.innerHTML='<h2>Seção do corte</h2>';tool.innerHTML='<h2>Perfil da ferramenta</h2><canvas id="toolProfile" height="220" aria-label="Perfil real da fresa do alojamento selecionado"></canvas>';
+ const oldHeading=$('cutProfile').previousElementSibling;oldHeading.remove();cut.append($('cutProfile'),$('cutStatus'));aux.append(section,xy,tool,cut);const duo=center.querySelector('.duo');duo.remove();center.replaceChildren(map,simulation,aux,code);
+ const sections={map,simulation,section,xy,tool,cut,code,machine:$('machineSection'),pocket:$('pocketSection'),aspire:$('aspireSection'),stl:$('stlSection')};for(const [key,node]of Object.entries(sections))sections[key]=accordion(node,key);
+ function dock(side,title,contents){const aside=document.createElement('aside'),tab=document.createElement('button'),frame=document.createElement('div'),bar=document.createElement('div'),label=document.createElement('strong'),pin=document.createElement('button'),collapse=document.createElement('button'),body=document.createElement('div');aside.className='dock '+side;aside.dataset.side=side;aside.setAttribute('aria-label',title);tab.type=pin.type=collapse.type='button';tab.className='dock-tab';tab.textContent=title;tab.dataset.panelTab=side;tab.setAttribute('aria-controls',side+'Dock');frame.id=side+'Dock';frame.className='dock-frame';bar.className='dock-bar';label.textContent=title;pin.textContent='📌';pin.dataset.panelPin=side;collapse.textContent=side==='left'?'‹':'›';collapse.dataset.panelCollapse=side;collapse.setAttribute('aria-label','Recolher painel '+title);body.className='dock-content';body.append(...contents);bar.append(label,pin,collapse);frame.append(bar,body);aside.append(tab,frame);
+  function render(){const pinned=workspaceState.panels[side];aside.classList.toggle('pinned',pinned);main.dataset[side+'Pinned']=String(pinned);pin.textContent=pinned?'📌':'Fixar';pin.setAttribute('aria-pressed',String(pinned));pin.setAttribute('aria-label',(pinned?'Desafixar':'Fixar')+' painel '+title);pin.title=pinned?'Desafixar painel':'Fixar painel';tab.setAttribute('aria-expanded',String(pinned||aside.classList.contains('temporary')));frame.inert=!pinned&&!aside.classList.contains('temporary');redrawWorkspace()}
+  tab.onclick=()=>{aside.classList.toggle('temporary');render();if(aside.classList.contains('temporary'))pin.focus()};pin.onclick=()=>{workspaceState.panels[side]=!workspaceState.panels[side];aside.classList.remove('temporary');rememberWorkspace();render();if(!workspaceState.panels[side])tab.focus()};collapse.onclick=()=>{workspaceState.panels[side]=false;aside.classList.remove('temporary');rememberWorkspace();render();tab.focus()};aside.closeTemporary=()=>{if(aside.classList.contains('temporary')){aside.classList.remove('temporary');render();tab.focus()}};render();return aside}
+ main.prepend(dock('left','Peça e máquina',[sections.machine]));main.append(dock('right','Operações',[sections.pocket,sections.aspire,sections.stl]));oldRight.remove();
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.querySelector('dialog[open]'))document.querySelectorAll('.dock.temporary').forEach(d=>d.closeTemporary())});document.addEventListener('pointerdown',e=>document.querySelectorAll('.dock.temporary').forEach(d=>{if(!d.contains(e.target))d.closeTemporary()}));
+ $('safetyButton').onclick=()=>$('safetyDialog').showModal();
+ let previousWidth=0;const observer=new ResizeObserver(entries=>{const width=entries[0].contentRect.width;if(width!==previousWidth){previousWidth=width;redrawWorkspace()}});observer.observe(center);addEventListener('resize',redrawWorkspace)
+}
+function drawToolProfile(){const canvas=$('toolProfile');if(!canvas||canvas.getBoundingClientRect().width<1)return;const k=devicePixelRatio||1,w=canvas.getBoundingClientRect().width;canvas.width=w*k;canvas.height=220*k;const g=canvas.getContext('2d'),tool=operationTool(),r=tool.diameter/2,scale=Math.min(18,(w-30)/Math.max(tool.diameter,1)),cx=w/2,tip=160;g.scale(k,k);g.font='12px sans-serif';g.fillStyle=css('--tx');g.fillText((tool.ball?'Ballnose · ponta esférica':'Topo reto · ponta plana')+' Ø'+tool.diameter+' mm',10,22);g.beginPath();g.moveTo(cx-r*scale,48);g.lineTo(cx-r*scale,tip-(tool.ball?r*scale:0));if(tool.ball)g.arc(cx,tip-r*scale,r*scale,Math.PI,0,true);else g.lineTo(cx+r*scale,tip);g.lineTo(cx+r*scale,48);g.closePath();g.fillStyle=css('--pn');g.fill();g.strokeStyle=css('--ac');g.lineWidth=2;g.stroke();g.fillStyle=css('--mu');g.fillText('Ferramenta do alojamento selecionado',10,202)}
+function drawSTLReference(poly,t,fo){const rotation=(+$('SR').value||0)*Math.PI/180,flipped=$('SX').checked,stride=Math.max(1,Math.ceil(TRI.length/9/5000));VW.g.save();VW.g.setLineDash([3*(devicePixelRatio||1),3*(devicePixelRatio||1)]);for(let i=0;i<TRI.length;i+=9*stride){const points=[];for(let j=0;j<3;j++){const offset=i+j*3,x=flipped?TLEN-TRI[offset]:TRI[offset],y=TRI[offset+1],z=TRI[offset+2];points.push(mph(x,Math.atan2(y,z)+rotation-fo,Math.hypot(y,z),t))}points.push(points[0]);poly(points,'#1686cf',.55,.85)}VW.g.restore()}
+['SR','SX'].forEach(id=>$(id).onchange=()=>{if(FLD)mkT();if(ops.some(o=>o.stlDepth))draw();else draw(false)});
+
+installWorkspace();installParameterHelp();lst();form();draw();
 </script></body></html>
