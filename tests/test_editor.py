@@ -4,6 +4,7 @@ Requires Playwright and Chromium (CHROMIUM_PATH optionally selects a system buil
 These checks validate software behavior, never physical machining safety.
 """
 import functools
+import hashlib
 import http.server
 import math
 import os
@@ -492,6 +493,95 @@ class EditorTests(unittest.TestCase):
         self.js('tt=tot;dr3()')
         self.assertTrue(self.js('sg.some(g=>g.h)&&sg.some(g=>!g.h)&&Object.keys(PK).length===2'))
         self.page.locator('[data-section="simulation"]').screenshot(path='/tmp/makernauta-stl-aspire-pockets.png')
+
+    def test_machine_visuals_align_and_rotate_without_moving_tailstock(self):
+        result=self.js('''() => {
+          const a=machineVisualGeometry(P(),0,0),b=machineVisualGeometry(P(),-Math.PI/2,0),seam=mph(0,-Math.PI/2,P().D/2,1);
+          return {jaws:a.jaws.length,left:a.faces.filter(f=>f.group==='chuck').every(f=>f.points.every(p=>p[0]<0)),right:a.faces.filter(f=>f.group==='tailstock').every(f=>f.points.every(p=>p[0]>P().L)),
+            aligned:Math.hypot(b.jaws[0][1]-seam[1],b.jaws[0][2]-seam[2]),
+            fixed:JSON.stringify(a.faces.filter(f=>f.group==='tailstock'))===JSON.stringify(b.faces.filter(f=>f.group==='tailstock'))};
+        }''')
+        self.assertEqual(result['jaws'],3)
+        self.assertTrue(result['left'] and result['right'] and result['fixed'])
+        self.assertLess(result['aligned'],1e-10)
+        self.assertTrue(self.js('VW.machine!==null'))
+        self.page.locator('[data-section="simulation"]').screenshot(path='/tmp/makernauta-machine-stock.png')
+        self.js("$('mo').value=0;$('mo').oninput()")
+        self.assertIsNone(self.js('VW.machine'))
+
+    def test_stock_end_faces_are_solid_from_both_axis_directions(self):
+        self.page.locator('#showMachine').uncheck()
+        for angle in [-math.pi/2,math.pi/2]:
+            color=self.page.evaluate('''angle=>{ya=angle;pa=0;zm=1;PX=0;PY=0;$('tp').checked=false;$('oc').checked=false;dr3();return Array.from(VW.g.getImageData(Math.round(VW.W/2),Math.round(VW.H/2),1,1).data)}''',angle)
+            self.assertGreater(color[0],color[2]*1.3, f'End face should be amber, not background: {color}')
+            self.assertEqual(color[3],255)
+        self.page.locator('#c3').screenshot(path='/tmp/makernauta-solid-end.png')
+
+    def test_vertical_resize_updates_canvas_and_preserves_state_and_nc(self):
+        self.js("$('ql').value='0';draw();v3();tt=tot*.5;dr3();window.beforeResize={field:FLD,values:Array.from(FLD),time:tt,code:$('out').value,camera:[ya,pa,zm,PX,PY]}")
+        handle=self.page.get_by_role('separator',name='Ajustar altura da simulação 3D')
+        handle.scroll_into_view_if_needed()
+        box=handle.bounding_box()
+        self.page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2)
+        self.page.mouse.down()
+        self.page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2+180,steps=8)
+        self.page.mouse.up()
+        self.page.wait_for_timeout(100)
+        self.assertGreater(self.page.locator('#simulationViewport').bounding_box()['height'],490)
+        self.assertTrue(self.js('Math.abs(c3.height-c3.getBoundingClientRect().height*devicePixelRatio)<=1'))
+        self.assertTrue(self.js("FLD===beforeResize.field&&beforeResize.values.every((v,i)=>v===FLD[i])&&tt===beforeResize.time&&$('out').value===beforeResize.code&&JSON.stringify([ya,pa,zm,PX,PY])===JSON.stringify(beforeResize.camera)"))
+        self.page.locator('[data-panel-pin="left"]').click()
+        self.page.locator('[data-panel-pin="right"]').click()
+        handle.focus()
+        self.page.keyboard.press('ArrowDown')
+        self.page.wait_for_timeout(100)
+        self.assertTrue(self.js("FLD===beforeResize.field&&tt===beforeResize.time&&$('out').value===beforeResize.code"))
+        self.page.locator('[data-section="simulation"]').screenshot(path='/tmp/makernauta-machine-resized.png')
+        height=handle.get_attribute('aria-valuenow')
+        self.page.reload()
+        self.page.wait_for_function('sg.length>0')
+        self.assertEqual(self.page.get_by_role('separator').get_attribute('aria-valuenow'),height)
+
+    def test_visual_fixture_toggle_preserves_removal_and_export_baselines(self):
+        self.assertEqual(hashlib.sha256(self.page.locator('#out').input_value().encode()).hexdigest(),'3e5b3159db84a38fc62469a8437606a8f6f58dcb5d19877980a98f5672dfcb97')
+        self.js("$('addR').click();$('T').value=4;$('T').oninput();$('addL').click();$('HT').value='1';$('HT').oninput();$('Z0').value='1';draw();v3()")
+        self.assertEqual(hashlib.sha256(self.page.locator('#out').input_value().encode()).hexdigest(),'bb2baf3f976a19cdd2c03d7170426b1d13abeebce14ecf9de57519078034175e')
+        self.js("tt=tot;dr3();window.visualBefore={field:FLD,values:Array.from(FLD),code:$('out').value,path:JSON.stringify(sg)}")
+        self.page.locator('#showMachine').uncheck()
+        self.page.locator('#showMachine').check()
+        self.assertTrue(self.js("FLD===visualBefore.field&&visualBefore.values.every((v,i)=>v===FLD[i])&&$('out').value===visualBefore.code&&JSON.stringify(sg)===visualBefore.path"))
+        self.load_reference_stl()
+        self.assertEqual(self.page.locator('#vm').input_value(),'4')
+        self.assertTrue(self.js("FLD===visualBefore.field&&$('out').value===visualBefore.code"))
+        self.page.locator('[data-section="simulation"]').screenshot(path='/tmp/makernauta-machine-stl.png')
+        self.page.locator('#sc').fill('(Z0 = superficie do bruto)\nG21 G90 G17\nG0 X30 Z8 A0\nG1 Z-3 F200\nG1 X60 A90 F1000\nM30')
+        self.page.locator('#simStage').select_option('sculpture')
+        self.js('tt=tot*.8;dr3()')
+        self.assertTrue(self.js('Math.abs(VW.machine.partAngle)>0&&Math.abs(VW.machine.machineAngle)<1e-10'))
+        self.page.locator('[data-section="simulation"]').screenshot(path='/tmp/makernauta-machine-rotating.png')
+
+    def test_height_control_mobile_hidpi_and_bounds(self):
+        context=self.browser.new_context(viewport={'width':390,'height':844},device_scale_factor=2,is_mobile=True,has_touch=True)
+        page=context.new_page()
+        page.on('pageerror',lambda error:self.errors.append(str(error)))
+        try:
+            page.goto(self.url)
+            page.wait_for_function('sg.length>0')
+            handle=page.get_by_role('separator',name='Ajustar altura da simulação 3D')
+            handle.scroll_into_view_if_needed()
+            handle.focus()
+            page.keyboard.press('End')
+            page.wait_for_timeout(100)
+            self.assertEqual(handle.get_attribute('aria-valuenow'),'1000')
+            self.assertEqual(page.evaluate('c3.height'),2000)
+            page.keyboard.press('Home')
+            page.keyboard.press('ArrowUp')
+            page.wait_for_timeout(100)
+            self.assertEqual(handle.get_attribute('aria-valuenow'),'240')
+            self.assertEqual(page.evaluate('c3.height'),480)
+            self.assertTrue(page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
+            page.locator('[data-section="simulation"]').screenshot(path='/tmp/makernauta-machine-mobile.png')
+        finally:context.close()
 
     def test_invalid_step_cannot_hang_generation(self):
         self.page.locator('#SD').fill('0')

@@ -39,6 +39,7 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 @media(max-width:800px){main.workspace{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:'center' 'left' 'right';padding:4px 8px 18px}.dock{position:static}.dock-content{max-height:none}.dock-tab{writing-mode:horizontal-tb;width:auto;min-height:0;padding:7px 12px}.dock.temporary .dock-frame{position:fixed;top:12vh;left:10px!important;right:10px!important;width:auto;max-width:none;max-height:80vh;overflow:auto}.dock.temporary .dock-content{max-height:65vh}.auxiliary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}header{padding:12px;gap:10px}header p{flex-basis:100%}.safety-strip{margin:8px 12px}}
 @media(max-width:500px){.auxiliary-grid{grid-template-columns:minmax(0,1fr)}}
 
+.simulation-viewport{height:340px;min-height:240px;max-height:1000px;min-width:0;overflow:hidden}.simulation-viewport #c3{height:100%;width:100%;display:block}.simulation-resize{height:16px;cursor:ns-resize;touch-action:none;display:flex;align-items:center;justify-content:center;border:1px solid var(--ln);border-radius:0 0 5px 5px;background:var(--ok);margin-bottom:6px}.simulation-resize::after{content:'•••';letter-spacing:4px;color:var(--mu);line-height:1}.simulation-resize:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 </style></head><body>
 <header><h1>Editor de usinagem indexada (3+1)</h1>
 <p>O eixo A gira a peça e fica parado; X, Y e Z fazem o recorte. Arraste os alojamentos sobre o cilindro desenrolado: horizontal = posição ao longo da peça, vertical = ângulo do A.</p><button id="helpToggle" class="info-toggle" aria-pressed="false">ⓘ Informações dos parâmetros</button></header>
@@ -53,6 +54,7 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 <div class="pn"><h2>3D: peça, alojamentos e simulação do G-code (arraste para girar, role para ampliar)</h2><canvas id="c3" height="340" style="touch-action:none;cursor:grab"></canvas>
 <p id="viewStatus" class="warn" role="status"></p><label>Qualidade da simulação<select id="ql"><option value="0">Rápida</option><option value="1" selected>Média</option><option value="2">Alta (lenta)</option></select></label><label>Etapas simuladas<select id="simStage"><option value="all">Aspire + alojamentos (Z0 validado)</option><option value="sculpture">Somente escultura Aspire</option><option value="pockets">Somente alojamentos sobre o bruto</option></select></label><p id="simStatus" class="warn" role="status"></p><label>Desenrolado (A vira Y) ⟷ enrolado no cilindro<input id="mo" type="range" min="0" max="100" value="100" style="padding:0"></label>
 <div class="row"><button class="p" id="pl3">Simular G-code</button><button id="rs3">Reiniciar</button><button id="hm" title="Voltar à vista inicial">Vista inicial</button><label style="flex-direction:row;align-items:center;gap:6px">Vista<select id="rf"><option value="2" selected>Automática (peça parada ao editar, máquina ao simular)</option><option value="1">Máquina (fresa fixa, peça gira)</option><option value="0">Peça (cilindro fixo)</option></select></label><label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx)"><input id="tp" type="checkbox" checked>Percurso</label><label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx)"><input id="oc" type="checkbox" checked>Contornos</label></div>
+<label style="flex-direction:row;align-items:center;gap:6px"><input id="showMachine" type="checkbox" checked>Fixação visual (chuck e contraponto)</label>
 <input id="sl3" type="range" min="0" max="1000" value="0" style="padding:0;width:100%;margin-top:6px" aria-label="Posição da simulação">
 <h2 style="margin-top:14px">Perfil da ferramenta e seção do corte</h2><canvas id="cutProfile" height="220" aria-label="Perfil das ferramentas e seção transversal do material simulado"></canvas>
 <p class="warn" id="cutStatus" aria-live="polite"></p></div>
@@ -208,13 +210,14 @@ function pg(){const code=simulationSource();const source=code+'|'+sourceReferenc
   else sg.push({p:{...s},q:t,r:m==0,h:ph,o:oi});s=t});
  const R=P().D/2;sg.forEach(e=>{acc+=(Math.hypot(e.q.x-e.p.x,e.q.y-e.p.y,e.q.z-e.p.z,(e.q.a-e.p.a)*Math.PI/180*R)+.01)*(e.r?.15:1);cm.push(acc)});tot=acc;tt=Math.min(tt,tot);SP=sg.findIndex(e=>e.h);if(SP<0)SP=sg.length;}
 function v3(){pg();dr3();xyv2()}
-function dr3(){const k=devicePixelRatio||1,rc=m3.getBoundingClientRect();if(rc.width<1)return;m3.width=rc.width*k;m3.height=340*k;
- const g=m3.getContext('2d'),W=m3.width,H=m3.height,p=P(),R=p.D/2,L=p.L,TP=2*Math.PI,t=mv,cw=Math.cos(ya),sw=Math.sin(ya),cp=Math.cos(pa),sp=Math.sin(pa),ey=(1-t)*Math.PI*R+t*R,sc=zm*k*Math.min(rc.width/(Math.max(1,L*Math.abs(cw)+2*ey*Math.abs(sw))*1.2),340/(Math.max(1,L*Math.abs(sw*sp)+2*ey*Math.abs(cw*sp)+2*R*Math.abs(cp))*1.2)),mu=css('--mu'),ac=css('--ac'),op=css('--op'),tx=css('--tx');
+function dr3(){const k=devicePixelRatio||1,rc=m3.getBoundingClientRect();if(rc.width<1)return;m3.width=rc.width*k;m3.height=Math.round(rc.height*k);
+ const g=m3.getContext('2d'),W=m3.width,H=m3.height,p=P(),R=p.D/2,L=p.L,TP=2*Math.PI,t=mv,cw=Math.cos(ya),sw=Math.sin(ya),cp=Math.cos(pa),sp=Math.sin(pa),ey=(1-t)*Math.PI*R+t*R,sc=zm*k*Math.min(rc.width/(Math.max(1,(L+R*3.6)*Math.abs(cw)+2*Math.max(ey,R*1.4)*Math.abs(sw))*1.2),rc.height/(Math.max(1,(L+R*3.6)*Math.abs(sw*sp)+2*Math.max(ey,R*1.4)*Math.abs(cw*sp)+2*R*1.4*Math.abs(cp))*1.2)),mu=css('--mu'),ac=css('--ac'),op=css('--op'),tx=css('--tx');
  const pj=q=>{const x=q[0]-L/2,x1=x*cw-q[1]*sw,y1=x*sw+q[1]*cw;return[W/2+PX+x1*sc,H/2+PY-(y1*sp+q[2]*cp)*sc]};
  const poly=(a,col,al,w)=>{g.beginPath();a.forEach((q,i)=>{const s=pj(q);if(i&&!(t<.999&&Math.abs(q[3]-a[i-1][3])>Math.PI))g.lineTo(s[0],s[1]);else g.moveTo(s[0],s[1])});g.strokeStyle=col;g.globalAlpha=al;g.lineWidth=w*k;g.stroke();g.globalAlpha=1};
  const mm=rfv()=='1',C=sg.length?curp():null,fo=mm&&C?C.cur.a*(C.cur.ad??p.dir)*Math.PI/180:0;
- VW={g,W,H,sc,cw,sw,cp,sp,L,t,fo};const vmd=$('vm').value;$('viewStatus').textContent=vmd==='4'?(TRI?'STL + Desbaste: material âmbar removido pelos percursos; STL azul tracejado em raio X, sem remover material por si só.':'STL + Desbaste: importe um STL para sobrepor a referência; somente os percursos removem material.'):vmd==='2'?'STL de referência: geometria alvo, não é o resultado de uma usinagem.':vmd==='3'?'Comparação geométrica: material simulado × STL de referência.':vmd==='0'?'Percursos em linhas, sem representar a superfície removida.':'Material simulado: remoção calculada somente a partir dos percursos selecionados.';if(!FLD||GK!=gridKey())grid();
+ VW={g,W,H,sc,cw,sw,cp,sp,L,t,fo};VW.machine=$('showMachine').checked&&t>.999?machineVisualGeometry(p,-fo,(C?C.cur.a*(C.cur.ad??p.dir)*Math.PI/180:0)-fo):null;const vmd=$('vm').value;$('viewStatus').textContent=vmd==='4'?(TRI?'STL + Desbaste: material âmbar removido pelos percursos; STL azul tracejado em raio X, sem remover material por si só.':'STL + Desbaste: importe um STL para sobrepor a referência; somente os percursos removem material.'):vmd==='2'?'STL de referência: geometria alvo, não é o resultado de uma usinagem.':vmd==='3'?'Comparação geométrica: material simulado × STL de referência.':vmd==='0'?'Percursos em linhas, sem representar a superfície removida.':'Material simulado: remoção calculada somente a partir dos percursos selecionados.';if(!FLD||GK!=gridKey())grid();
  if(vmd=='1'||vmd=='3'||vmd=='4'){if(C)carveTo(C.ci,C.u);msh(FLD,vmd=='3'?2:0);if(vmd==='4'&&TRI)drawSTLReference(poly,t,fo)}else if(vmd=='2'&&TGT)msh(TGT,1);
+ if(vmd==='0'||(vmd==='2'&&!TGT))msh(FLD,0,true);
  if(vmd=='0'||vmd=='2')for(let j=0;j<24;j++)poly(Array.from({length:13},(_,i)=>mph(L*i/12,TP*j/24-fo,R,t)),mu,.4,1);
  poly(Array.from({length:13},(_,i)=>mph(L*i/12,-fo,R,t)),tx,.9,2.4);
  if(vmd=='0'||vmd=='2')for(let i=0;i<=12;i++)poly(Array.from({length:49},(_,j)=>mph(L*i/12,j==48?TP-1e-6:TP*j/48,R,t)),mu,.4,1);
@@ -355,19 +358,22 @@ function profileView(){drawToolProfile();if($('cutProfile').getBoundingClientRec
  g.fillStyle=css('--mu');g.fillText('Largura '+f(span)+' mm',left,196);g.fillText('Escala X = Z (mm)',left,213);
  $('cutStatus').textContent=(K&&K.n?'Seção do material removido na posição central do alojamento selecionado. Laranja: superfície simulada; tracejado: antes dos alojamentos. ':'Simule ou avance a barra para ver o material removido. ')+(tool.ball?'Ballnose: ponta hemisférica; uma linha deixa sulco arredondado. Várias passadas deixam cristas e podem produzir um fundo quase plano.':'Topo plano: base reta; uma linha deixa sulco com fundo plano.')
 }
-function msh(F,kind){const {g,W,H,sc,cw,sw,cp,sp,L,t,fo}=VW,TP=2*Math.PI,Q=[];
+function msh(F,kind,onlyMachine=false){const {g,W,H,sc,cw,sw,cp,sp,L,t,fo}=VW,TP=2*Math.PI,Q=[];
  const pt=(i,j)=>{const jj=j%NPG,m=mph(L*i/(NXG-1),(j>=NPG?TP-1e-6:TP*jj/NPG)-fo,F[i*NPG+jj],t),x=m[0]-L/2;return[x*cw-m[1]*sw,x*sw+m[1]*cw,m[2],m[3]]};
  const base=kind==1?[110,160,210]:[222,170,110];
- const act=kind==1?[]:Object.keys(PK).filter(k=>PK[k]&&PK[k].n&&ops[k]).map(k=>({o:ops[k],K:PK[k],hx:(PK[k].nx-1)*.075-.55,hy:(PK[k].ny-1)*.075-.55,ph:ops[k].a*Math.PI/180}));
- for(let i=0;i<NXG-1;i++)for(let j=0;j<NPG;j++){if(act.length){const xc=L*(i+.5)/(NXG-1),uc=TP*(j+.5)/NPG,rc=F[i*NPG+j];if(act.some(z=>{const dd=uc-z.ph;return Math.abs(xc-z.o.x)<z.hx&&Math.cos(dd)>0&&Math.abs(rc*Math.sin(dd))<z.hy}))continue}const a=pt(i,j),b=pt(i+1,j),c=pt(i+1,j+1),d=pt(i,j+1);if(t<.999&&(Math.abs(a[3]-d[3])>Math.PI||Math.abs(a[3]-b[3])>Math.PI))continue;
+ const act=kind==1||onlyMachine?[]:Object.keys(PK).filter(k=>PK[k]&&PK[k].n&&ops[k]).map(k=>({o:ops[k],K:PK[k],hx:(PK[k].nx-1)*.075-.55,hy:(PK[k].ny-1)*.075-.55,ph:ops[k].a*Math.PI/180}));
+ if(!onlyMachine)for(let i=0;i<NXG-1;i++)for(let j=0;j<NPG;j++){if(act.length){const xc=L*(i+.5)/(NXG-1),uc=TP*(j+.5)/NPG,rc=F[i*NPG+j];if(act.some(z=>{const dd=uc-z.ph;return Math.abs(xc-z.o.x)<z.hx&&Math.cos(dd)>0&&Math.abs(rc*Math.sin(dd))<z.hy}))continue}const a=pt(i,j),b=pt(i+1,j),c=pt(i+1,j+1),d=pt(i,j+1);if(t<.999&&(Math.abs(a[3]-d[3])>Math.PI||Math.abs(a[3]-b[3])>Math.PI))continue;
   const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2],nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx,nl=Math.hypot(nx,ny,nz)||1,sh=.4+.6*Math.abs((-.3*nx+(-.7*cp+.5*sp)*ny+(.7*sp+.5*cp)*nz)/nl);
   Q.push([-(a[1]+c[1])/2*cp+(a[2]+c[2])/2*sp,a,b,c,d,sh,i,j])}
  const shd=(a,b,d)=>{const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2],nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx,nl=Math.hypot(nx,ny,nz)||1;return .4+.6*Math.abs((-.3*nx+(-.7*cp+.5*sp)*ny+(.7*sp+.5*cp)*nz)/nl)};
  act.forEach(z=>{const o=z.o,K=z.K,th=-o.a*Math.PI/180,cc=Math.cos(th),ss=Math.sin(th),nx=K.nx,ny=K.ny,N=new Array(nx*ny);
   for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const x=K.x0+i*.15,y=K.y0+j*.15,zz=pocketHeight(K,i,j,o),yy=y*cc-zz*ss,z2=y*ss+zz*cc,m=mph(x,Math.atan2(yy,z2)-fo,Math.hypot(yy,z2),t),xx=m[0]-L/2;N[j*nx+i]=[xx*cw-m[1]*sw,xx*sw+m[1]*cw,m[2],m[3]]}
   for(let j=0;j<ny-1;j++)for(let i=0;i<nx-1;i++){const a=N[j*nx+i],b=N[j*nx+i+1],c=N[(j+1)*nx+i+1],d=N[(j+1)*nx+i];if(t<.999&&Math.abs(a[3]-c[3])>Math.PI)continue;Q.push([-(a[1]+c[1])/2*cp+(a[2]+c[2])/2*sp,a,b,c,d,shd(a,b,d),-1,-1])}});
+ // Close the displayed radial surface with solid end disks, without touching F.
+ if(!onlyMachine&&t>.999)for(const i of [0,NXG-1]){const x=L*i/(NXG-1),center=[(x-L/2)*cw,(x-L/2)*sw,0,0];for(let j=0;j<NPG;j++){const a=pt(i,j),b=pt(i,j+1);Q.push([-(center[1]+a[1]+b[1])/3*cp+(center[2]+a[2]+b[2])/3*sp,center,a,b,b,i===0?.72:.9,i,j])}}
+ if(VW.machine)queueMachineFaces(Q,VW.machine);
  Q.sort((p,q)=>p[0]-q[0]);
- Q.forEach(q=>{let col=base;if(kind==2&&TGT&&q[6]>=0){const df=F[q[6]*NPG+q[7]]-TGT[q[6]*NPG+q[7]];col=df>.6?[230,90,80]:df<-.6?[80,130,230]:[90,190,120]}
+ Q.forEach(q=>{let col=q[8]||base;if(kind==2&&TGT&&q[6]>=0){const df=F[q[6]*NPG+q[7]]-TGT[q[6]*NPG+q[7]];col=df>.6?[230,90,80]:df<-.6?[80,130,230]:[90,190,120]}
   g.beginPath();[q[1],q[2],q[3],q[4]].forEach((z,n)=>{const X=W/2+PX+z[0]*sc,Y=H/2+PY-(z[1]*sp+z[2]*cp)*sc;n?g.lineTo(X,Y):g.moveTo(X,Y)});g.closePath();
   const s='rgb('+(col[0]*q[5]|0)+','+(col[1]*q[5]|0)+','+(col[2]*q[5]|0)+')';g.fillStyle=s;g.strokeStyle=s;g.lineWidth=.6;g.fill();g.stroke()})}
 let aspireRef={text:'',reference:null,explicit:false};let pocketCode='';
@@ -393,6 +399,7 @@ $('sc').oninput=()=>{FLD=null;sci();draw()};
 ['Z0','OM','PZ'].forEach(i=>$(i).onchange=draw);
 $('fsc').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('sc').value=r.result;FLD=null;sci();draw()};r.readAsText(f)};
 const parameterHelp={
+ showMachine:['Fixação visual','Mostra chuck com três castanhas no lado X0 e contraponto na extremidade X=L, somente na vista totalmente enrolada. A fixação é ilustrativa: não limita movimentos nem calcula colisões ou material removido. Desmarque para inspecionar as extremidades do bruto.'],
  safetyButton:['Aviso de segurança','Abre a advertência completa sobre o protótipo não homologado. Feche com o botão Fechar aviso ou Escape. O aviso discreto permanece visível.'],
  toolProfile:['Perfil da ferramenta','Mostra a ponta real da fresa do alojamento selecionado. Ballnose tem ponta hemisférica; topo reto tem base plana. Recolher o painel não altera a ferramenta.'],
  simStage:['Etapas simuladas','Aspire + alojamentos: exige referências Z0 confirmadas e compatíveis. Somente escultura: usa a ferramenta e a referência original do Aspire. Somente alojamentos: parte do cilindro bruto. Esta escolha não altera o conteúdo exportado. STL nunca executa desbaste automaticamente.'],
@@ -462,7 +469,7 @@ function installParameterHelp(){
   const target=$(id);if(!target)throw new Error('Controle sem destino de ajuda: '+id);
   target.setAttribute('aria-description',description);const button=document.createElement('button');button.type='button';button.className='param-info';button.hidden=true;button.textContent='i';button.dataset.helpFor=id;button.setAttribute('aria-label','Informações: '+title);button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','paramHelp');
   button.onclick=e=>{e.preventDefault();e.stopPropagation();$('helpTitle').textContent=title;$('helpBody').textContent=description;$('paramHelp').showModal()};
-  target.insertAdjacentElement('afterend',button);
+  (id==='c3'?$('simulationViewport'):target).insertAdjacentElement('afterend',button);
  }
  $('helpToggle').onclick=()=>{const enabled=$('helpToggle').getAttribute('aria-pressed')!=='true';$('helpToggle').setAttribute('aria-pressed',String(enabled));document.querySelectorAll('.param-info').forEach(b=>b.hidden=!enabled)};
  $('paramHelp').addEventListener('click',e=>{if(e.target===$('paramHelp')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close()}})
@@ -474,7 +481,7 @@ function rememberWorkspace(){try{localStorage.setItem(workspaceKey,JSON.stringif
 function redrawWorkspace(){if(workspaceFrame)return;workspaceFrame=requestAnimationFrame(()=>{workspaceFrame=0;draw(false)})}
 function accordion(node,key){const heading=node.querySelector(':scope > h2');if(!heading)return node;const details=document.createElement('details'),summary=document.createElement('summary'),body=document.createElement('div');details.className=node.className;details.id=node.id;details.dataset.section=key;details.open=workspaceState.sections[key]!==false;summary.textContent=heading.textContent;body.className='section-body';heading.remove();while(node.firstChild)body.append(node.firstChild);details.append(summary,body);node.replaceWith(details);details.addEventListener('toggle',()=>{workspaceState.sections[key]=details.open;rememberWorkspace();redrawWorkspace()});return details}
 function installWorkspace(){
- try{const saved=JSON.parse(localStorage.getItem(workspaceKey)||'{}');for(const side of ['left','right'])if(typeof saved.panels?.[side]==='boolean')workspaceState.panels[side]=saved.panels[side];if(saved.sections&&typeof saved.sections==='object')for(const [key,value]of Object.entries(saved.sections))if(typeof value==='boolean')workspaceState.sections[key]=value}catch(_){}
+ try{const saved=JSON.parse(localStorage.getItem(workspaceKey)||'{}');for(const side of ['left','right'])if(typeof saved.panels?.[side]==='boolean')workspaceState.panels[side]=saved.panels[side];if(Number.isFinite(saved.simulationHeight))workspaceState.simulationHeight=Math.max(240,Math.min(1000,saved.simulationHeight));if(saved.sections&&typeof saved.sections==='object')for(const [key,value]of Object.entries(saved.sections))if(typeof value==='boolean')workspaceState.sections[key]=value}catch(_){}
  const main=document.querySelector('main'),center=main.firstElementChild,oldRight=main.lastElementChild;main.className='workspace';center.id='workspaceCenter';center.classList.add('workspace-center');
  const map=$('cv').closest('.pn'),simulation=$('c3').closest('.pn'),section=$('sec').closest('.pn'),xy=$('xy').closest('.pn'),code=$('out').closest('.pn'),aux=document.createElement('div');aux.className='auxiliary-grid';
  const cut=document.createElement('div'),tool=document.createElement('div');cut.className=tool.className='pn';cut.innerHTML='<h2>Seção do corte</h2>';tool.innerHTML='<h2>Perfil da ferramenta</h2><canvas id="toolProfile" height="220" aria-label="Perfil real da fresa do alojamento selecionado"></canvas>';
@@ -492,5 +499,31 @@ function drawToolProfile(){const canvas=$('toolProfile');if(!canvas||canvas.getB
 function drawSTLReference(poly,t,fo){const rotation=(+$('SR').value||0)*Math.PI/180,flipped=$('SX').checked,stride=Math.max(1,Math.ceil(TRI.length/9/5000));VW.g.save();VW.g.setLineDash([3*(devicePixelRatio||1),3*(devicePixelRatio||1)]);for(let i=0;i<TRI.length;i+=9*stride){const points=[];for(let j=0;j<3;j++){const offset=i+j*3,x=flipped?TLEN-TRI[offset]:TRI[offset],y=TRI[offset+1],z=TRI[offset+2];points.push(mph(x,Math.atan2(y,z)+rotation-fo,Math.hypot(y,z),t))}points.push(points[0]);poly(points,'#1686cf',.55,.85)}VW.g.restore()}
 ['SR','SX'].forEach(id=>$(id).onchange=()=>{if(FLD)mkT();if(ops.some(o=>o.stlDepth))draw();else draw(false)});
 
-installWorkspace();installParameterHelp();lst();form();draw();
+// Display-only solids. Never read by toolpath generation or material removal.
+function machineVisualGeometry(p,partAngle,machineAngle){const R=p.D/2,L=p.L,faces=[],jaws=[],rotate=(q,a)=>[q[0],q[1]*Math.cos(a)+q[2]*Math.sin(a),q[2]*Math.cos(a)-q[1]*Math.sin(a)];
+ const face=(points,color,group)=>faces.push({points,color,group});
+ function cylinder(x0,x1,r0,r1,color,group,phase=0){const n=36,ring=(x,r)=>Array.from({length:n},(_,i)=>rotate([x,r*Math.sin(i*2*Math.PI/n),r*Math.cos(i*2*Math.PI/n)],phase)),a=ring(x0,r0),b=ring(x1,r1);for(let i=0;i<n;i++){const j=(i+1)%n;face([a[i],a[j],b[j],b[i]],color,group)}face(a.slice().reverse(),color,group);face(b,color,group)}
+ function box(x0,x1,r0,r1,halfWidth,angle,color,group){const points=[];for(const x of [x0,x1])for(const r of [r0,r1])for(const v of [-halfWidth,halfWidth])points.push(rotate([x,v,r],angle));for(const ids of [[0,1,3,2],[4,6,7,5],[0,4,5,1],[2,3,7,6],[0,2,6,4],[1,5,7,3]])face(ids.map(i=>points[i]),color,group)}
+ cylinder(-R*1.35,-R*.25,R*1.4,R*1.4,[57,65,72],'chuck',partAngle);
+ cylinder(-R*.28,-R*.1,R*1.32,R*1.32,[87,97,108],'chuck',partAngle);
+ for(let j=0;j<3;j++){const angle=partAngle+j*2*Math.PI/3;box(-R*.18,R*.08,R*.91,R*1.32,R*.16,angle,[151,160,168],'jaw');jaws.push(rotate([0,0,R],angle))}
+ cylinder(L+.15,L+R*.85,0,R*.48,[157,164,170],'tailstock');
+ cylinder(L+R*.85,L+R*1.25,R*.48,R*.48,[101,111,122],'tailstock');
+ cylinder(L+R*1.25,L+R*2.15,R*.83,R*.83,[57,65,72],'tailstock');
+ box(L+R*1.18,L+R*2.25,-R*1.22,-R*.48,R*.65,machineAngle,[62,72,81],'tailstock');
+ return {faces,jaws,tailstockTip:[L+.15,0,0],partAngle,machineAngle}
+}
+function queueMachineFaces(queue,geometry){const {L,cw,sw,cp,sp}=VW;for(const face of geometry.faces){const points=face.points.map(q=>{const x=q[0]-L/2;return[x*cw-q[1]*sw,x*sw+q[1]*cw,q[2],0]});
+ // Fan triangulation also handles circular end faces.
+ for(let j=1;j<points.length-1;j++){const a=points[0],b=points[j],c=points[j+1],u=b.map((v,i)=>v-a[i]),v=c.map((v,i)=>v-a[i]),nx=u[1]*v[2]-u[2]*v[1],ny=u[2]*v[0]-u[0]*v[2],nz=u[0]*v[1]-u[1]*v[0],length=Math.hypot(nx,ny,nz)||1,shade=.5+.5*Math.abs((-.3*nx+(-.7*cp+.5*sp)*ny+(.7*sp+.5*cp)*nz)/length);queue.push([-(a[1]+b[1]+c[1])/3*cp+(a[2]+b[2]+c[2])/3*sp,a,b,c,c,shade,-1,-1,face.color])}}
+}
+function installSimulationResize(){const canvas=$('c3'),viewport=document.createElement('div'),handle=document.createElement('div');viewport.id='simulationViewport';viewport.className='simulation-viewport';canvas.before(viewport);viewport.append(canvas);handle.className='simulation-resize';handle.tabIndex=0;handle.setAttribute('role','separator');handle.setAttribute('aria-orientation','horizontal');handle.setAttribute('aria-label','Ajustar altura da simulação 3D');handle.setAttribute('aria-controls','simulationViewport');handle.setAttribute('aria-valuemin','240');handle.setAttribute('aria-valuemax','1000');handle.title='Arraste para ajustar a altura; setas para cima/baixo também ajustam';viewport.after(handle);
+ const clamp=value=>Math.max(240,Math.min(1000,Math.round(value)));function setHeight(value,remember=false){const height=clamp(value);viewport.style.height=height+'px';handle.setAttribute('aria-valuenow',String(height));if(remember){workspaceState.simulationHeight=height;rememberWorkspace()}redrawWorkspace()}
+ setHeight(typeof workspaceState.simulationHeight==='number'?workspaceState.simulationHeight:340);
+ let drag=null;handle.onpointerdown=e=>{if(e.button!==0)return;e.preventDefault();handle.setPointerCapture(e.pointerId);handle.focus();drag={y:e.clientY,height:viewport.getBoundingClientRect().height}};handle.onpointermove=e=>{if(drag)setHeight(drag.height+e.clientY-drag.y)};handle.onpointerup=handle.onpointercancel=()=>{if(drag){drag=null;setHeight(viewport.getBoundingClientRect().height,true)}};
+ handle.onkeydown=e=>{let height=viewport.getBoundingClientRect().height;if(e.key==='ArrowUp')height-=20;else if(e.key==='ArrowDown')height+=20;else if(e.key==='Home')height=240;else if(e.key==='End')height=1000;else return;e.preventDefault();setHeight(height,true)};
+ let lastHeight=0;new ResizeObserver(entries=>{const height=entries[0].contentRect.height;if(height!==lastHeight){lastHeight=height;redrawWorkspace()}}).observe(viewport)
+}
+
+installWorkspace();installSimulationResize();installParameterHelp();$('showMachine').onchange=dr3;lst();form();draw();
 </script></body></html>
