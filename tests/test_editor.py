@@ -58,7 +58,7 @@ class EditorTests(unittest.TestCase):
         return self.page.evaluate(expression)
 
     def test_original_controls_desktop_mobile_and_export(self):
-        self.assertEqual(self.page.locator('canvas').count(), 5)
+        self.assertEqual(self.page.locator('canvas').count(), 6)
         self.assertIn('G91.1', self.page.locator('#out').input_value())
         self.page.locator('#addR').click()
         self.page.locator('#r45').click()
@@ -198,7 +198,8 @@ class EditorTests(unittest.TestCase):
         self.page.locator('#SR').dispatch_event('change')
         self.page.locator('#SX').check()
         self.page.wait_for_timeout(100)
-        self.assertIn('/90/true', self.js('GK'))
+        self.assertEqual(self.page.locator('#SR').input_value(),'90')
+        self.assertTrue(self.page.locator('#SX').is_checked())
 
     def test_rendered_line_groove_retains_ballnose_curvature(self):
         # Measure the same Cartesian heights used by the mesh and the enlarged section.
@@ -360,6 +361,137 @@ class EditorTests(unittest.TestCase):
         self.page.locator('#Z0').select_option('0')
         self.assertEqual(self.page.locator('#fz').input_value(),'9')
         self.assertIn('G1 Z9',self.page.locator('#out').input_value())
+
+    def load_reference_stl(self):
+        vertices=[(0,-8,-8),(0,8,-8),(0,8,8),(0,-8,8),(120,-8,-8),(120,8,-8),(120,8,8),(120,-8,8)]
+        faces=[(0,1,2),(0,2,3),(4,6,5),(4,7,6),(0,4,5),(0,5,1),(3,2,6),(3,6,7),(0,3,7),(0,7,4),(1,5,6),(1,6,2)]
+        text='solid target\n'+''.join('facet normal 0 0 0\nouter loop\n'+''.join('vertex %s %s %s\n'%vertices[i] for i in face)+'endloop\nendfacet\n' for face in faces)+'endsolid target'
+        self.page.locator('#fst').set_input_files({'name':'target.stl','mimeType':'model/stl','buffer':text.encode()})
+        self.page.wait_for_function('TRI!==null&&TGT!==null')
+
+    def test_docks_pin_collapse_temporary_and_persistence(self):
+        self.assertEqual(self.page.locator('main').get_attribute('data-left-pinned'),'true')
+        self.page.screenshot(path='/tmp/makernauta-docks-pinned.png',full_page=True)
+        initial=self.page.locator('#workspaceCenter').bounding_box()['width']
+        self.page.locator('[data-panel-pin="left"]').click()
+        self.page.wait_for_timeout(100)
+        wider=self.page.locator('#workspaceCenter').bounding_box()['width']
+        self.assertGreater(wider,initial+150)
+        self.page.locator('[data-panel-pin="right"]').click()
+        self.page.wait_for_timeout(100)
+        self.assertGreater(self.page.locator('#workspaceCenter').bounding_box()['width'],wider+150)
+        self.page.screenshot(path='/tmp/makernauta-docks-hidden.png',full_page=True)
+        self.page.locator('[data-panel-tab="left"]').click()
+        self.assertTrue(self.page.locator('#leftDock').is_visible())
+        self.page.screenshot(path='/tmp/makernauta-dock-temporary.png')
+        self.page.keyboard.press('Escape')
+        self.assertFalse(self.page.locator('#leftDock').is_visible())
+        self.page.locator('[data-panel-tab="right"]').click()
+        self.page.locator('[data-panel-pin="right"]').click()
+        self.assertEqual(self.page.locator('main').get_attribute('data-right-pinned'),'true')
+        self.page.reload()
+        self.page.wait_for_function('sg.length>0')
+        self.assertEqual(self.page.locator('main').get_attribute('data-left-pinned'),'false')
+        self.assertEqual(self.page.locator('main').get_attribute('data-right-pinned'),'true')
+        self.page.locator('[data-panel-collapse="right"]').click()
+        self.assertFalse(self.page.locator('#rightDock').is_visible())
+
+    def test_accordions_preserve_values_and_are_independent_and_keyboard_accessible(self):
+        self.page.locator('#T').fill('4')
+        code=self.page.locator('#out').input_value()
+        self.page.locator('#pocketSection > summary').focus()
+        self.page.keyboard.press('Enter')
+        self.assertFalse(self.page.locator('#pocketSection').evaluate('(e)=>e.open'))
+        self.page.locator('#aspireSection > summary').click()
+        self.assertFalse(self.page.locator('#aspireSection').evaluate('(e)=>e.open'))
+        self.assertTrue(self.page.locator('#stlSection').evaluate('(e)=>e.open'))
+        self.page.locator('#pocketSection > summary').click()
+        self.assertEqual(self.page.locator('#T').input_value(),'4')
+        self.assertEqual(self.page.locator('#out').input_value(),code)
+        self.page.reload()
+        self.assertFalse(self.page.locator('#aspireSection').evaluate('(e)=>e.open'))
+        self.assertTrue(self.page.locator('#pocketSection').evaluate('(e)=>e.open'))
+
+    def test_auxiliary_panels_and_resizing_preserve_simulation_and_camera(self):
+        self.js("$('ql').value='0';draw();v3();tt=tot*.65;dr3();ya=.7;pa=.4;zm=1.3;window.savedField=FLD;window.savedValues=Array.from(FLD);window.savedTime=tt")
+        for key in ['section','xy','tool','cut']:
+            self.page.locator(f'[data-section="{key}"] > summary').click()
+            self.assertLess(self.page.locator(f'[data-section="{key}"]').bounding_box()['height'],55)
+        self.page.locator('[data-panel-pin="left"]').click()
+        self.page.locator('[data-panel-pin="right"]').click()
+        self.page.set_viewport_size({'width':1700,'height':1000})
+        self.page.wait_for_timeout(150)
+        self.assertTrue(self.js('FLD===savedField&&tt===savedTime&&savedValues.every((v,i)=>v===FLD[i])'))
+        self.assertEqual(self.js('[ya,pa,zm]'),[.7,.4,1.3])
+        self.page.screenshot(path='/tmp/makernauta-aux-collapsed.png',full_page=True)
+        for key in ['section','xy','tool','cut']:
+            self.page.locator(f'[data-section="{key}"] > summary').click()
+        self.page.wait_for_timeout(100)
+        self.assertTrue(self.js('FLD===savedField&&tt===savedTime'))
+        self.assertTrue(self.js('LY.pw>0&&LY.ph>0'))
+
+    def test_safety_modal_and_mobile_layout(self):
+        self.page.locator('#safetyButton').click()
+        self.assertTrue(self.page.locator('#safetyDialog').is_visible())
+        self.assertIn('nunca foi testado numa CNC real',self.page.locator('#safetyDialog').text_content())
+        self.page.keyboard.press('Escape')
+        self.assertFalse(self.page.locator('#safetyDialog').is_visible())
+        self.page.locator('#safetyButton').click()
+        self.page.get_by_role('button',name='Fechar aviso',exact=True).click()
+        self.page.set_viewport_size({'width':390,'height':844})
+        self.page.wait_for_timeout(100)
+        self.assertTrue(self.js('document.documentElement.scrollWidth<=innerWidth'))
+        self.page.locator('[data-panel-pin="left"]').click()
+        self.page.locator('[data-panel-tab="left"]').click()
+        box=self.page.locator('#leftDock').bounding_box()
+        self.assertGreaterEqual(box['x'],0)
+        self.assertLessEqual(box['x']+box['width'],390)
+        self.page.keyboard.press('Escape')
+        self.page.screenshot(path='/tmp/makernauta-mobile-workspace.png',full_page=True)
+
+    def test_stl_roughing_is_progressive_and_unwraps_without_fake_removal(self):
+        self.js("$('ql').value='0';draw();v3();window.savedField=FLD")
+        code=self.page.locator('#out').input_value()
+        self.load_reference_stl()
+        self.assertEqual(self.page.locator('#vm').input_value(),'4')
+        self.assertEqual(self.page.locator('#out').input_value(),code)
+        self.assertTrue(self.js('FLD===savedField&&FLD.every(r=>r===15)&&tt===0'))
+        self.js('tt=tot*.55;dr3()')
+        self.assertTrue(self.js('FLD.some(r=>r<15)&&tt>0'))
+        self.page.locator('[data-section="simulation"]').screenshot(path='/tmp/makernauta-stl-roughing.png')
+        self.js("window.beforeUnwrap=Array.from(FLD);window.beforeTime=tt;$('mo').value=0;$('mo').oninput()")
+        self.assertTrue(self.js('VW.t===0&&tt===beforeTime&&beforeUnwrap.every((v,i)=>v===FLD[i])'))
+        self.page.locator('[data-section="simulation"]').screenshot(path='/tmp/makernauta-stl-unwrapped.png')
+        self.js("$('mo').value=100;$('mo').oninput();tt=tot;dr3()")
+        self.page.locator('#rs3').click()
+        self.assertTrue(self.js('tt===0&&FLD.every(r=>r===15)'))
+        self.page.locator('#vm').select_option('2')
+        self.page.locator('#pl3').click()
+        self.assertEqual(self.page.locator('#vm').input_value(),'4')
+        self.page.wait_for_timeout(150)
+        self.assertGreater(self.js('tt'),0)
+        self.page.locator('#pl3').click()
+        self.assertFalse(self.js('pl'))
+        self.js('ops.splice(0);lst();draw();v3();tt=tot;dr3()')
+        self.assertTrue(self.js('FLD.every(r=>r===15)&&Object.keys(PK).length===0'))
+
+    def test_stl_aspire_and_pocket_stages_and_per_operation_reference(self):
+        self.load_reference_stl()
+        self.page.locator('#ST').check()
+        self.assertTrue(self.js('ops[0].stlDepth'))
+        self.page.locator('#addC').click()
+        self.assertFalse(self.page.locator('#ST').is_checked())
+        self.page.locator('#list button').nth(0).click()
+        self.assertTrue(self.page.locator('#ST').is_checked())
+        self.page.locator('#ST').uncheck()
+        self.page.locator('#sc').fill('(Z0 = centro)\nG21 G90 G17\nG0 X30 Y0 Z23 A0\nG1 Z11 F200\nG1 X60 A90 F1000\nG0 Z23\nM30')
+        self.page.locator('#simStage').select_option('sculpture')
+        self.js('tt=tot;dr3()')
+        self.assertTrue(self.js('sg.every(g=>!g.h)&&FLD.some(r=>r<15)&&Object.keys(PK).length===0'))
+        self.page.locator('#simStage').select_option('all')
+        self.js('tt=tot;dr3()')
+        self.assertTrue(self.js('sg.some(g=>g.h)&&sg.some(g=>!g.h)&&Object.keys(PK).length===2'))
+        self.page.locator('[data-section="simulation"]').screenshot(path='/tmp/makernauta-stl-aspire-pockets.png')
 
     def test_invalid_step_cannot_hang_generation(self):
         self.page.locator('#SD').fill('0')

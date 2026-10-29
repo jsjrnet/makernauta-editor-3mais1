@@ -80,3 +80,19 @@ O simulador guarda a referência Z por etapa, independentemente do seletor de Z0
 **Etapas simuladas** escolhe a sequência combinada validada, somente escultura Aspire ou somente alojamentos sobre o bruto. Essa seleção é independente do conteúdo exportado. **STL alvo** mostra somente a referência geométrica; **Material** mostra a remoção calculada dos percursos selecionados; **Comparar** compara esse material ao STL. Nenhum desses modos gera desbaste a partir do STL.
 
 A pausa na transição Aspire/alojamentos só pode ser desmarcada se as ferramentas forem iguais. Parâmetros inválidos ou profundidades além do limite bloqueiam a exportação em vez de emitir um programa parcial ou alterar silenciosamente a profundidade pedida. Esses bloqueios não equivalem a uma homologação de segurança CNC.
+
+## Área de trabalho retrátil e STL + Desbaste
+
+A área central prioriza o cilindro desenrolado e o simulador. **Peça e máquina** fica à esquerda; **Alojamentos**, **Aspire** e **STL** ficam à direita. O pino 📌 mantém o painel na lateral; recolher ou desafixar libera espaço central. Clique na aba para abrir temporariamente, use **Fixar** para manter aberto e Escape ou clique fora para fechar a abertura temporária. Em telas pequenas, os painéis fixos ficam abaixo da área central; a abertura temporária fica sobreposta e pode ser fechada.
+
+Cada seção tem um título expansível por clique, toque, Enter ou Espaço. As quatro vistas auxiliares — seção de topo, XY, perfil da ferramenta e seção do corte — são independentes e se distribuem horizontalmente conforme a largura central. Fixação e seções abertas são lembradas no `localStorage` quando disponível. Recolher não altera parâmetros; redimensionar não regenera G-code, não apaga o material e preserva progresso, câmera e zoom. O enquadramento considera largura e altura para evitar cortar a peça quando a área central aumenta.
+
+O aviso integral de segurança está no botão **Aviso de segurança — Protótipo não homologado**, com fechamento por botão ou Escape. A indicação resumida de não homologação permanece visível.
+
+**STL + Desbaste** mostra material âmbar e o STL de referência em azul tracejado, em raio X. A referência azul pode aparecer através do material: não significa que aquele material já foi removido. A remoção continua sendo calculada exclusivamente pelos percursos selecionados e pela ferramenta de cada etapa. A sobreposição usa os triângulos STL transformados, com até aproximadamente 5 mil triângulos amostrados para manter a resposta visual; não altera o STL nem os cálculos de remoção. Material, STL alvo, comparação e só linhas continuam disponíveis.
+
+A regressão após importação vinha da seleção automática de **STL alvo**, uma vista estática que não exibia a ferramenta nem a remoção progressiva. A importação agora entra em **STL + Desbaste**, sem iniciar a reprodução e sem zerar o material/progresso existentes. Iniciar uma reprodução enquanto a vista estática está selecionada também abre STL + Desbaste. Rotação/inversão apenas da referência não reinicia a usinagem, salvo quando existe alojamento explicitamente configurado para usar a superfície STL como referência de profundidade e seu percurso precisa ser recalculado. Essa opção é individual por alojamento e ocupa uma linha inteira.
+
+O controle de desenrolar/enrolar permanece ativo também com STL e durante a simulação. Os controles Simular/Pausar, Reiniciar e progresso atuam no mesmo material calculado, sem criar trajetórias CAM a partir do STL. A geometria de remoção, as estratégias e as validações Z0 do PR #1 são mantidas.
+
+As evidências visuais estão em [docs/evidencias/README.md](docs/evidencias/README.md). Os testes de navegador também cobrem pinagem individual, abertura temporária, persistência, accordions por teclado, modais, layout móvel, redimensionamento sem reinício, progressão STL com/sem Aspire, desenrolamento e ausência de remoção sem percurso de corte.
