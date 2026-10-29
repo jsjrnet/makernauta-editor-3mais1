@@ -2,11 +2,13 @@ name: Validar e publicar no GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: false
 jobs:
   validate:
@@ -28,6 +30,7 @@ jobs:
         with:
           path: _site
   deploy:
+    if: github.event_name != 'pull_request'
     needs: validate
     runs-on: ubuntu-latest
     permissions:
