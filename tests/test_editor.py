@@ -81,7 +81,7 @@ class EditorTests(unittest.TestCase):
 
     def test_tools_are_independent_in_selection_and_removal(self):
         values = self.js('''() => {
-          $('TS').value=6;$('TY').value='1';$('T').value=2;$('HT').value='0';
+          $('TS').value=6;$('TY').value='1';$('T').value=2;$('HT').value='0';$('T').oninput();
           const q={x:30,y:0,z:9,a:0};
           const sculpture=toolFor({h:0}),pocket=toolFor({h:1});
           return {sculpture,pocket,
@@ -92,7 +92,7 @@ class EditorTests(unittest.TestCase):
         self.assertEqual(values['pocket'], {'diameter': 2, 'ball': False})
         self.assertAlmostEqual(values['ballEdge'], 12-math.sqrt(5))
         self.assertAlmostEqual(values['flatEdge'], 9)
-        self.assertTrue(self.js("() => {$('TY').value='0';$('HT').value='1';return !toolFor({h:0}).ball&&toolFor({h:1}).ball}"))
+        self.assertTrue(self.js("() => {$('TY').value='0';$('HT').value='1';$('HT').oninput();return !toolFor({h:0}).ball&&toolFor({h:1}).ball}"))
 
     def test_indexed_coordinates_align_for_both_a_directions_and_z_origins(self):
         error = self.js('''() => {
@@ -123,7 +123,7 @@ class EditorTests(unittest.TestCase):
         self.assertGreater(result['removed'], 0)
         self.js('tt=0;dr3()')
         self.assertEqual(self.js('FLD.filter(r=>r<15).length'), 0)
-        self.js("$('HT').value='1';draw();v3();tt=tot;dr3()")
+        self.js("$('HT').value='1';$('HT').oninput();draw();v3();tt=tot;dr3()")
         self.assertGreater(self.js('Object.values(PK).filter(k=>k.n).length'), 0)
         self.page.screenshot(path='/tmp/makernauta-desktop.png', full_page=True)
 
@@ -160,7 +160,8 @@ class EditorTests(unittest.TestCase):
     def test_aspire_xza_import_phase_tools_and_combined_mach3(self):
         code = '(Aspire XZA)\nG21 G90 G17\nG0 X10 Y0 Z23 A0\nS18000 M3\nG1 X20 Z12 A90 F1000\ng1 x30 z11 a180\nN100 M30\n'
         self.page.locator('#fsc').set_input_files({'name':'aspire.nc','mimeType':'text/plain','buffer':code.encode()})
-        self.page.wait_for_function("$('si').textContent.startsWith('Lido:')")
+        self.page.wait_for_function("$('si').textContent.includes('Coordenadas')")
+        self.page.locator('#confirmCenter').click()
         self.page.wait_for_timeout(250)
         output = self.page.locator('#out').input_value()
         self.assertIn('FIM DA ESCULTURA', output)
@@ -171,9 +172,11 @@ class EditorTests(unittest.TestCase):
         self.page.locator('#OM').select_option('0')
         self.page.wait_for_timeout(250)
         self.assertNotIn('FIM DA ESCULTURA', self.page.locator('#out').input_value())
+        self.page.locator('#simStage').select_option('pockets')
         self.assertTrue(self.js('sg.every(s=>s.h)'))
 
     def test_ascii_and_binary_stl_import_rotation_and_surface_floor(self):
+        before=self.page.locator('#out').input_value()
         vertices=[(0,-5,-5),(0,5,-5),(0,5,5),(0,-5,5),(40,-5,-5),(40,5,-5),(40,5,5),(40,-5,5)]
         faces=[(0,1,2),(0,2,3),(4,6,5),(4,7,6),(0,4,5),(0,5,1),(3,2,6),(3,6,7),(0,3,7),(0,7,4),(1,5,6),(1,6,2)]
         ascii_stl='solid target\n'+''.join('facet normal 0 0 0\nouter loop\n'+''.join('vertex %s %s %s\n'%vertices[i] for i in face)+'endloop\nendfacet\n' for face in faces)+'endsolid target'
@@ -183,6 +186,9 @@ class EditorTests(unittest.TestCase):
         for name,data in [('ascii.stl',ascii_stl.encode()),('binary.stl',bytes(binary))]:
             self.page.locator('#fst').set_input_files({'name':name,'mimeType':'model/stl','buffer':data})
             self.page.wait_for_function("$('sti').textContent.startsWith('STL lido:')")
+            self.assertTrue(self.js('FLD.every(r=>r===P().D/2)'))
+            self.assertEqual(self.page.locator('#out').input_value(),before)
+            self.assertEqual(self.js('tt'),0)
             self.assertEqual(self.js('TRI.length/9'),12)
             self.assertEqual(self.js('TLEN'),40)
             self.assertGreater(self.js('Math.max(...TGT)'),5)
@@ -198,10 +204,10 @@ class EditorTests(unittest.TestCase):
         # Measure the same Cartesian heights used by the mesh and the enlarged section.
         result = self.js('''() => {
           ops.splice(0,ops.length,{t:'r',ln:true,cm:'on',x:30,a:0,w:6,l:20,d:4});sel=0;
-          $('T').value=6;$('SD').value=4;$('ql').value='0';
+          ops[0].toolDiameter=6;$('T').value=6;$('SD').value=4;$('ql').value='0';
           const results={};
           for(const type of ['0','1']){
-            $('HT').value=type;draw();v3();tt=tot;dr3();
+            ops[0].toolType=type;$('HT').value=type;draw();v3();tt=tot;dr3();
             const K=PK[0];results[type]=[0,.75,1.5,2.25].map(y=>pocketSample(K,30,y,ops[0]));
           }
           return results;
@@ -244,6 +250,116 @@ class EditorTests(unittest.TestCase):
         self.assertTrue(self.js('document.documentElement.scrollWidth<=innerWidth'))
         self.page.locator('#helpToggle').click()
         self.assertEqual(self.page.locator('.param-info:visible').count(),0)
+
+    def test_each_figure_keeps_its_tool_and_exports_tool_changes(self):
+        self.page.locator('#T').fill('6')
+        self.page.locator('#HT').select_option('1')
+        self.page.locator('#addR').click()
+        self.assertEqual(self.page.locator('#T').input_value(),'3')
+        self.page.locator('#T').fill('4')
+        self.page.locator('#addL').click()
+        self.page.locator('#T').fill('2')
+        self.page.locator('#list button').nth(0).click()
+        self.assertEqual(self.page.locator('#T').input_value(),'6')
+        self.assertEqual(self.page.locator('#HT').input_value(),'1')
+        self.page.wait_for_timeout(100)
+        text=self.page.locator('#out').input_value()
+        self.assertIn('Ferramenta alojamento 1: ballnose D6',text)
+        self.assertIn('Ferramenta alojamento 2: topo reto D4',text)
+        self.assertIn('Ferramenta alojamento 3: topo reto D2',text)
+        self.assertEqual(text.count('M0 (Troque a fresa para o proximo alojamento'),2)
+        self.assertTrue(self.js("sg.some(g=>g.h&&g.o===0&&toolFor(g).diameter===6&&toolFor(g).ball)&&sg.some(g=>g.h&&g.o===1&&toolFor(g).diameter===4&&!toolFor(g).ball)&&sg.some(g=>g.h&&g.o===2&&toolFor(g).diameter===2)"))
+        self.js('tt=tot;dr3()')
+        self.assertEqual(self.js('Object.keys(PK).length'),3)
+        self.page.locator('#list button').nth(1).click()
+        self.assertEqual(self.page.locator('#T').input_value(),'4')
+        self.assertEqual(self.page.locator('#HT').input_value(),'0')
+
+    def test_parameters_are_in_their_functional_sections(self):
+        for section,ids in {'pocketSection':['T','HT','ST'],'machineSection':['D','L','S','F','FP','SD','SF','DIR','Z0'],'aspireSection':['TS','TY','sc','fsc','confirmCenter','confirmSurface'],'stlSection':['fst','fit','SR','SX','vm']}.items():
+            for control in ids:
+                self.assertEqual(self.page.locator(f'#{section} #{control}').count(),1)
+        self.assertEqual(self.page.locator('#aspireSection #Z0').count(),0)
+        self.assertFalse(self.page.locator('#ST').is_checked())
+
+    def test_unknown_aspire_origin_blocks_export_until_confirmed_and_mismatch_blocks(self):
+        code='G21 G90 G17\nG0 X10 Z23 A0\nG1 X20 Z12 A90 F1000\nM30'
+        self.page.locator('#sc').fill(code)
+        self.assertEqual(self.page.locator('#out').input_value(),'')
+        self.assertTrue(self.page.locator('#download').is_disabled())
+        self.assertIn('Confirme',self.page.locator('#err').text_content())
+        self.assertEqual(self.page.locator('#Z0').input_value(),'0')
+        self.page.locator('#confirmSurface').click()
+        self.assertIn('incompatível',self.page.locator('#err').text_content())
+        self.assertEqual(self.page.locator('#out').input_value(),'')
+        self.page.locator('#Z0').select_option('1')
+        self.assertIn('G1 X20 Z12 A90 F1000',self.page.locator('#out').input_value())
+        self.assertEqual(self.page.locator('#sc').input_value(),code)
+        self.page.locator('#sc').fill(code+'\n(comment edit)')
+        self.assertEqual(self.page.locator('#out').input_value(),'')
+        self.assertIsNone(self.js('sourceReference()'))
+
+    def test_explicit_aspire_reference_preserves_xyz_a_and_uses_phase_offset(self):
+        code='(Z0 = superficie do bruto)\nG21 G90 G17\nG0 X10 Y0 Z8 A0\nG1 X20 Z-3 A90 F1000\nM30'
+        self.page.locator('#sc').fill(code)
+        self.assertEqual(self.js('sourceReference()'),'1')
+        self.assertTrue(self.page.locator('#confirmCenter').is_disabled())
+        self.assertEqual(self.page.locator('#Z0').input_value(),'0')
+        self.page.locator('#simStage').select_option('sculpture')
+        self.page.wait_for_timeout(100)
+        original=self.js('sg.filter(g=>!g.r).map(g=>({x:g.q.x,z:g.q.z,a:g.q.a,zo:g.q.zo}))')
+        self.assertEqual(original,[{'x':20,'z':-3,'a':90,'zo':15}])
+        self.page.locator('#DIR').select_option('-1')
+        self.page.locator('#Z0').select_option('1')
+        self.page.wait_for_timeout(100)
+        self.assertEqual(self.js('sg.filter(g=>!g.r).map(g=>({x:g.q.x,z:g.q.z,a:g.q.a,zo:g.q.zo}))'),original)
+        self.page.locator('#simStage').select_option('all')
+        self.assertIn('G1 X20 Z-3 A90 F1000',self.page.locator('#out').input_value())
+        self.assertTrue(self.js('sg.every(g=>g.q.ad===-1)'))
+
+    def test_combined_export_requires_tool_change_and_does_not_rewrite_modes(self):
+        self.page.locator('#sc').fill('(Z0 = centro)\nG21 G90 G17\nG0 Z23\nG1 X20 Z12 A90 F1000\nN100 M30')
+        self.page.locator('#PZ').uncheck()
+        self.assertEqual(self.page.locator('#out').input_value(),'')
+        self.assertIn('pausa',self.page.locator('#err').text_content())
+        self.page.locator('#PZ').check()
+        self.assertIn('G1 X20 Z12 A90 F1000',self.page.locator('#out').input_value())
+        self.page.locator('#sc').fill('(Z0 = centro)\nG21 G91\nG1 X20 Z12 A90 F1000')
+        self.assertEqual(self.page.locator('#out').input_value(),'')
+        self.assertIn('não suportados',self.page.locator('#err').text_content())
+
+    def test_ambiguous_comments_require_confirmation_and_modes_are_not_converted(self):
+        self.page.locator('#sc').fill('(Z0 = centro ou superficie)\nG21 G90\nG1 X20 Z10 A90')
+        self.assertIsNone(self.js('sourceReference()'))
+        self.assertEqual(self.page.locator('#out').input_value(),'')
+        self.page.locator('#confirmCenter').click()
+        self.assertIn('G1 X20 Z10 A90',self.page.locator('#out').input_value())
+        self.page.locator('#sc').fill('(Z0 = centro)\nG20 G90\nG1 X20 Z10 A90')
+        self.assertEqual(self.page.locator('#out').input_value(),'')
+        self.assertIn('G20',self.page.locator('#sc').input_value())
+
+    def test_simulation_stage_and_reference_view_are_distinct(self):
+        self.page.locator('#sc').fill('(Z0 = centro)\nG21 G90 G17\nG0 X10 Z23 A0\nG1 X20 Z12 A90 F1000\nM30')
+        self.page.locator('#simStage').select_option('sculpture')
+        self.assertTrue(self.js('sg.length>0&&sg.every(g=>!g.h)'))
+        self.page.locator('#simStage').select_option('pockets')
+        self.assertTrue(self.js('sg.length>0&&sg.every(g=>g.h)'))
+        self.page.locator('#simStage').select_option('all')
+        self.assertTrue(self.js('sg.some(g=>g.h)&&sg.some(g=>!g.h)'))
+        self.page.locator('#vm').select_option('2')
+        self.assertIn('não é o resultado',self.page.locator('#viewStatus').text_content())
+        self.assertTrue(self.js('FLD.every(r=>r===15)'))
+        self.page.locator('#vm').select_option('1')
+        self.assertIn('percursos',self.page.locator('#viewStatus').text_content())
+
+    def test_pocket_floor_readout_uses_mach3_origin_without_moving_aspire(self):
+        self.assertEqual(self.page.locator('#fz').input_value(),'9')
+        self.page.locator('#Z0').select_option('1')
+        self.assertEqual(self.page.locator('#fz').input_value(),'-6')
+        self.assertIn('G1 Z-6',self.page.locator('#out').input_value())
+        self.page.locator('#Z0').select_option('0')
+        self.assertEqual(self.page.locator('#fz').input_value(),'9')
+        self.assertIn('G1 Z9',self.page.locator('#out').input_value())
 
     def test_invalid_step_cannot_hang_generation(self):
         self.page.locator('#SD').fill('0')

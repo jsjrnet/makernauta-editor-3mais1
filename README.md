@@ -19,13 +19,20 @@ O `index.html` encaminha à página do editor. O HTML é autossuficiente e tamb�
 - Cilindro desenrolado, alojamentos circulares, retangulares e em linha; arraste, grade e rotação da forma.
 - Bolsão e contornos sobre a linha, por dentro e por fora; inspeção cartesiana XY e seção transversal.
 - Importação de STL ASCII/binário, alinhamento ao eixo X, inversão, rotação e comparação com o material.
-- Importação de G-code rotativo Aspire XZA por arquivo ou texto; Z0 no centro do eixo ou na superfície, com confirmação manual da detecção.
+- Importação de G-code rotativo Aspire XZA por arquivo ou texto; referência Z0 original identificada em comentários explícitos ou confirmada pelo usuário quando ambígua.
 - Simulação com pausa, reinício e busca; referenciais da máquina/peça, desenrolamento, câmera e cubo de orientação.
-- Exportação Mach3, combinando escultura e alojamentos ou somente alojamentos, com pausa opcional para troca; copiar e baixar `.nc`.
+- Exportação Mach3, combinando escultura e alojamentos ou somente alojamentos, com validação de Z0 e pausas para troca de ferramenta; copiar e baixar `.nc`.
 
 ## Ferramentas e alinhamento
 
-A escultura usa exclusivamente **TS/TY** (diâmetro/tipo); os alojamentos usam **T/HT**. Ambas permitem ballnose ou topo reto, com padrões ballnose para escultura e topo reto para alojamentos. Alterar uma ferramenta não altera os parâmetros da outra. O indicador 3D acompanha a etapa simulada.
+As seções organizam os parâmetros por função:
+
+1. **Alojamentos:** cada círculo, retângulo ou linha guarda seu próprio diâmetro e tipo de fresa (`toolDiameter`/`toolType`). Os campos **T/HT** editam somente a figura selecionada. Novas figuras começam com topo reto Ø3 mm. A referência opcional de profundidade no STL fica aqui, desmarcada por padrão.
+2. **Peça e máquina:** bruto, avanços, spindle, passadas, folga, sentido de A e **Z0 dos alojamentos/Mach3**.
+3. **Escultura Aspire:** importação e ferramenta **TS/TY**, independente de todas as figuras, além da confirmação da referência original do arquivo.
+4. **STL:** importação, alinhamento, rotação, inversão, visualização e comparação geométrica. Importar o STL não desbasta material nem altera o percurso dos alojamentos. Copiar suas medidas para o bruto ou usar sua superfície para profundidade exige uma ação explícita.
+
+Percurso, compensação XY, malha de remoção, perfil ampliado e indicação da ferramenta 3D usam a ferramenta da mesma operação. Mudar de tipo não refaz uma estratégia CAM: ballnose pode deixar cristas entre passadas. Entre alojamentos com ferramentas diferentes, o `.nc` retrai em Z, para o spindle e inclui `M0` com tipo/diâmetro antes de prosseguir. Não há troca automática, atribuição de números T ou calibração de comprimento.
 
 Os percursos XYZ são transformados em torno de X com o mesmo referencial usado pelos contornos e pelo material. O sentido de A é aplicado tanto à geração quanto à interpretação; Z0 desloca a ponta, não o modelo. Os contornos dos alojamentos mantêm Y cartesiano e piso Z plano, sem a aproximação `ângulo = Y / raio` no 3D. A remoção radial usa a interseção com o volume da ferramenta: base plana para topo reto e esfera para ballnose. Os alojamentos também têm uma malha cartesiana local de 0,15 mm.
 
@@ -40,11 +47,11 @@ python3 -m venv .venv
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
-Pode-se selecionar um Chromium já instalado com `CHROMIUM_PATH=/usr/bin/chromium`. Os testes cobrem ferramentas independentes, geometria dos cortadores, alinhamento para os dois sentidos de A e Z0, piso/remoção/reinício da simulação, STL ASCII/binário, importação Aspire, exportação `.nc`, controles e layout móvel. Não são testes de homologação CNC.
+Pode-se selecionar um Chromium já instalado com `CHROMIUM_PATH=/usr/bin/chromium`. Os testes cobrem ferramentas individuais nos três tipos de figura, organização dos controles, Z0 pendente/incompatível, preservação das coordenadas Aspire, etapas de simulação independentes, STL sem desbaste automático, ferramentas independentes, geometria dos cortadores, alinhamento para os dois sentidos de A e Z0, piso/remoção/reinício da simulação, STL ASCII/binário, importação Aspire, exportação `.nc`, controles e layout móvel. Não são testes de homologação CNC.
 
 ## GitHub Pages
 
-O workflow `.github/workflows/pages.yml` testa e publica somente `index.html` e `editor-usinagem-indexada.html` após push na `main`. O job tenta habilitar Pages com fonte GitHub Actions. Se a política do repositório impedir a ativação automática, selecione **Settings → Pages → Source → GitHub Actions** e execute novamente o workflow.
+Pull requests são validados sem deploy. A incorporação à `main` requer aprovação; esta atualização não é incorporada nem publicada automaticamente pelo agente. O workflow `.github/workflows/pages.yml` testa e publica somente `index.html` e `editor-usinagem-indexada.html` após push na `main`. O job tenta habilitar Pages com fonte GitHub Actions. Se a política do repositório impedir a ativação automática, selecione **Settings → Pages → Source → GitHub Actions** e execute novamente o workflow.
 
 Endereço previsto após a publicação bem-sucedida:
 
@@ -61,3 +68,15 @@ O botão **Informações dos parâmetros** revela ícones `i` nos campos, seleto
 A seção ampliada abaixo do 3D usa as mesmas alturas da malha detalhada do alojamento, em escala horizontal e vertical iguais. Uma linha isolada produz fundo reto com topo plano e perfil arredondado com ballnose. Bolsões com várias passadas de ballnose podem apresentar fundo quase plano com pequenas cristas. A referência de profundidade não deve ser confundida com o material realmente removido.
 
 A malha detalhada é limitada pela superfície capturada **antes** de executar os alojamentos. Não é achatada pela malha radial mais grosseira já usinada. Trocar a ferramenta reinicia a simulação; avance a barra ou simule novamente. O modo **STL alvo** mostra o modelo desejado e, por definição, não muda com a seleção da fresa.
+
+## Referências Z0 e seleção das etapas
+
+O Z0 da seção **Peça e máquina** governa somente o programa gerado dos alojamentos. Não há seletor para transladar o `.nc` Aspire. Seus valores X/Y/Z/A são mantidos. Ao concatenar, a terminação `M2`/`M30` do Aspire é removida do código executável para permitir a sequência; os comentários e coordenadas permanecem.
+
+Comentários explícitos como `(Z0 = centro do eixo A)` ou `(Z0 = superficie do bruto)` identificam a referência original. Sem indicação explícita, ou com comentários conflitantes, **a exportação combinada e a simulação da escultura ficam bloqueadas** até o usuário conferir no trabalho/pós-processador Aspire e confirmar a referência. Não se infere o Z0 a partir de retrações ou da maior altura Z. Editar o texto invalida a confirmação anterior. O Z0 dos alojamentos precisa coincidir com o confirmado do Aspire para combinar; divergências não são corrigidas por deslocamentos automáticos.
+
+O simulador guarda a referência Z por etapa, independentemente do seletor de Z0 dos alojamentos. O sentido positivo de A é uma convenção comum da máquina, usada na interpretação de todas as etapas; os valores A do Aspire não são reescritos. O fluxo suportado é milimétrico e absoluto; modos explicitamente incompatíveis, como G20/G91/G92 e referências especiais de movimento, são recusados sem conversão silenciosa.
+
+**Etapas simuladas** escolhe a sequência combinada validada, somente escultura Aspire ou somente alojamentos sobre o bruto. Essa seleção é independente do conteúdo exportado. **STL alvo** mostra somente a referência geométrica; **Material** mostra a remoção calculada dos percursos selecionados; **Comparar** compara esse material ao STL. Nenhum desses modos gera desbaste a partir do STL.
+
+A pausa na transição Aspire/alojamentos só pode ser desmarcada se as ferramentas forem iguais. Parâmetros inválidos ou profundidades além do limite bloqueiam a exportação em vez de emitir um programa parcial ou alterar silenciosamente a profundidade pedida. Esses bloqueios não equivalem a uma homologação de segurança CNC.
