@@ -371,11 +371,11 @@ function stl(buf){let v;const dv=new DataView(buf),n=buf.byteLength>=84?dv.getUi
  TRI=new Float32Array(v.length);for(let i=0;i<v.length;i+=3){TRI[i]=v[i+o[0]]-mn[o[0]];TRI[i+1]=v[i+o[1]]-(mn[o[1]]+mx[o[1]])/2;TRI[i+2]=v[i+o[2]]-(mn[o[2]]+mx[o[2]])/2}
  const p=P();$('sti').textContent='STL lido: '+Math.floor(v.length/9)+' triângulos, comprimento '+TLEN.toFixed(1)+' mm, Ø máx. aprox. '+Math.max(d[o[1]],d[o[2]]).toFixed(1)+' mm. O eixo foi alinhado a X e centrado, com X começando em 0. Bruto atual: L '+p.L+', Ø '+p.D+'. Se a posição ou o lado estiverem trocados, use Girar STL e Inverter o comprimento.'+(SMD>p.D+.01?' ATENÇÃO: o STL é mais largo que o bruto, e a fresa cortaria fora do cilindro. Use "Ajustar" ou confira a escala.':'')}
 $('fst').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{stl(r.result);$('vm').value='4';if(!FLD)grid();else mkT();if(ops.some(o=>o.stlDepth))draw();else draw(false)}catch(x){$('sti').textContent='Não consegui ler o STL: '+x.message}};r.readAsArrayBuffer(f)};
-function sR(o){const R=P().D/2;if(!TGT||!o.stlDepth)return R;const i=Math.max(0,Math.min(NXG-1,Math.round(o.x/P().L*(NXG-1)))),j=Math.floor((((-o.a%360)+360)%360)/360*NPG)%NPG,r=TGT[i*NPG+j];return r>0?Math.min(r,R):R}
+function sR(o){const R=P().D/2;if(!TGT||!o.stlDepth)return R;const i=Math.max(0,Math.min(NXG-1,Math.round(o.x/P().L*(NXG-1)))),j=Math.floor((((o.a%360)+360)%360)/360*NPG)%NPG,r=TGT[i*NPG+j];return r>0?Math.min(r,R):R}
 const lerpq=(a,b,u)=>({...b,x:a.x+(b.x-a.x)*u,y:a.y+(b.y-a.y)*u,z:a.z+(b.z-a.z)*u,a:a.a+(b.a-a.a)*u});
 function cutterRadiusAt(dx,phi,q,tool){
  const rt=tool.diameter/2;if(Math.abs(dx)>rt)return Infinity;
- const angle=q.a*(q.ad??P().dir)*Math.PI/180,delta=phi+angle,sy=Math.sin(delta),cz=Math.cos(delta),z=q.z+(q.zo??machineOffset());
+ const angle=q.a*(q.ad??P().dir)*Math.PI/180,delta=phi-angle,sy=Math.sin(delta),cz=Math.cos(delta),z=q.z+(q.zo??machineOffset());
  if(cz<=1e-8)return Infinity;
  const cylinderEntry=bottom=>{
   const width=Math.sqrt(Math.max(0,rt*rt-dx*dx));let lo=Math.max(0,bottom/cz),hi=Infinity;
