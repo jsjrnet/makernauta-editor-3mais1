@@ -203,7 +203,7 @@ class EditorTests(unittest.TestCase):
         self.assertTrue(self.page.locator('#SX').is_checked())
 
     def test_rendered_line_groove_retains_ballnose_curvature(self):
-        # Measure the same Cartesian heights used by the mesh and the enlarged section.
+        # Measure the detailed Cartesian section; the 3D surface uses the radial field.
         result = self.js('''() => {
           ops.splice(0,ops.length,{t:'r',ln:true,cm:'on',x:30,a:0,w:6,l:20,d:4});sel=0;
           ops[0].toolDiameter=6;$('T').value=6;$('SD').value=4;$('ql').value='0';
@@ -545,7 +545,7 @@ class EditorTests(unittest.TestCase):
     def test_visual_fixture_toggle_preserves_removal_and_export_baselines(self):
         self.assertEqual(hashlib.sha256(self.page.locator('#out').input_value().encode()).hexdigest(),'3e5b3159db84a38fc62469a8437606a8f6f58dcb5d19877980a98f5672dfcb97')
         self.js("$('addR').click();$('T').value=4;$('T').oninput();$('addL').click();$('HT').value='1';$('HT').oninput();$('Z0').value='1';draw();v3()")
-        self.assertEqual(hashlib.sha256(self.page.locator('#out').input_value().encode()).hexdigest(),'bb2baf3f976a19cdd2c03d7170426b1d13abeebce14ecf9de57519078034175e')
+        self.assertEqual(hashlib.sha256(self.page.locator('#out').input_value().replace('Alojamento 3: linha','Alojamento 3: retangulo').encode()).hexdigest(),'bb2baf3f976a19cdd2c03d7170426b1d13abeebce14ecf9de57519078034175e')
         self.js("tt=tot;dr3();window.visualBefore={field:FLD,values:Array.from(FLD),code:$('out').value,path:JSON.stringify(sg)}")
         self.page.locator('#showMachine').uncheck()
         self.page.locator('#showMachine').check()
@@ -582,6 +582,97 @@ class EditorTests(unittest.TestCase):
             self.assertTrue(page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
             page.locator('[data-section="simulation"]').screenshot(path='/tmp/makernauta-machine-mobile.png')
         finally:context.close()
+
+    def test_visual_a_controls_never_change_program_or_material(self):
+        self.js("tt=tot;dr3();window.beforeInspection={code:$('out').value,ops:JSON.stringify(ops),field:Array.from(FLD),time:tt,angle:VW.fo,tip:VW.machine.tailstockTip}")
+        self.page.locator('#aRight').click()
+        self.assertTrue(self.js("$('out').value===beforeInspection.code&&JSON.stringify(ops)===beforeInspection.ops&&tt===beforeInspection.time&&FLD.every((v,i)=>v===beforeInspection.field[i])"))
+        self.assertAlmostEqual(self.js('VW.fo-beforeInspection.angle'),math.pi/12)
+        self.assertEqual(self.js('VW.machine.tailstockTip'),self.js('beforeInspection.tip'))
+        self.page.locator('#aLeft').click()
+        self.assertEqual(self.js('inspectionA'),0)
+        self.page.locator('#aRight').click()
+        self.page.locator('#hm').click()
+        self.assertEqual(self.js('inspectionA'),0)
+
+    def test_section_titles_and_collapsed_panel_arrows(self):
+        for title in self.page.locator('.dock summary').all_text_contents():
+            self.assertRegex(title,r'^[^0-9]')
+        for side in ['left','right']:
+            self.page.locator(f'[data-panel-pin="{side}"]').click()
+            tab=self.page.locator(f'[data-panel-tab="{side}"]')
+            self.assertTrue(tab.is_visible())
+            self.assertIn(tab.evaluate("el => getComputedStyle(el, '::before').content"),['"›"','"‹"'])
+            tab.click()
+            self.assertTrue(self.page.locator(f'[data-panel-pin="{side}"]').is_visible())
+            self.page.keyboard.press('Escape')
+
+    def test_spline_edit_drag_export_and_tools(self):
+        self.page.locator('#addSpline').click()
+        self.assertEqual(self.js('ops[sel].sp.length'),4)
+        self.assertTrue(self.page.locator('#cm').is_disabled())
+        self.page.locator('#splinePoints').fill('-10, 0\n-4, 6\n4, -6\n10, 0')
+        self.page.wait_for_timeout(100)
+        self.assertEqual(self.js('ops[sel].sp[1]'),[-4,6])
+        self.assertIn('spline',self.page.locator('#out').input_value())
+        self.assertTrue(self.js("sg.some(g=>g.h&&g.o===sel&&!g.r)"))
+        # Generated cutting XY matches the sampled centerline after machine rounding.
+        self.assertLess(self.js("Math.max(...splinePath(ops[sel]).map(p=>Math.min(...sg.filter(g=>g.h&&g.o===sel&&!g.r).map(g=>Math.hypot(g.q.x-ops[sel].x-p[0],g.q.y-p[1])))))"),.002)
+        self.page.locator('#xy').scroll_into_view_if_needed()
+        target=self.js("() => {const v=$('xy').splineProjection,p=ops[sel].sp[1],r=$('xy').getBoundingClientRect();return {x:r.left+v.cx+p[0]*v.sc,y:r.top+v.cy-p[1]*v.sc}}")
+        self.page.mouse.move(target['x'],target['y']);self.page.mouse.down()
+        self.page.mouse.move(target['x']+10,target['y']+8);self.page.mouse.up()
+        self.assertNotEqual(self.js('ops[sel].sp[1]'),[-4,6])
+        for tool in ['0','1']:
+            self.js(f"ops[sel].toolType='{tool}';draw();v3();tt=tot;dr3()")
+            self.assertTrue(self.js('FLD.every(Number.isFinite)&&FLD.some(v=>v<15)'))
+        self.page.locator('#splinePoints').fill('0, 0')
+        self.assertTrue(self.page.locator('#download').is_disabled())
+        self.assertEqual(self.page.locator('#out').input_value(),'')
+        self.page.locator('#d').fill('2')
+        self.assertTrue(self.page.locator('#download').is_disabled())
+        self.assertEqual(self.page.locator('#out').input_value(),'')
+        self.page.locator('#splinePoints').fill('-10,0\n-5,4\n5,-4\n10,0')
+        self.assertFalse(self.page.locator('#download').is_disabled())
+        self.page.locator('[data-section="map"]').screenshot(path='/tmp/makernauta-spline.png')
+
+    def test_spline_subdivision_bounds_and_degenerate_controls(self):
+        error=self.js("""() => {let error=0;for(const sp of [[[-10,0],[-4,8],[4,-8],[10,0]],[[0,0],[20,0],[-20,0],[0,0]],[[0,0],[0,0],[0,0],[0,0]]]){const path=splinePath({sp});for(let n=0;n<=1000;n++){const t=n/1000,v=1-t,q=[0,1].map(k=>v*v*v*sp[0][k]+3*v*v*t*sp[1][k]+3*v*t*t*sp[2][k]+t*t*t*sp[3][k]);let best=Infinity;for(let i=1;i<path.length;i++){const a=path[i-1],b=path[i],dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy,u=l?Math.max(0,Math.min(1,((q[0]-a[0])*dx+(q[1]-a[1])*dy)/l)):0;best=Math.min(best,Math.hypot(q[0]-a[0]-u*dx,q[1]-a[1]-u*dy))}error=Math.max(error,best)}}return error}""")
+        self.assertLessEqual(error,.03)
+
+    def test_a30_crossing_cuts_final_mesh_single_surface_and_replay(self):
+        result=self.js("""() => {
+          $('D').value=30;$('L').value=120;$('ql').value='0';$('rf').value='0';$('oc').checked=false;$('tp').checked=false;$('showMachine').checked=false;
+          ops.splice(0,ops.length,{t:'c',x:30,a:30,w:10,l:10,d:1},{t:'r',ln:true,cm:'on',x:70,a:30,w:3,l:20,rot:90,d:1.5},{t:'r',ln:true,cm:'on',x:60,a:30,w:3,l:20,rot:0,d:3});sel=0;draw();v3();tt=tot;dr3();
+          const final=Array.from(FLD),floors=[30,70,60].map(x=>cutterRadiusAt(0,Math.PI/6,{x,y:0,z:x===30?14:x===70?13.5:12,a:30,zo:0,ad:1},{diameter:3,ball:false}));
+          const g=m3.getContext('2d'),fill=g.fill,begin=g.beginPath,move=g.moveTo,line=g.lineTo,expected=(NXG-1)*NPG+2*NPG,edges=new Map();let count=0,points=[];
+          g.beginPath=function(){points=[];return begin.apply(this,arguments)};g.moveTo=function(x,y){points.push([x,y]);return move.apply(this,arguments)};g.lineTo=function(x,y){points.push([x,y]);return line.apply(this,arguments)};
+          g.fill=function(){if(count<expected){const vertices=points.map(p=>p.map(v=>v.toFixed(6)).join(','));for(let i=0;i<vertices.length;i++){const a=vertices[i],b=vertices[(i+1)%vertices.length];if(a!==b){const key=[a,b].sort().join('|');edges.set(key,(edges.get(key)||0)+1)}}}count++;return fill.apply(this,arguments)};dr3();g.fill=fill;g.beginPath=begin;g.moveTo=move;g.lineTo=line;
+          const manifold=[...edges.values()].every(count=>count===2),stable=FLD.every((v,i)=>v===final[i]);tt=0;dr3();const reset=FLD.every(v=>v===15);tt=tot;dr3();const replay=FLD.every((v,i)=>v===final[i]);
+          grid();for(let k=0;k<=20;k++){tt=tot*k/20;const p=curp();carveTo(p.ci,p.u)}const incremental=FLD.every((v,i)=>v===final[i]);dr3();
+          return {count,expected,manifold,incremental,stable,reset,replay,floors,finite:FLD.every(v=>Number.isFinite(v)&&v>=0&&v<=15),min:Math.min(...FLD),code:$('out').value};
+        }""")
+        self.assertEqual(result['floors'],[14,13.5,12])
+        self.assertTrue(result['finite'] and result['stable'] and result['reset'] and result['replay'] and result['incremental'])
+        self.assertTrue(result['manifold'], 'Cada aresta da superfície fechada deve pertencer a duas faces')
+        self.assertAlmostEqual(result['min'],12,places=4)
+        # Cube fills three faces; no independent overlapping pocket grids remain.
+        self.assertLessEqual(result['count']-result['expected'],3)
+        self.assertIn('Alojamento 2: linha',result['code'])
+        self.assertNotIn('retangulo',result['code'])
+        self.page.locator('#c3').screenshot(path='/tmp/makernauta-a30-final.png')
+
+
+    def test_a30_floors_on_all_three_operations_and_quality_levels(self):
+        values=self.js("""() => {const results=[];$('D').value=30;$('L').value=120;$('rf').value='0';
+          for(const quality of ['0','1','2'])for(const floor of [14,13.5,12]){
+            $('ql').value=quality;ops.splice(0,ops.length,{t:'c',x:30,a:30,w:10,l:10,d:15-floor},{t:'r',ln:true,cm:'on',x:70,a:30,w:3,l:20,rot:90,d:15-floor},{t:'r',ln:true,cm:'on',x:60,a:30,w:3,l:20,rot:0,d:15-floor});draw();pg();grid();carveTo(sg.length-1,1);
+            const j=Math.round(NPG/12),radii=[30,70,60].map(x=>FLD[Math.round(x/120*(NXG-1))*NPG+j]);results.push({floor,radii,finite:FLD.every(v=>Number.isFinite(v)&&v<=15&&v>=0)});
+          }return results}""")
+        for row in values:
+            self.assertTrue(row['finite'])
+            for radius in row['radii']:
+                self.assertAlmostEqual(radius,row['floor'],delta=.001)
 
     def test_invalid_step_cannot_hang_generation(self):
         self.page.locator('#SD').fill('0')
