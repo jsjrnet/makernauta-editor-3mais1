@@ -1,0 +1,46 @@
+name: Prévia e homologação funcional
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches: [main]
+  issue_comment:
+    types: [created, edited, deleted]
+  check_run:
+    types: [completed]
+  workflow_run:
+    workflows: ["Validar e publicar no GitHub Pages"]
+    types: [completed]
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Número da PR (vazio atualiza todas as abertas)
+        required: false
+        type: string
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+concurrency:
+  group: makernauta-preview-status
+  cancel-in-progress: false
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Trusted default-branch code only. Never checkout or execute the PR here.
+      # Deployment itself is performed by Cloudflare's native Git integration.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Atualizar link, testes e aprovação por commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node .github/scripts/preview-status.cjs
