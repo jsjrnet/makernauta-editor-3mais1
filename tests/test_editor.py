@@ -132,7 +132,7 @@ class EditorTests(unittest.TestCase):
         for ball in (False, True):
             result = self.page.evaluate('''ball => {
               const q={x:30,y:0,z:9,a:90},tool={diameter:6,ball};
-              const phi=(-90+5)*Math.PI/180,r=cutterRadiusAt(0,phi,q,tool),delta=5*Math.PI/180;
+              const phi=(90+5)*Math.PI/180,r=cutterRadiusAt(0,phi,q,tool),delta=5*Math.PI/180;
               return {r,y:r*Math.sin(delta),z:r*Math.cos(delta)};
             }''', ball)
             if ball:
@@ -152,7 +152,7 @@ class EditorTests(unittest.TestCase):
             $('DIR').value=dir;$('Z0').value=origin;grid();
             const i=Math.round((NXG-1)/2),x=i*P().L/(NXG-1),q={x,y:0,z:9-(+origin?15:0),a:angle*dir};
             carveSeg({p:q,q,r:false,h:0},0,1);
-            const j=Math.round((((-angle%360)+360)%360)/360*NPG)%NPG,at=FLD[i*NPG+j],opposite=FLD[i*NPG+(j+NPG/2)%NPG];
+            const j=Math.round(angle/360*NPG)%NPG,at=FLD[i*NPG+j],opposite=FLD[i*NPG+(j+NPG/2)%NPG];
             if(Math.abs(at-9)>1e-6||opposite!==15)failures.push({dir,origin,angle,at,opposite});
           }return failures;
         }''')
@@ -644,7 +644,7 @@ class EditorTests(unittest.TestCase):
         result=self.js("""() => {
           $('D').value=30;$('L').value=120;$('ql').value='0';$('rf').value='0';$('oc').checked=false;$('tp').checked=false;$('showMachine').checked=false;
           ops.splice(0,ops.length,{t:'c',x:30,a:30,w:10,l:10,d:1},{t:'r',ln:true,cm:'on',x:70,a:30,w:3,l:20,rot:90,d:1.5},{t:'r',ln:true,cm:'on',x:60,a:30,w:3,l:20,rot:0,d:3});sel=0;draw();v3();tt=tot;dr3();
-          const final=Array.from(FLD),floors=[30,70,60].map(x=>cutterRadiusAt(0,-Math.PI/6,{x,y:0,z:x===30?14:x===70?13.5:12,a:30,zo:0,ad:1},{diameter:3,ball:false}));
+          const final=Array.from(FLD),floors=[30,70,60].map(x=>cutterRadiusAt(0,Math.PI/6,{x,y:0,z:x===30?14:x===70?13.5:12,a:30,zo:0,ad:1},{diameter:3,ball:false}));
           const g=m3.getContext('2d'),fill=g.fill,begin=g.beginPath,move=g.moveTo,line=g.lineTo,expected=(NXG-1)*NPG+2*NPG,edges=new Map();let count=0,points=[];
           g.beginPath=function(){points=[];return begin.apply(this,arguments)};g.moveTo=function(x,y){points.push([x,y]);return move.apply(this,arguments)};g.lineTo=function(x,y){points.push([x,y]);return line.apply(this,arguments)};
           g.fill=function(){if(count<expected){const vertices=points.map(p=>p.map(v=>v.toFixed(6)).join(','));for(let i=0;i<vertices.length;i++){const a=vertices[i],b=vertices[(i+1)%vertices.length];if(a!==b){const key=[a,b].sort().join('|');edges.set(key,(edges.get(key)||0)+1)}}}count++;return fill.apply(this,arguments)};dr3();g.fill=fill;g.beginPath=begin;g.moveTo=move;g.lineTo=line;
@@ -667,7 +667,7 @@ class EditorTests(unittest.TestCase):
         values=self.js("""() => {const results=[];$('D').value=30;$('L').value=120;$('rf').value='0';
           for(const quality of ['0','1','2'])for(const floor of [14,13.5,12]){
             $('ql').value=quality;ops.splice(0,ops.length,{t:'c',x:30,a:30,w:10,l:10,d:15-floor},{t:'r',ln:true,cm:'on',x:70,a:30,w:3,l:20,rot:90,d:15-floor},{t:'r',ln:true,cm:'on',x:60,a:30,w:3,l:20,rot:0,d:15-floor});draw();pg();grid();carveTo(sg.length-1,1);
-            const j=Math.round(NPG*11/12),radii=[30,70,60].map(x=>FLD[Math.round(x/120*(NXG-1))*NPG+j]);results.push({floor,radii,finite:FLD.every(v=>Number.isFinite(v)&&v<=15&&v>=0)});
+            const j=Math.round(NPG/12),radii=[30,70,60].map(x=>FLD[Math.round(x/120*(NXG-1))*NPG+j]);results.push({floor,radii,finite:FLD.every(v=>Number.isFinite(v)&&v<=15&&v>=0)});
           }return results}""")
         for row in values:
             self.assertTrue(row['finite'])
@@ -702,18 +702,18 @@ class EditorTests(unittest.TestCase):
     def test_cylinder_cut_angle_matches_tool_and_contour_in_rolled_view(self):
         result=self.js("""() => {
           const tool={diameter:3,ball:false},q={x:35,y:0,z:12,a:30,zo:0,ad:1};
-          const front=cutterRadiusAt(0,-Math.PI/6,q,tool);
-          const opposite=cutterRadiusAt(0,Math.PI/6,q,tool);
+          const front=cutterRadiusAt(0,Math.PI/6,q,tool);
+          const opposite=cutterRadiusAt(0,-Math.PI/6,q,tool);
           const projected=mpt(q,1,0),radius=Math.atan2(projected[1],projected[2]);
           $('D').value=30;$('L').value=120;$('ql').value='2';
           ops.splice(0,ops.length,{t:'r',ln:true,cm:'on',x:60,a:30,w:3,l:20,d:3});
           sel=0;draw();pg();grid();carveTo(sg.length-1,1);
-          const x=Math.round(60/120*(NXG-1)),j=Math.round(NPG*11/12),jWrong=Math.round(NPG/12);
+          const x=Math.round(60/120*(NXG-1)),j=Math.round(NPG/12),jWrong=Math.round(NPG*11/12);
           return {front,opposite,radius,cut:FLD[x*NPG+j],wrong:FLD[x*NPG+jWrong],code:$('out').value};
         }""")
         self.assertAlmostEqual(result['front'],12,places=4)
         self.assertTrue(not math.isfinite(result['opposite']) or result['opposite']>12.5)
-        self.assertAlmostEqual(result['radius'],-math.pi/6,places=4)
+        self.assertAlmostEqual(result['radius'],math.pi/6,places=4)
         self.assertLess(result['cut'],13)
         self.assertGreater(result['wrong'],result['cut']+.5)
         self.assertIn('G0 A30',result['code'])
