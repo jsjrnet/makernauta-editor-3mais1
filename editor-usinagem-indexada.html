@@ -296,8 +296,10 @@ function splineLocalFromPointer(e,v){
 }
 $('splineDraw').onclick=()=>{
  const o=ops[sel];if(!o?.sp)return;
- splineCreation=splineCreation?.operation===o?null:{operation:o,points:[]};updateSplineDrawUI();xyv2();
- if(splineCreation){const d=$('xy').closest('details');if(d&&!d.open)d.open=true;$('xy').scrollIntoView({behavior:'smooth',block:'center'})}
+ splineCreation=splineCreation?.operation===o?null:{operation:o,points:[]};
+ if(splineCreation){const d=$('xy').closest('details');if(d&&!d.open)d.open=true}
+ updateSplineDrawUI();xyv2();
+ if(splineCreation)$('xy').scrollIntoView({behavior:'smooth',block:'center'})
 };
 $('splineCancel').onclick=()=>{splineCreation=null;updateSplineDrawUI();xyv2()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&splineCreation){splineCreation=null;updateSplineDrawUI();xyv2()}});
