@@ -78,7 +78,7 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 <div class="g"><label>Fresa da escultura Aspire Ø (mm)<input id="TS" type="number" value="3" step="0.1"></label>
 <label>Tipo da fresa da escultura<select id="TY"><option value="1">Esférica (ball nose)</option><option value="0">Topo plana</option></select></label></div><p id="aspireReference" class="warn" role="status"></p><div class="row"><button id="confirmCenter">Confirmar arquivo: Z0 no centro</button><button id="confirmSurface">Confirmar arquivo: Z0 na superfície</button></div><p class="warn" id="si"></p></div>
 <div class="pn" id="stlSection"><h2>Modelo STL de referência (opcional)</h2>
-<div class="sample-stl"><label>Exemplos STL integrados ao Makernauta<select id="sampleSTL"><option value="cylinder">Cilindro de teste — Ø20 × 100 mm</option><option value="lure">Isca demonstrativa — 100 mm</option></select></label>
+<div class="sample-stl"><label>Exemplos STL integrados ao Makernauta<select id="sampleSTL"><option value="lure">Isca Natan — modelo de estudo (63 mm)</option><option value="pawn">Peão de xadrez — modelo de estudo (65 mm)</option></select></label>
 <div class="row"><button type="button" id="loadSampleSTL">Carregar exemplo</button><button type="button" id="downloadSampleSTL">Baixar arquivo .stl</button></div>
 <p class="example-note">Exemplos ilustrativos para aprender. Carregar substitui o STL de referência atual; não altera o G-code, o bruto ou os percursos.</p></div>
 <div class="row"><input id="fst" type="file" accept=".stl"><button id="fit" title="Atenção: copia medidas da geometria acabada, não as do material bruto usado no Aspire.">Copiar dimensões do STL (avançado)</button></div>
@@ -327,44 +327,42 @@ function stl(buf){let v;const dv=new DataView(buf),n=buf.byteLength>=84?dv.getUi
  TRI=new Float32Array(v.length);for(let i=0;i<v.length;i+=3){TRI[i]=v[i+o[0]]-mn[o[0]];TRI[i+1]=v[i+o[1]]-(mn[o[1]]+mx[o[1]])/2;TRI[i+2]=v[i+o[2]]-(mn[o[2]]+mx[o[2]])/2}
  const p=P();$('sti').textContent='STL lido: '+Math.floor(v.length/9)+' triângulos, comprimento '+TLEN.toFixed(1)+' mm, Ø máx. aprox. '+Math.max(d[o[1]],d[o[2]]).toFixed(1)+' mm. O eixo foi alinhado a X e centrado, com X começando em 0. Bruto atual: L '+p.L+', Ø '+p.D+'. Se a posição ou o lado estiverem trocados, use Girar STL e Inverter o comprimento.'+(SMD>p.D+.01?' ATENÇÃO: o STL é mais largo que o bruto, e a fresa cortaria fora do cilindro. Use "Ajustar" ou confira a escala.':'')}
 
-/* Two genuine binary STL examples, generated locally. They never change the CNC toolpath. */
+/* Embedded binary STL examples; lure radial envelope sampled from user's original 63mm STL (not an exact copy). */
+const LURE_NATAN_RADIAL_005MM='EBAQHAccEBAQEBAQEBAQECw0O0BCQDs0LCUhHh0eISU6QEVJSklFQDo1MS8uLzE1R0pOUVJRTktHQ0A/Pj9AQ1FUV1laWVdUUU9OTUxNTk9bXF5hYmFeXFtaWlpaWlpaY2RmaGloZmRjZGVmZmZlZGtsbW9xb21sbG1vcHFwb21zc3R3d3d0c3N1d3p7end1enp7fX59e3p6fH+DhIN/fICAgoOEg4KAgIKFio2KhYKGcIiIiYiIcIaHipCUkIqHi4CHjo+OhYGLi46VmpSOi4iFhZOUk4mIj5CSmaCZkpCWi5CYmZiTipaTlZ2lnZWUmZOenJ2cnpWalpihqaGYlZ6hop+in6KhnpmbpK6km5mipqajpqOmpqKcnqexp56cpamqqqqpqqmln6Gqtauhn6itrauuq62tqKKjrbito6KrsLGvsa+xsKukpa+6r6WkrbO0srWytLOtpqexvLGnpq+1tra4tra1r6ipsr2yqaixt7m4uri5t7GqqrO+s6qqsri6u727uriyq6u0vrSrq7O6vLy+vLy6s6urs76zq6uzur29wL29urOsq7K8squss7q9vsG+vbqzq6qxubGqq7K5vb/Bv725sqqprrWuqaqxuL2/wb+9uLGpp6yxrKepr7e8vsG+vLevp6WorKilqK21u77Avru1raaipKakoqartLq9v726tKukoKChoKCkqbG4vL68uLGpop2cnJydoqevtru9u7avp6CamJeYmqClrbW6vLq1raWdmJSTlJido6uzuLq4s6ujm5WRkJGVm6Cpsbe5t7GpoJmTj42Pk5mepq+zt7Ovpp6WkI2KjZCWm6Sss7WzrKSblI2JiImNlJihqrGzsaqhmJGLh4aHi5GVnqeusa6nnpWOiIWDhYiOkpqhqa6poZqSi4aCgYKGi4+XnqWspZ6Xj4iDgH+Ag4iMlJylqaWclIyFgH59foCFiZKcpKeknJKJg398e3x/g4ePmaGkoZmPh4B9e3l7fYCEjJWeoZ6VjIR+enh4eHp+gYmQl56XkYqBfHp4dnh6fH+Hjpebl46Hf3l3dXV1d3l8hI2TmJONhHx3dHNzc3R3eYCJkZSRiYB5dHFwcHBxdHV9hY2QjYV9dXBubWxtbnByeYKIjIiCeXJtamloaWptb3Z+hYeFfnZvamZlZGVmamtzeoCDgHpzbGZiYF9gYmZnb3Z7fnt2b2diXVtaW11hYmpwdXd1cGpiXFdVVFVXXFxjam9wb2pjXFZRTUxNUVZUW2JmaGZiW1RNSEVERUhNSlFYXF5cWFFKRD47Ojs+RD9GTVJTUk1GPzkzMC8wMzgyOkFGR0VBOjIsJyQjJCcsBRAbIiUiGxAFAwIBAQECAw==';
 function sampleSTLBuffer(kind){
- if(!['cylinder','lure'].includes(kind))throw Error('Modelo de exemplo desconhecido');
- const bands=64,radial=32,faces=(bands*2+2)*radial,buffer=new ArrayBuffer(84+50*faces),view=new DataView(buffer);
- const label='Makernauta STL demonstracao '+kind;
- new Uint8Array(buffer).set(new TextEncoder().encode(label).slice(0,80));
- view.setUint32(80,faces,true);
- const radius=x=>kind==='cylinder'?10:1.2+8.6*Math.pow(Math.sin(Math.PI*x/100),.75);
- const point=(i,j)=>{const x=i*100/bands,a=j*2*Math.PI/radial,r=radius(x);return [x,r*Math.cos(a),r*Math.sin(a)]};
- let offset=84;const triangle=(p,q,r)=>{
+ if(!['lure','pawn'].includes(kind))throw Error('Modelo de exemplo desconhecido');
+ const radial=kind==='lure'?16:32,bands=kind==='lure'?63:64,faces=(bands*2+2)*radial,buffer=new ArrayBuffer(84+50*faces),view=new DataView(buffer);
+ const label='Makernauta demonstracao '+kind;
+ new Uint8Array(buffer).set(new TextEncoder().encode(label).slice(0,80));view.setUint32(80,faces,true);
+ const samples=kind==='lure'?Uint8Array.from(atob(LURE_NATAN_RADIAL_005MM),c=>c.charCodeAt(0)):null;
+ const pawnProfile=[[0,12],[1,13],[3,14],[6,14],[8,11],[11,10],[14,9],[16,6],[20,5.5],[29,5],[38,5.5],[41,6],[43,8.5],[45,8.5],[47,6],[49,5.7],[50,6.4],[53,7.8],[56,8],[59,7.3],[62,5],[64.5,0]];
+ const radiusPawn=x=>{let i=0;while(i<pawnProfile.length-2&&pawnProfile[i+1][0]<x)i++;const a=pawnProfile[i],b=pawnProfile[i+1],t=Math.max(0,Math.min(1,(x-a[0])/(b[0]-a[0])));return a[1]*(1-t)+b[1]*t};
+ const length=kind==='lure'?63.3:64.5;
+ const point=(i,j)=>{const x=i*length/bands,angle=j*2*Math.PI/radial,r=kind==='lure'?(samples[i*radial+j]*.05):radiusPawn(x);return [x,r*Math.cos(angle),r*Math.sin(angle)]};
+ let offset=84;
+ const triangle=(p,q,r)=>{
   const u=q.map((v,i)=>v-p[i]),v=r.map((n,i)=>n-p[i]),cross=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]],size=Math.hypot(...cross)||1;
-  for(const n of cross)view.setFloat32(offset,(n/size),true),offset+=4;
-  for(const vert of [p,q,r])for(const value of vert)view.setFloat32(offset,value,true),offset+=4;
+  for(const n of cross){view.setFloat32(offset,n/size,true);offset+=4}
+  for(const vert of [p,q,r])for(const value of vert){view.setFloat32(offset,value,true);offset+=4}
   view.setUint16(offset,0,true);offset+=2;
  };
  for(let i=0;i<bands;i++)for(let j=0;j<radial;j++){
-  const a=point(i,j),b=point(i+1,j),c=point(i+1,j+1),d=point(i,j+1);
-  triangle(a,b,c);triangle(a,c,d);
+  const a=point(i,j),b=point(i+1,j),c=point(i+1,j+1),d=point(i,j+1);triangle(a,b,c);triangle(a,c,d)
  }
- for(let j=0;j<radial;j++){triangle([0,0,0],point(0,j+1),point(0,j));triangle([100,0,0],point(bands,j),point(bands,j+1))}
- if(offset!==buffer.byteLength)throw Error('Contagem de triângulos do STL inconsistente');
- return buffer;
+ for(let j=0;j<radial;j++){triangle([0,0,0],point(0,j+1),point(0,j));triangle([length,0,0],point(bands,j),point(bands,j+1))}
+ if(offset!==buffer.byteLength)throw Error('Contagem de triângulos do STL inconsistente');return buffer
 }
-function sampleSTLName(kind){return kind==='cylinder'?'Cilindro de teste':'Isca demonstrativa'}
+function sampleSTLName(kind){return kind==='lure'?'Isca Natan (aproximação do arquivo de 63 mm)':'Peão de xadrez'}
 $('loadSampleSTL').onclick=()=>{
- try{
-  const kind=$('sampleSTL').value;stl(sampleSTLBuffer(kind));
-  $('sti').textContent='EXEMPLO INCORPORADO — '+sampleSTLName(kind)+'. Não corresponde ao programa Aspire importado. '+$('sti').textContent;
-  $('vm').value='4';if(!FLD)grid();else mkT();
-  if(ops.some(o=>o.stlDepth))draw();else draw(false)
+ try{const kind=$('sampleSTL').value;stl(sampleSTLBuffer(kind));
+  $('sti').textContent='EXEMPLO INCORPORADO — '+sampleSTLName(kind)+'. Versão didática simplificada, sem correspondência garantida com o programa Aspire. '+$('sti').textContent;
+  $('vm').value='4';if(!FLD)grid();else mkT();if(ops.some(o=>o.stlDepth))draw();else draw(false)
  }catch(e){$('sti').textContent='Falha ao carregar exemplo STL: '+e.message}
 };
 $('downloadSampleSTL').onclick=()=>{
  const kind=$('sampleSTL').value,blob=new Blob([sampleSTLBuffer(kind)],{type:'model/stl'}),url=URL.createObjectURL(blob),link=document.createElement('a');
- link.href=url;link.download='makernauta-exemplo-'+kind+'.stl';link.click();
- setTimeout(()=>URL.revokeObjectURL(url),1000)
+ link.href=url;link.download='makernauta-exemplo-'+kind+'.stl';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)
 };
-
 $('fst').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{stl(r.result);$('vm').value='4';if(!FLD)grid();else mkT();if(ops.some(o=>o.stlDepth))draw();else draw(false)}catch(x){$('sti').textContent='Não consegui ler o STL: '+x.message}};r.readAsArrayBuffer(f)};
 function sR(o){const R=P().D/2;if(!TGT||!o.stlDepth)return R;const i=Math.max(0,Math.min(NXG-1,Math.round(o.x/P().L*(NXG-1)))),j=Math.floor((((o.a%360)+360)%360)/360*NPG)%NPG,r=TGT[i*NPG+j];return r>0?Math.min(r,R):R}
 const lerpq=(a,b,u)=>({...b,x:a.x+(b.x-a.x)*u,y:a.y+(b.y-a.y)*u,z:a.z+(b.z-a.z)*u,a:a.a+(b.a-a.a)*u});
