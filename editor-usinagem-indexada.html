@@ -48,7 +48,7 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 <dialog id="safetyDialog" aria-labelledby="safetyTitle"><h2 id="safetyTitle">Aviso de segurança</h2><p><b>Protótipo, não validado em máquina.</b> O G-code gerado não é homologado para execução física e nunca foi testado numa CNC real. Antes de usinar, confira no backplot do Mach3 e rode no ar. Uso por sua conta e risco.</p><form method="dialog"><button autofocus>Fechar aviso</button></form></dialog>
 <main>
 <div class="col">
-<div class="pn"><h2>Cilindro desenrolado (ângulo × comprimento)</h2><div class="row" style="margin:0 0 8px"><button id="addC">+ Círculo</button><button id="addR">+ Retângulo</button><button id="addL">+ Linha (encaixe)</button><button id="addSpline">+ Spline</button><button id="del">Remover selecionado</button></div><canvas id="cv" height="330"></canvas>
+<div class="pn"><h2>Cilindro desenrolado (ângulo × comprimento)</h2><div class="row" style="margin:0 0 8px"><button id="addC">+ Círculo</button><button id="addR">+ Retângulo</button><button id="addL">+ Linha (encaixe)</button><button id="del">Remover selecionado</button></div><canvas id="cv" height="330"></canvas>
 </div>
 <div class="duo"><div class="pn"><h2>Vista de topo da seção</h2><canvas id="sec" height="250"></canvas></div>
 <div class="pn"><h2>Inspeção cartesiana XY (alojamento selecionado)</h2><canvas id="xy" height="200"></canvas><p class="warn">Laranja: contorno final. Verde tracejado: trajetória do centro da fresa. Círculo pequeno: a fresa. O contorno é cartesiano (arcos G3) e não depende da malha da simulação 3D.</p></div></div>
@@ -105,10 +105,7 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 <label class="stl-depth" style="flex-direction:row;align-items:center;gap:6px;color:var(--tx);margin-top:4px"><input id="ST" type="checkbox">Usar STL como referência de profundidade (opcional)</label><label>Profundidade (mm)<input id="d" type="number" step="0.5"></label>
 <label>Piso Z no Mach3 (mm)<input id="fz" readonly></label>
 <label id="rotw">Ângulo da forma (°)<input id="rot" type="number" step="5" value="0"></label><label>Tipo de corte<select id="cm"><option value="p">Esvaziar (bolsão)</option><option value="on">Contorno sobre a linha</option><option value="in">Contorno por dentro</option><option value="out">Contorno por fora</option></select></label></div>
-<div id="splineEditor" hidden>
-<div class="row"><button type="button" id="splineDraw" aria-pressed="false">✏ Desenhar com mouse na vista XY</button><button type="button" id="splineCancel" hidden>Cancelar desenho</button></div>
-<p id="splineDrawStatus" class="warn" role="status">Você pode desenhar com quatro cliques na inspeção XY, arrastar os pontos ou usar as coordenadas abaixo.</p>
-<label>Pontos Bézier locais X,Y (mm), um por linha<textarea id="splinePoints" style="height:100px" spellcheck="false"></textarea></label><p class="warn">Curva aberta, sobre a linha, sem compensação. Clique na vista cartesiana XY para posicionar P0, P1, P2 e P3; os campos permanecem sincronizados. Exportação G1 com tolerância de 0,03 mm antes do arredondamento das coordenadas.</p><p id="splineError" class="err" role="status"></p></div><div class="row" id="rotb"><button id="r0">Horizontal</button><button id="r90">Vertical</button><button id="r45">Diagonal 45°</button></div>
+<div class="row" id="rotb"><button id="r0">Horizontal</button><button id="r90">Vertical</button><button id="r45">Diagonal 45°</button></div>
 <div class="g" style="margin-top:8px"><label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx)"><input id="GS" type="checkbox">Travar na grade</label><span></span><label>Grade X (mm)<input id="GX" type="number" value="10" min="1" step="1"></label><label>Grade A (°)<input id="GA" type="number" value="5" step="1"></label></div>
 <div class="err" id="err" role="alert"></div>
 <p class="warn">Profundidade a partir do bruto ou, com a opção STL ativa, da superfície alvo na posição do alojamento. O piso é cartesiano em Z; o limite perto do eixo aparece nos avisos.</p></div>
@@ -131,8 +128,7 @@ function drawMap(){if($('cv').getBoundingClientRect().width<=M.l+M.r+2)return;co
  const R=p.D/2;ops.forEach((o,i)=>{const px=ox+pw*o.x/p.L,py=oy+ph*o.a/360,wx=pw*(o.t=='c'?o.w:o.l)/p.L,wy=ph*((o.t=='c'?o.w:o.w)/(Math.PI*p.D));
   g.lineWidth=(i==sel?2.5:1.5)*k;g.strokeStyle=i==sel?css('--op'):css('--ac');g.fillStyle=i==sel?css('--op'):css('--ac');g.globalAlpha=.25;
   const sc2=pw/p.L,rt=(o.rot||0)*Math.PI/180,cr=Math.cos(rt),sr=Math.sin(rt),pc=o.ln?'on':(o.cm||'p'),Q2=(u,v)=>[px+(u*cr-v*sr)*sc2,py+(u*sr+v*cr)*sc2];g.beginPath();
-if(o.sp){splinePath(o).forEach(([u,v],i)=>{const q=Q2(u,v);i?g.lineTo(...q):g.moveTo(...q)})}
-else if(o.ln){const A=Q2(-o.l/2,0),B=Q2(o.l/2,0);g.moveTo(A[0],A[1]);g.lineTo(B[0],B[1])}
+if(o.ln){const A=Q2(-o.l/2,0),B=Q2(o.l/2,0);g.moveTo(A[0],A[1]);g.lineTo(B[0],B[1])}
 else if(o.t=='c')g.ellipse(px,py,wx/2,wy/2,0,0,7);
 else{[[-1,-1],[1,-1],[1,1],[-1,1]].forEach((c2,i)=>{const q=Q2(c2[0]*o.l/2,c2[1]*o.w/2);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1])});g.closePath()}
 if(pc=='p'&&!o.ln)g.fill();g.globalAlpha=1;g.stroke();g.beginPath();g.moveTo(px-6*k,py);g.lineTo(px+6*k,py);g.moveTo(px,py-6*k);g.lineTo(px,py+6*k);g.stroke();});
@@ -146,14 +142,14 @@ function drawSection(){if($('sec').getBoundingClientRect().width<1)return;const 
 }
 function draw(regenerate=true){drawMap();drawSection();if(regenerate){gen();clearTimeout(vt);vt=setTimeout(v3,$('sc').value.length>2e4?200:0)}else{dr3();xyv2();if(m3.getBoundingClientRect().width<1)profileView()}}
 
-function lst(){const u=$('list');u.innerHTML='';ops.forEach((o,i)=>{const li=document.createElement('li'),b=document.createElement('button');b.textContent=`${o.sp?'Spline':o.ln?'Linha':o.t=='c'?'Círculo':'Retângulo'} ${i+1}: X${f(o.x)}  A${f(o.a)}° · ${operationTool(o).ball?'ballnose':'topo reto'} Ø${f(operationTool(o).diameter)}`;b.className=i==sel?'on':'';b.onclick=()=>{splineCreation=null;sel=i;lst();form();draw()};li.appendChild(b);u.appendChild(li)})}
-function form(){const o=ops[sel];if(!o)return;$('ST').checked=!!o.stlDepth;$('T').value=operationTool(o).diameter;$('HT').value=operationTool(o).ball?'1':'0';$('x').value=o.x;$('a').value=o.a;$('yy').value=f(o.a*Math.PI*P().D/360);$('w').value=o.w;$('l').value=o.l;$('d').value=o.d;$('splineEditor').hidden=!o.sp;$('splinePoints').value=o.splineDraft??(o.sp?o.sp.map(p=>p.join(', ')).join('\n'):'');$('splineError').textContent=o.splineInvalid?'Informe exatamente quatro pares X,Y finitos entre −500 e 500 mm.':'';updateSplineDrawUI();$('cm').disabled=!!o.sp;$('ll').style.display=o.t=='r'&&!o.sp?'':'none';$('lw').style.display=o.ln?'none':'';$('rot').value=o.rot||0;$('cm').value=o.ln&&(o.cm||'p')=='p'?'on':(o.cm||'p');$('rotw').style.display=$('rotb').style.display=o.t=='c'?'none':'';$('pt').textContent='Propriedades: '+(o.sp?'Spline':o.ln?'Linha':o.t=='c'?'Círculo':'Retângulo')+' '+(sel+1);$('lw').firstChild.textContent=o.t=='c'?'Diâmetro (mm)':'Largura tangencial (mm)';$('fz').value=f(P().D/2-o.d-machineOffset())}
+function lst(){const u=$('list');u.innerHTML='';ops.forEach((o,i)=>{const li=document.createElement('li'),b=document.createElement('button');b.textContent=`${o.ln?'Linha':o.t=='c'?'Círculo':'Retângulo'} ${i+1}: X${f(o.x)}  A${f(o.a)}° · ${operationTool(o).ball?'ballnose':'topo reto'} Ø${f(operationTool(o).diameter)}`;b.className=i==sel?'on':'';b.onclick=()=>{sel=i;lst();form();draw()};li.appendChild(b);u.appendChild(li)})}
+function form(){const o=ops[sel];if(!o)return;$('ST').checked=!!o.stlDepth;$('T').value=operationTool(o).diameter;$('HT').value=operationTool(o).ball?'1':'0';$('x').value=o.x;$('a').value=o.a;$('yy').value=f(o.a*Math.PI*P().D/360);$('w').value=o.w;$('l').value=o.l;$('d').value=o.d;$('ll').style.display=o.t=='r'?'':'none';$('lw').style.display=o.ln?'none':'';$('rot').value=o.rot||0;$('cm').value=o.ln&&(o.cm||'p')=='p'?'on':(o.cm||'p');$('rotw').style.display=$('rotb').style.display=o.t=='c'?'none':'';$('pt').textContent='Propriedades: '+(o.ln?'Linha':o.t=='c'?'Círculo':'Retângulo')+' '+(sel+1);$('lw').firstChild.textContent=o.t=='c'?'Diâmetro (mm)':'Largura tangencial (mm)';$('fz').value=f(P().D/2-o.d-machineOffset())}
 ['x','a','w','l','d'].forEach(k=>$(k).oninput=()=>{const o=ops[sel];if(!o)return;o[k]=+$(k).value;$('fz').value=f(P().D/2-o.d-machineOffset());lst();draw()});
 ['D','L','S','F','FP','SD','SF','DIR'].forEach(k=>$(k).oninput=()=>{form();draw()});
 ['T','HT'].forEach(id=>$(id).oninput=()=>{const o=ops[sel];if(!o)return;o.toolDiameter=+$('T').value;o.toolType=$('HT').value;lst();draw()});
 $('addC').onclick=()=>{ops.push({t:'c',x:P().L/2,a:180,w:10,l:10,d:5});sel=ops.length-1;lst();form();draw()};
 $('addR').onclick=()=>{ops.push({t:'r',x:P().L/2,a:180,w:8,l:16,d:5});sel=ops.length-1;lst();form();draw()};
-$('del').onclick=()=>{if(ops.length){splineCreation=null;ops.splice(sel,1);sel=Math.max(0,sel-1);lst();form();draw()}};
+$('del').onclick=()=>{if(ops.length){ops.splice(sel,1);sel=Math.max(0,sel-1);lst();form();draw()}};
 let drag=false;const cv=$('cv');
 function pos(e){const r=cv.getBoundingClientRect(),p=P(),q=cv.width/r.width,x=((e.clientX-r.left)*q-LY.ox)/LY.pw,y=((e.clientY-r.top)*q-LY.oy)/LY.ph;return{x:Math.max(0,Math.min(p.L,x*p.L)),a:Math.max(0,Math.min(360,y*360))}}
 cv.onpointerdown=e=>{const q=pos(e);let best=-1,bd=1e9;ops.forEach((o,i)=>{const d=Math.hypot((o.x-q.x)/P().L,(o.a-q.a)/360);if(d<bd){bd=d;best=i}});if(best>=0&&bd<.12){sel=best;drag=true;cv.setPointerCapture(e.pointerId);lst();form();draw()}};
@@ -171,12 +167,12 @@ function gen(){const p=P(),R=p.D/2,e=[];$('err').textContent='';
  if(ops.some(o=>!Number.isFinite(operationTool(o).diameter)||operationTool(o).diameter<=0)){$('out').value='';$('err').textContent='Cada alojamento precisa de diâmetro de fresa maior que zero.';return}
  let previousTool=null;const out=['(Gerado pelo Editor de usinagem indexada 3+1)',`(Bruto D${f(p.D)} x L${f(p.L)} | ferramentas por alojamento)`,'(PROTOTIPO: G-code nao homologado para execucao fisica)',`(Z0 = ${+$('Z0').value?'superficie do bruto':'centro do eixo A'})`,'G21 G90 G17 G40 G49 G80 G94 G91.1',`S${p.S} M3`];
  const zo=+$('Z0').value?R:0,zs=R+p.SF-zo;out.push(`G0 Z${f(zs)}`);
- ops.forEach((o,i)=>{const tool=operationTool(o),p={...P(),T:tool.diameter};if(o.sp&&(o.splineInvalid||!splineValid(o.sp)||o.cm!=='on')){e.push('Spline inválida: quatro pontos finitos e corte sobre a linha são obrigatórios.');return}if(![o.x,o.a,o.w,o.l,o.d,o.rot||0].every(Number.isFinite)||o.w<=0||o.l<=0||o.d<=0){e.push(`Alojamento ${i+1}: medidas inválidas.`);return}if(o.ln)o.w=p.T;const mn=o.t=='c'?o.w:Math.min(o.w,o.l);if((mn<=p.T&&!o.ln)||(o.ln&&o.l<=p.T)){e.push(`Alojamento ${i+1}: menor que a fresa (Ø${f(p.T)}).`);return}
+ ops.forEach((o,i)=>{const tool=operationTool(o),p={...P(),T:tool.diameter};if(![o.x,o.a,o.w,o.l,o.d,o.rot||0].every(Number.isFinite)||o.w<=0||o.l<=0||o.d<=0){e.push(`Alojamento ${i+1}: medidas inválidas.`);return}if(o.ln)o.w=p.T;const mn=o.t=='c'?o.w:Math.min(o.w,o.l);if((mn<=p.T&&!o.ln)||(o.ln&&o.l<=p.T)){e.push(`Alojamento ${i+1}: menor que a fresa (Ø${f(p.T)}).`);return}
   const Ro=sR(o),dm=Math.min(o.d,Ro-p.T/2-1),zf=Ro-dm;if(i==sel)$('fz').value=f(zf-zo);if(dm<o.d-1e-6)e.push('Alojamento '+(i+1)+': a superfície ali tem raio '+f(Ro)+' mm; a profundidade excede o limite de '+f(Math.max(dm,0))+' mm para a fresa não chegar ao eixo. Exportação bloqueada; ajuste a profundidade, a posição X ou a referência STL.');if(dm<=0)return;if(zf<=p.T/2){e.push(`Alojamento ${i+1}: piso muito perto do centro do eixo.`)}
   if(o.x-ext(o)<0||o.x+ext(o)>p.L)e.push(`Alojamento ${i+1}: passa do comprimento da peça.`);
   const key=tool.diameter+'/'+tool.ball;if(previousTool!==null&&previousTool!==key)out.push(`G0 Z${f(zs)}`,'M5',`M0 (Troque a fresa para o proximo alojamento: ${tool.ball?'ballnose':'topo reto'} D${f(tool.diameter)} e confirme)`,`S${p.S} M3`);previousTool=key;
   out.push(`(Ferramenta alojamento ${i+1}: ${tool.ball?'ballnose':'topo reto'} D${f(tool.diameter)})`);
-  out.push('',`(--- Alojamento ${i+1}: ${o.sp?'spline':o.ln?'linha':o.t=='c'?'circulo':'retangulo'} | A${f(o.a)} ---)`,`G0 Z${f(zs)}`,`G0 A${f(o.a*p.dir)}`);
+  out.push('',`(--- Alojamento ${i+1}: ${o.ln?'linha':o.t=='c'?'circulo':'retangulo'} | A${f(o.a)} ---)`,`G0 Z${f(zs)}`,`G0 A${f(o.a*p.dir)}`);
   const n=Math.max(1,Math.ceil(dm/p.SD));for(let k=1;k<=n;k++){const z=Ro-dm*k/n-zo;out.push(`(camada ${k}/${n})`);ring2(o,p,z,out);out.push(`G0 Z${f(zs)}`)}});
  out.push('','G0 Z'+f(zs),'G0 A0','M5','G0 X0 Y0','M30');pocketCode=out.join('\n');const sc=$('sc').value;let fin=pocketCode;
  if(e.length){pocketCode='';fin=''}
@@ -228,8 +224,7 @@ function dr3(){const k=devicePixelRatio||1,rc=m3.getBoundingClientRect();if(rc.w
  if(vmd=='0'||vmd=='2')for(let i=0;i<=12;i++)poly(Array.from({length:49},(_,j)=>mph(L*i/12,j==48?TP-1e-6:TP*j/48,R,t)),mu,.4,1);
  ops.forEach((o,i)=>{if(!$('oc').checked)return;const f0=o.a*Math.PI/180-fo,Ro=sR(o),col=i==sel?op:ac,ou=[];
   const rt=(o.rot||0)*Math.PI/180,cr=Math.cos(rt),sr=Math.sin(rt),local=[];
-  if(o.sp)local.push(...splinePath(o));
-  else if(o.t=='c')for(let j=0;j<=80;j++){const a=TP*j/80;local.push([o.w/2*Math.cos(a),o.w/2*Math.sin(a)])}
+  if(o.t=='c')for(let j=0;j<=80;j++){const a=TP*j/80;local.push([o.w/2*Math.cos(a),o.w/2*Math.sin(a)])}
   else if(o.ln)for(let j=0;j<=12;j++)local.push([o.l*(j/12-.5),0]);
   else{const corners=[[-1,-1],[1,-1],[1,1],[-1,1],[-1,-1]];for(let e=0;e<4;e++)for(let j=0;j<12;j++){const u=j/12;local.push([o.l/2*(corners[e][0]*(1-u)+corners[e+1][0]*u),o.w/2*(corners[e][1]*(1-u)+corners[e+1][1]*u)])}local.push([-o.l/2,-o.w/2])}
   const floor=Ro-Math.max(0,Math.min(o.d,Ro-operationTool(o).diameter/2-1));
@@ -248,30 +243,20 @@ function dr3(){const k=devicePixelRatio||1,rc=m3.getBoundingClientRect();if(rc.w
  g.fillStyle=mu;g.font=(12*k)+'px sans-serif';g.fillText(mm?'Referência da máquina: fresa fixa, a peça gira com o A (linha grossa = A0)':t>.99?'Cilindro (referencial da peça)':t<.01?'Desenrolado: Y = ângulo A × raio':'Enrolando…',10*k,18*k);cube(g,W,k,cw,sw,cp,sp);warn3(g,W,H,k);$('sl3').value=tot?tt/tot*1000:0;profileView()}
 let vt=0,TRI=null,TGT=null,FLD=null,NXG=0,NPG=96,GK='',CV={ci:0,u:0},VW=null,SP=0,TLEN=0;
 let PX=0,PY=0,CUB=[],HV=-1,SMD=0,BS=null,NB=true,PK={};let LY={ox:0,oy:0,pw:1,ph:1};
-function splinePath(o,tolerance=.03){
- const result=[o.sp[0]],mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];
- function split(p,depth=0){const [a,b,c,d]=p,v=[d[0]-a[0],d[1]-a[1]],length=Math.hypot(...v),distance=q=>length?Math.abs(v[0]*(a[1]-q[1])-(a[0]-q[0])*v[1])/length:Math.hypot(q[0]-a[0],q[1]-a[1]),hull=Math.hypot(b[0]-a[0],b[1]-a[1])+Math.hypot(c[0]-b[0],c[1]-b[1])+Math.hypot(d[0]-c[0],d[1]-c[1]);
- if(depth>=16||(Math.max(distance(b),distance(c))<=tolerance&&hull-length<=tolerance&&length<=1)){result.push(d);return}
- const ab=mid(a,b),bc=mid(b,c),cd=mid(c,d),abc=mid(ab,bc),bcd=mid(bc,cd),m=mid(abc,bcd);split([a,ab,abc,m],depth+1);split([m,bcd,cd,d],depth+1)}split(o.sp);return result
-}
-function splineValid(points){return Array.isArray(points)&&points.length===4&&points.every(p=>Array.isArray(p)&&p.length===2&&p.every(v=>Number.isFinite(v)&&Math.abs(v)<=500))}
-function ext(o,y){if(o.sp){const a=(o.rot||0)*Math.PI/180;return Math.max(...o.sp.map(([u,v])=>Math.abs(y?u*Math.sin(a)+v*Math.cos(a):u*Math.cos(a)-v*Math.sin(a))))}const a=(o.rot||0)*Math.PI/180,c=Math.abs(Math.cos(a)),s=Math.abs(Math.sin(a));if(o.t=='c')return o.w/2;const hl=o.l/2,hw=o.w/2;return y?hl*s+hw*c:hl*c+hw*s}
+function ext(o,y){const a=(o.rot||0)*Math.PI/180,c=Math.abs(Math.cos(a)),s=Math.abs(Math.sin(a));if(o.t=='c')return o.w/2;const hl=o.l/2,hw=o.w/2;return y?hl*s+hw*c:hl*c+hw*s}
 function ring2(o,p,z,out){const T=operationTool(o).diameter,cx=o.x,rt=(o.rot||0)*Math.PI/180,c=Math.cos(rt),s=Math.sin(rt),cm=o.ln&&(o.cm||'p')=='p'?'on':(o.cm||'p'),off=cm=='in'?-T/2:cm=='out'?T/2:0,st=T*.4,Rt=(u,v)=>'X'+f(cx+u*c-v*s)+' Y'+f(u*s+v*c),start=(u,v)=>{out.push('G0 '+Rt(u,v),'G1 Z'+f(z)+' F'+p.FP)};
- if(o.sp){const points=splinePath(o);start(...points[0]);points.slice(1).forEach(([u,v],i)=>out.push('G1 '+Rt(u,v)+(i?'':' F'+p.F)));return}
  if(o.ln){const q=o.l/2,v=cm=='in'?T/2:cm=='out'?-T/2:0;start(-q,v);out.push('G1 '+Rt(q,v)+' F'+p.F);return}
  if(o.t=='c'){if(cm=='p'){const rf=(o.w-T)/2;out.push('G0 X'+f(cx)+' Y0','G1 Z'+f(z)+' F'+p.FP);if(rf<=0)return;for(let r=Math.min(st,rf);;r=Math.min(r+st,rf)){out.push('G1 X'+f(cx+r)+' Y0 F'+p.F,'G3 X'+f(cx+r)+' Y0 I'+f(-r)+' J0');if(r>=rf)break}out.push('G1 X'+f(cx)+' Y0');return}
   const rc=o.w/2+off;if(rc<=.01)return;out.push('G0 X'+f(cx+rc)+' Y0','G1 Z'+f(z)+' F'+p.FP,'G3 X'+f(cx+rc)+' Y0 I'+f(-rc)+' J0 F'+p.F);return}
  if(cm=='p'){const hx=(o.l-T)/2,hy=(o.w-T)/2,n=Math.ceil(Math.min(hx,hy)/st);out.push('G0 X'+f(cx)+' Y0','G1 Z'+f(z)+' F'+p.FP);for(let i=n;i>=0;i--){const ax=Math.max(hx-i*st,0),ay=Math.max(hy-i*st,0);[[-1,-1],[1,-1],[1,1],[-1,1],[-1,-1]].forEach((q,j)=>out.push('G1 '+Rt(q[0]*ax,q[1]*ay)+(j?'':' F'+p.F)))}out.push('G1 X'+f(cx)+' Y0');return}
  const hx=o.l/2+off,hy=o.w/2+off;if(hx<=0||hy<=0)return;start(-hx,-hy);[[1,-1],[1,1],[-1,1],[-1,-1]].forEach((q,j)=>out.push('G1 '+Rt(q[0]*hx,q[1]*hy)+(j?'':' F'+p.F)))}
 function xyv2(){if($('xy').getBoundingClientRect().width<1)return;const c=$('xy'),r=c.getBoundingClientRect(),k=devicePixelRatio||1,o=ops[sel],p=P();c.width=r.width*k;c.height=200*k;if(!o)return;
- const g=c.getContext('2d'),W=c.width,H=c.height,T=operationTool(o).diameter,rt=(o.rot||0)*Math.PI/180,cr=Math.cos(rt),sr=Math.sin(rt),cm=o.ln&&(o.cm||'p')=='p'?'on':(o.cm||'p'),off=cm=='in'?-T/2:cm=='out'?T/2:0,hx0=o.t=='c'?o.w/2:o.l/2,hy0=o.w/2,sc=Math.min(W,H)*.42/(o.sp?Math.hypot(ext(o),ext(o,1))+T:Math.hypot(hx0,hy0)+T),Q=(u,v)=>[W/2+(u*cr-v*sr)*sc,H/2-(u*sr+v*cr)*sc];
+ const g=c.getContext('2d'),W=c.width,H=c.height,T=operationTool(o).diameter,rt=(o.rot||0)*Math.PI/180,cr=Math.cos(rt),sr=Math.sin(rt),cm=o.ln&&(o.cm||'p')=='p'?'on':(o.cm||'p'),off=cm=='in'?-T/2:cm=='out'?T/2:0,hx0=o.t=='c'?o.w/2:o.l/2,hy0=o.w/2,sc=Math.min(W,H)*.42/(Math.hypot(hx0,hy0)+T),Q=(u,v)=>[W/2+(u*cr-v*sr)*sc,H/2-(u*sr+v*cr)*sc];
  const path=(pts,cl)=>{g.beginPath();pts.forEach((q,i)=>{const z=Q(q[0],q[1]);i?g.lineTo(z[0],z[1]):g.moveTo(z[0],z[1])});if(cl)g.closePath();g.stroke()},rect=(a,b)=>[[-a,-b],[a,-b],[a,b],[-a,b]];
  g.lineWidth=k;g.strokeStyle=css('--ln');for(let x=-30;x<=30;x+=5){g.beginPath();g.moveTo(W/2+x*sc,0);g.lineTo(W/2+x*sc,H);g.moveTo(0,H/2-x*sc);g.lineTo(W,H/2-x*sc);g.stroke()}
- g.strokeStyle=css('--op');g.lineWidth=2*k;if(o.sp)path(splinePath(o),0);else if(o.ln)path([[-hx0,0],[hx0,0]],0);else if(o.t=='c'){g.beginPath();g.arc(W/2,H/2,hx0*sc,0,7);g.stroke()}else path(rect(hx0,hy0),1);
+ g.strokeStyle=css('--op');g.lineWidth=2*k;if(o.ln)path([[-hx0,0],[hx0,0]],0);else if(o.t=='c'){g.beginPath();g.arc(W/2,H/2,hx0*sc,0,7);g.stroke()}else path(rect(hx0,hy0),1);
  g.strokeStyle=css('--ac');g.setLineDash([4*k,4*k]);let tp;
- if(o.sp){path(splinePath(o),0);tp=splinePath(o).at(-1);g.setLineDash([]);o.sp.forEach((p,i)=>{const q=Q(...p);g.beginPath();g.arc(...q,5*k,0,7);g.stroke();g.fillText('P'+i,q[0]+7*k,q[1])});c.splineProjection={sc:sc/k,cx:W/2/k,cy:H/2/k,cr,sr};
-  if(splineCreation?.operation===o){const pts=splineCreation.points;g.strokeStyle=css('--op');g.setLineDash([3*k,3*k]);if(pts.length>1)path(pts,0);g.setLineDash([]);g.fillStyle=css('--op');g.font=(12*k)+'px sans-serif';pts.forEach((p,i)=>{const q=Q(...p);g.beginPath();g.arc(...q,6*k,0,7);g.fill();g.fillText('P'+i,q[0]+8*k,q[1]-6*k)});g.fillStyle=css('--mu')}}
- else if(o.ln){const v=cm=='in'?T/2:cm=='out'?-T/2:0;path([[-hx0,v],[hx0,v]],0);tp=[hx0,v]}
+ if(o.ln){const v=cm=='in'?T/2:cm=='out'?-T/2:0;path([[-hx0,v],[hx0,v]],0);tp=[hx0,v]}
  else if(o.t=='c'){const rr=cm=='p'?Math.max(0,(o.w-T)/2):o.w/2+off;g.beginPath();g.arc(W/2,H/2,rr*sc,0,7);g.stroke();tp=[rr,0]}
  else{const a=cm=='p'?Math.max(0,(o.l-T)/2):hx0+off,b=cm=='p'?Math.max(0,(o.w-T)/2):hy0+off;path(rect(a,b),1);tp=[a,b]}
  g.setLineDash([]);g.lineWidth=k;const z=Q(tp[0],tp[1]);g.beginPath();g.arc(z[0],z[1],T/2*sc,0,7);g.stroke();
@@ -281,43 +266,6 @@ $('rot').oninput=()=>{const o=ops[sel];if(o){o.rot=+$('rot').value||0;draw()}};
 $('cm').onchange=()=>{const o=ops[sel];if(o){o.cm=$('cm').value;draw()}};
 $('r0').onclick=()=>setRot(0);$('r90').onclick=()=>setRot(90);$('r45').onclick=()=>setRot(45);
 $('GX').oninput=draw;$('GA').oninput=draw;$('addL').onclick=()=>{ops.push({t:'r',ln:true,cm:'on',x:P().L/2,a:180,w:P().T,l:20,d:3});sel=ops.length-1;lst();form();draw()};$('tp').onchange=dr3;$('oc').onchange=dr3;
-$('addSpline').onclick=()=>{splineCreation=null;ops.push({t:'r',ln:true,sp:[[-10,0],[-4,8],[4,-8],[10,0]],cm:'on',x:P().L/2,a:180,w:3,l:20,d:3});sel=ops.length-1;lst();form();draw()};
-$('splinePoints').oninput=()=>{const o=ops[sel];if(!o?.sp)return;const points=$('splinePoints').value.trim().split(/\n/).map(line=>line.trim().split(/[,;\s]+/).map(Number));if(!splineValid(points)){o.splineInvalid=true;o.splineDraft=$('splinePoints').value;draw();$('splineError').textContent='Informe exatamente quatro pares X,Y finitos entre −500 e 500 mm.';$('download').disabled=$('cp').disabled=true;$('out').value='';return}$('splineError').textContent='';delete o.splineInvalid;delete o.splineDraft;o.sp=points;draw()};
-let splineDrag=null,splineCreation=null;
-function updateSplineDrawUI(){
- const active=!!splineCreation&&splineCreation.operation===ops[sel];const button=$('splineDraw'),cancel=$('splineCancel');
- button.disabled=!ops[sel]?.sp;button.setAttribute('aria-pressed',String(active));button.textContent=active?'Desenhando: clicar em P'+splineCreation.points.length:'✏ Desenhar com mouse na vista XY';
- cancel.hidden=!active;$('xy').style.cursor=active?'crosshair':'';
- $('splineDrawStatus').textContent=active?'Clique na inspeção XY para marcar P'+splineCreation.points.length+' de 4 (P0 → P1 → P2 → P3). Os valores antigos permanecem até completar a curva.':'Duas opções: clicar quatro pontos na inspeção XY, ou digitar os valores abaixo. Depois, arraste os pontos para ajustar.';
-}
-function splineLocalFromPointer(e,v){
- const r=$('xy').getBoundingClientRect(),x=(e.clientX-r.left-v.cx)/v.sc,y=-(e.clientY-r.top-v.cy)/v.sc;
- return [x*v.cr+y*v.sr,-x*v.sr+y*v.cr].map(n=>Math.round(Math.max(-500,Math.min(500,n))*100)/100)
-}
-$('splineDraw').onclick=()=>{
- const o=ops[sel];if(!o?.sp)return;
- splineCreation=splineCreation?.operation===o?null:{operation:o,points:[]};
- if(splineCreation){const d=$('xy').closest('details');if(d&&!d.open)d.open=true}
- updateSplineDrawUI();xyv2();
- if(splineCreation)$('xy').scrollIntoView({behavior:'smooth',block:'center'})
-};
-$('splineCancel').onclick=()=>{splineCreation=null;updateSplineDrawUI();xyv2()};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&splineCreation){splineCreation=null;updateSplineDrawUI();xyv2()}});
-$('xy').onpointerdown=e=>{
- const o=ops[sel],v=$('xy').splineProjection;if(!o?.sp||!v)return;
- if(splineCreation?.operation===o){
-  if(e.button!==0&&e.pointerType==='mouse')return;
-  e.preventDefault();splineCreation.points.push(splineLocalFromPointer(e,v));
-  if(splineCreation.points.length===4){
-   o.sp=splineCreation.points.map(p=>p.slice());delete o.splineInvalid;delete o.splineDraft;splineCreation=null;form();draw()
-  }else{updateSplineDrawUI();xyv2()}
-  return
- }
- const r=$('xy').getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,index=o.sp.findIndex(([u,w])=>Math.hypot(v.cx+(u*v.cr-w*v.sr)*v.sc-x,v.cy-(u*v.sr+w*v.cr)*v.sc-y)<12);
- if(index<0)return;e.preventDefault();splineDrag=index;$('xy').setPointerCapture(e.pointerId)
-};
-$('xy').onpointermove=e=>{if(splineDrag===null)return;const o=ops[sel],v=$('xy').splineProjection;if(!o?.sp||!v)return;o.sp[splineDrag]=splineLocalFromPointer(e,v);form();draw()};
-$('xy').onpointerup=$('xy').onpointercancel=()=>splineDrag=null;
 function pcut(g,u0,u1){const p=P(),o=ops[g.o];if(!o)return;const Rt=operationTool(o).diameter/2,res=.15,zo=g.q.zo??machineOffset();
  let K=PK[g.o];if(!K){const hx=ext(o)+Rt+1,hy=ext(o,1)+Rt+1,nx=Math.ceil(2*hx/res)+1,ny=Math.ceil(2*hy/res)+1;K=PK[g.o]={x0:o.x-(nx-1)*res/2,y0:-(ny-1)*res/2,nx:nx,ny:ny,z:new Float32Array(nx*ny).fill(1e9),n:0}}
  const a=lerpq(g.p,g.q,u0),b=lerpq(g.p,g.q,u1),n=Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.y-a.y,b.z-a.z)/(res*.8))),r=Math.ceil(Rt/res)+1;
@@ -448,10 +396,6 @@ $('sc').oninput=()=>{FLD=null;sci();draw()};
 ['Z0','OM','PZ'].forEach(i=>$(i).onchange=draw);
 $('fsc').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('sc').value=r.result;FLD=null;sci();draw()};r.readAsText(f)};
 const parameterHelp={
- addSpline:['Spline Bézier aberta','Adiciona curva cúbica de quatro pontos locais em mm. P0/P3 são extremidades e P1/P2 controlam a curva. Corte somente sobre a linha, sem compensação; exporta G1 com tolerância geométrica de 0,03 mm antes do arredondamento do G-code.'],
- splineDraw:['Desenhar spline com mouse','Abre a inspeção cartesiana XY para marcar P0, P1, P2 e P3 com quatro cliques ou toques. O desenho aparece progressivamente. Após completar, a curva substitui a anterior e os campos numéricos são atualizados. Não modifica o eixo A nem calcula corte sem trajetória.'],
- splineCancel:['Cancelar desenho da spline','Interrompe o desenho por mouse sem modificar a spline anterior. Também é possível cancelar com Escape. Os pontos anteriores e o G-code existente são preservados.'],
- splinePoints:['Pontos da spline','Quatro linhas X,Y, em mm relativos à posição X e ao plano tangencial do alojamento. A rotação da forma transforma a curva inteira. Arraste os pontos na inspeção XY ou edite os números. Não modifica círculos, retângulos ou linhas existentes.'],
  aLeft:['Inspeção visual do eixo A','Gira visualmente a peça em −15°. Não altera A0, operações, G-code ou material removido. Vista inicial zera esta inspeção.'],
  aRight:['Inspeção visual do eixo A','Gira visualmente a peça em +15°. A ferramenta e o percurso permanecem alinhados à peça. Não altera o programa CNC.'],
  showMachine:['Fixação visual','Mostra chuck com três castanhas no lado X0 e contraponto na extremidade X=L, somente na vista totalmente enrolada. A fixação é ilustrativa: não limita movimentos nem calcula colisões ou material removido. Desmarque para inspecionar as extremidades do bruto.'],
