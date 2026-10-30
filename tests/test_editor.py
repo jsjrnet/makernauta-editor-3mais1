@@ -687,7 +687,7 @@ class EditorTests(unittest.TestCase):
             self.page.mouse.click(bounds['x']+bounds['width']*x,bounds['y']+bounds['height']*y)
         self.assertEqual(self.page.locator('#splineDraw').get_attribute('aria-pressed'),'false')
         self.assertNotEqual(self.js('JSON.stringify(ops[sel].sp)'),original)
-        self.assertIn('\\n',self.page.locator('#splinePoints').input_value())
+        self.assertIn('\n',self.page.locator('#splinePoints').input_value())
         self.assertFalse(self.page.locator('#download').is_disabled())
         edited=self.js('JSON.stringify(ops[sel].sp)')
         self.page.locator('#splineDraw').click()
@@ -696,7 +696,7 @@ class EditorTests(unittest.TestCase):
         self.page.keyboard.press('Escape')
         self.assertEqual(self.js('JSON.stringify(ops[sel].sp)'),edited)
         self.assertEqual(self.page.locator('#splineDraw').get_attribute('aria-pressed'),'false')
-        self.page.locator('#splinePoints').fill('-10,0\\n-5,4\\n5,-4\\n10,0')
+        self.page.locator('#splinePoints').fill('-10,0\n-5,4\n5,-4\n10,0')
         self.assertEqual(self.js('ops[sel].sp[1]'),[-5,4])
 
     def test_cylinder_cut_angle_matches_tool_and_contour_in_rolled_view(self):
