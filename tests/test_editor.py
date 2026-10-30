@@ -613,7 +613,7 @@ class EditorTests(unittest.TestCase):
 
     def test_embedded_stl_examples_and_groups_preserve_nc(self):
         before=self.page.locator('#out').input_value()
-        for model,expected in [('lure',2080),('pawn',4160)]:
+        for model,expected in [('lure',2048),('pawn',4160)]:
             self.page.locator('#sampleSTL').select_option(model)
             self.page.locator('#loadSampleSTL').click()
             self.assertTrue(self.page.locator('#sti').text_content().startswith('EXEMPLO INCORPORADO'))
@@ -624,7 +624,7 @@ class EditorTests(unittest.TestCase):
             self.assertEqual(self.page.locator('#L').input_value(),'120')
             self.assertEqual(self.page.locator('#vm').input_value(),'4')
             self.assertTrue(self.js('Number.isFinite(Math.max(...TGT))'))
-        self.assertEqual(self.js('new DataView(sampleSTLBuffer("lure")).getUint32(80,true)'),2080)
+        self.assertEqual(self.js('new DataView(sampleSTLBuffer("lure")).getUint32(80,true)'),2048)
         self.assertEqual(self.page.locator('#mapSection #GS').count(),1)
         self.assertEqual(self.page.locator('#mapSection #yy').count(),1)
         self.assertEqual(self.page.locator('#pocketSection #GS').count(),0)
@@ -643,6 +643,35 @@ class EditorTests(unittest.TestCase):
         self.assertTrue(self.page.locator('#pocketSection').evaluate('(e)=>e.open'))
         self.assertEqual(self.page.locator('#out').input_value(),before)
         self.assertIn('Girar A',self.page.locator('.a-inspection').text_content())
+
+    def test_aspire_declared_parameters_are_reviewed_before_applied(self):
+        code='(Material Size)\\n(X= 100.000, Z= 10.000)\\n(Diameter = 20.000 mm)\\n(Tools used in this file:)\\n(0 = Esferica 3.1mm)\\nG21 G90 G17\\nG0 X10 A0 Z5\\nG1 X20 A-90 Z-1\\nM30'
+        self.page.locator('#sc').fill(code)
+        self.assertEqual(self.page.locator('#D').input_value(),'30')
+        self.assertIn('Diâmetro bruto: 20 mm',self.page.locator('#aspireDetected').text_content())
+        self.assertIn('Comprimento bruto: 100 mm',self.page.locator('#aspireDetected').text_content())
+        self.assertIn('Ø3.1 mm',self.page.locator('#aspireDetected').text_content())
+        self.assertIsNone(self.js('sourceReference()'))
+        self.page.locator('#applyAspireParams').click()
+        self.assertEqual(self.page.locator('#D').input_value(),'20')
+        self.assertEqual(self.page.locator('#L').input_value(),'100')
+        self.assertEqual(self.page.locator('#TS').input_value(),'3.1')
+        self.assertEqual(self.page.locator('#TY').input_value(),'1')
+        self.assertEqual(self.page.locator('#sc').input_value(),code)
+        self.assertIsNone(self.js('sourceReference()'))
+        self.assertEqual(self.page.locator('#out').input_value(),'')
+
+    def test_stl_position_offset_changes_reference_not_nc(self):
+        before=self.page.locator('#out').input_value()
+        self.page.locator('#sampleSTL').select_option('pawn')
+        self.page.locator('#loadSampleSTL').click()
+        self.assertEqual(self.page.locator('#out').input_value(),before)
+        snapshot=self.js('Array.from(TGT)')
+        self.page.locator('#OX').fill('10')
+        self.page.locator('#OX').dispatch_event('change')
+        self.assertEqual(self.page.locator('#out').input_value(),before)
+        self.assertEqual(self.page.locator('#OX').input_value(),'10')
+        self.assertNotEqual(self.js('Array.from(TGT)'),snapshot)
 
     def test_invalid_step_cannot_hang_generation(self):
         self.page.locator('#SD').fill('0')
