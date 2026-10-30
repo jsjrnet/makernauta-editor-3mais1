@@ -447,6 +447,9 @@ $('sc').oninput=()=>{FLD=null;sci();draw()};
 ['Z0','OM','PZ'].forEach(i=>$(i).onchange=draw);
 $('fsc').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('sc').value=r.result;FLD=null;sci();draw()};r.readAsText(f)};
 const parameterHelp={
+ sampleSTL:['Modelos STL de demonstração','Escolha um dos dois arquivos de teste gerados internamente. O cilindro e a isca são exemplos didáticos, não correspondem ao G-code importado do Aspire.'],
+ loadSampleSTL:['Carregar modelo de teste','Substitui somente a referência STL atual pelo exemplo selecionado. Não modifica o bruto, os movimentos, a ferramenta nem o G-code.'],
+ downloadSampleSTL:['Baixar STL de demonstração','Salva no seu computador o arquivo STL binário de teste selecionado, para que possa ser importado também em outros programas.'],
  aLeft:['Inspeção visual do eixo A','Gira visualmente a peça em −15°. Não altera A0, operações, G-code ou material removido. Vista inicial zera esta inspeção.'],
  aRight:['Inspeção visual do eixo A','Gira visualmente a peça em +15°. A ferramenta e o percurso permanecem alinhados à peça. Não altera o programa CNC.'],
  showMachine:['Fixação visual','Mostra chuck com três castanhas no lado X0 e contraponto na extremidade X=L, somente na vista totalmente enrolada. A fixação é ilustrativa: não limita movimentos nem calcula colisões ou material removido. Desmarque para inspecionar as extremidades do bruto.'],
