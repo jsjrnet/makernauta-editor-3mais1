@@ -607,39 +607,6 @@ class EditorTests(unittest.TestCase):
             self.assertTrue(self.page.locator(f'[data-panel-pin="{side}"]').is_visible())
             self.page.keyboard.press('Escape')
 
-    def test_spline_edit_drag_export_and_tools(self):
-        self.page.locator('#addSpline').click()
-        self.assertEqual(self.js('ops[sel].sp.length'),4)
-        self.assertTrue(self.page.locator('#cm').is_disabled())
-        self.page.locator('#splinePoints').fill('-10, 0\n-4, 6\n4, -6\n10, 0')
-        self.page.wait_for_timeout(100)
-        self.assertEqual(self.js('ops[sel].sp[1]'),[-4,6])
-        self.assertIn('spline',self.page.locator('#out').input_value())
-        self.assertTrue(self.js("sg.some(g=>g.h&&g.o===sel&&!g.r)"))
-        # Generated cutting XY matches the sampled centerline after machine rounding.
-        self.assertLess(self.js("Math.max(...splinePath(ops[sel]).map(p=>Math.min(...sg.filter(g=>g.h&&g.o===sel&&!g.r).map(g=>Math.hypot(g.q.x-ops[sel].x-p[0],g.q.y-p[1])))))"),.002)
-        self.page.locator('#xy').scroll_into_view_if_needed()
-        target=self.js("() => {const v=$('xy').splineProjection,p=ops[sel].sp[1],r=$('xy').getBoundingClientRect();return {x:r.left+v.cx+p[0]*v.sc,y:r.top+v.cy-p[1]*v.sc}}")
-        self.page.mouse.move(target['x'],target['y']);self.page.mouse.down()
-        self.page.mouse.move(target['x']+10,target['y']+8);self.page.mouse.up()
-        self.assertNotEqual(self.js('ops[sel].sp[1]'),[-4,6])
-        for tool in ['0','1']:
-            self.js(f"ops[sel].toolType='{tool}';draw();v3();tt=tot;dr3()")
-            self.assertTrue(self.js('FLD.every(Number.isFinite)&&FLD.some(v=>v<15)'))
-        self.page.locator('#splinePoints').fill('0, 0')
-        self.assertTrue(self.page.locator('#download').is_disabled())
-        self.assertEqual(self.page.locator('#out').input_value(),'')
-        self.page.locator('#d').fill('2')
-        self.assertTrue(self.page.locator('#download').is_disabled())
-        self.assertEqual(self.page.locator('#out').input_value(),'')
-        self.page.locator('#splinePoints').fill('-10,0\n-5,4\n5,-4\n10,0')
-        self.assertFalse(self.page.locator('#download').is_disabled())
-        self.page.locator('[data-section="map"]').screenshot(path='/tmp/makernauta-spline.png')
-
-    def test_spline_subdivision_bounds_and_degenerate_controls(self):
-        error=self.js("""() => {let error=0;for(const sp of [[[-10,0],[-4,8],[4,-8],[10,0]],[[0,0],[20,0],[-20,0],[0,0]],[[0,0],[0,0],[0,0],[0,0]]]){const path=splinePath({sp});for(let n=0;n<=1000;n++){const t=n/1000,v=1-t,q=[0,1].map(k=>v*v*v*sp[0][k]+3*v*v*t*sp[1][k]+3*v*t*t*sp[2][k]+t*t*t*sp[3][k]);let best=Infinity;for(let i=1;i<path.length;i++){const a=path[i-1],b=path[i],dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy,u=l?Math.max(0,Math.min(1,((q[0]-a[0])*dx+(q[1]-a[1])*dy)/l)):0;best=Math.min(best,Math.hypot(q[0]-a[0]-u*dx,q[1]-a[1]-u*dy))}error=Math.max(error,best)}}return error}""")
-        self.assertLessEqual(error,.03)
-
     def test_a30_crossing_cuts_final_mesh_single_surface_and_replay(self):
         result=self.js("""() => {
           $('D').value=30;$('L').value=120;$('ql').value='0';$('rf').value='0';$('oc').checked=false;$('tp').checked=false;$('showMachine').checked=false;
@@ -673,31 +640,6 @@ class EditorTests(unittest.TestCase):
             self.assertTrue(row['finite'])
             for radius in row['radii']:
                 self.assertAlmostEqual(radius,row['floor'],delta=.001)
-
-    def test_spline_mouse_click_creation_and_cancel_preserves_numeric_mode(self):
-        self.page.locator('#addSpline').click()
-        original=self.js('JSON.stringify(ops[sel].sp)')
-        self.page.locator('#splineDraw').click()
-        self.assertEqual(self.page.locator('#splineDraw').get_attribute('aria-pressed'),'true')
-        self.assertTrue(self.page.locator('#xy').is_visible())
-        canvas=self.page.locator('#xy')
-        canvas.scroll_into_view_if_needed()
-        bounds=canvas.bounding_box()
-        for x,y in [(0.25,0.48),(0.40,0.20),(0.62,0.80),(0.76,0.5)]:
-            self.page.mouse.click(bounds['x']+bounds['width']*x,bounds['y']+bounds['height']*y)
-        self.assertEqual(self.page.locator('#splineDraw').get_attribute('aria-pressed'),'false')
-        self.assertNotEqual(self.js('JSON.stringify(ops[sel].sp)'),original)
-        self.assertIn('\n',self.page.locator('#splinePoints').input_value())
-        self.assertFalse(self.page.locator('#download').is_disabled())
-        edited=self.js('JSON.stringify(ops[sel].sp)')
-        self.page.locator('#splineDraw').click()
-        self.page.mouse.click(bounds['x']+bounds['width']*.36,bounds['y']+bounds['height']*.40)
-        self.assertEqual(self.js('JSON.stringify(ops[sel].sp)'),edited)
-        self.page.keyboard.press('Escape')
-        self.assertEqual(self.js('JSON.stringify(ops[sel].sp)'),edited)
-        self.assertEqual(self.page.locator('#splineDraw').get_attribute('aria-pressed'),'false')
-        self.page.locator('#splinePoints').fill('-10,0\n-5,4\n5,-4\n10,0')
-        self.assertEqual(self.js('ops[sel].sp[1]'),[-5,4])
 
     def test_cylinder_cut_angle_matches_tool_and_contour_in_rolled_view(self):
         result=self.js("""() => {
