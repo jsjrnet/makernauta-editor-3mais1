@@ -54,13 +54,23 @@ async function limitedResponse(response, maximum) {
 async function verifyPreview(origin, pr, config, fetcher = fetch) {
   if (!previewOrigin(origin, config)) return false;
   try {
-    // No redirect to an authentication page, production site or third-party host.
+    // Manifest never redirects. HTML allows only Cloudflare's same-origin clean URL.
     const options = { redirect: 'error', signal: AbortSignal.timeout(15000) };
     const manifest = JSON.parse((await limitedResponse(await fetcher(`${origin}/preview-manifest.json?commit=${pr.head.sha}`, options), 65536)).toString('utf8'));
     if (manifest.environment !== 'preview' || manifest.commit !== pr.head.sha || manifest.branch !== pr.head.ref) return false;
     const expected = manifest.files?.['editor-usinagem-indexada.html'];
     if (!/^[a-f0-9]{64}$/.test(expected || '')) return false;
-    const html = await limitedResponse(await fetcher(`${origin}/editor-usinagem-indexada.html?commit=${pr.head.sha}`, { ...options, signal: AbortSignal.timeout(15000) }), 4 * 1024 * 1024);
+    const editorURL = new URL(`${origin}/editor-usinagem-indexada.html?commit=${pr.head.sha}`);
+    let response = await fetcher(editorURL.href, { ...options, redirect: 'manual', signal: AbortSignal.timeout(15000) });
+    if ([301, 302, 307, 308].includes(response.status)) {
+      const location = response.headers.get('location');
+      if (!location) return false;
+      const canonical = new URL(location, editorURL);
+      if (canonical.origin !== origin || canonical.username || canonical.password || canonical.pathname !== '/editor-usinagem-indexada' || canonical.search !== editorURL.search || canonical.hash) return false;
+      // Only one known redirect, retaining the commit query; no login or external hop.
+      response = await fetcher(canonical.href, { ...options, signal: AbortSignal.timeout(15000) });
+    }
+    const html = await limitedResponse(response, 4 * 1024 * 1024);
     return crypto.createHash('sha256').update(html).digest('hex') === expected;
   } catch (_) { return false; }
 }
