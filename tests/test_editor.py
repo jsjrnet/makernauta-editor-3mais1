@@ -616,7 +616,7 @@ class EditorTests(unittest.TestCase):
         for model,expected in [('lure',2048),('pawn',4160)]:
             self.page.locator('#sampleSTL').select_option(model)
             self.page.locator('#loadSampleSTL').click()
-            self.assertTrue(self.page.locator('#sti').text_content().startswith('EXEMPLO INCORPORADO'))
+            self.assertTrue(self.page.locator('#sti').text_content().startswith('EXEMPLO INCORPORADO'),self.page.locator('#sti').text_content())
             self.assertEqual(self.js('TRI.length/9'),expected)
             self.assertAlmostEqual(self.js('TLEN'),63.3 if model=='lure' else 64.5,places=3)
             self.assertEqual(self.page.locator('#out').input_value(),before)
@@ -625,6 +625,10 @@ class EditorTests(unittest.TestCase):
             self.assertEqual(self.page.locator('#vm').input_value(),'4')
             self.assertTrue(self.js('Number.isFinite(Math.max(...TGT))'))
         self.assertEqual(self.js('new DataView(sampleSTLBuffer("lure")).getUint32(80,true)'),2048)
+        self.assertTrue(self.js('''() => {
+          for(const model of ['lure','pawn']){const b=sampleSTLBuffer(model),v=new DataView(b),n=v.getUint32(80,true);for(let i=0;i<n;i++)for(let j=0;j<9;j++)if(!Number.isFinite(v.getFloat32(96+i*50+j*4,true)))return false}return true
+        }'''))
+
         self.assertEqual(self.page.locator('#mapSection #GS').count(),1)
         self.assertEqual(self.page.locator('#mapSection #yy').count(),1)
         self.assertEqual(self.page.locator('#pocketSection #GS').count(),0)
