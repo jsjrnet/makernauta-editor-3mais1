@@ -13,7 +13,7 @@
 - **Simulação:** simulação de usinagem; **exportação:** programa CNC (.nc) para Mach3, experimental.
 - **Aspire:** importação opcional de G-code rotativo XZA para referência/simulação e composição dos programas, sem converter as operações indexadas em rotativas simultâneas.
 
-**Compatibilidade:** a página física `editor-usinagem-indexada.html`, o repositório, o endereço GitHub Pages, os identificadores internos (`pockets`, `simStage`, etc.) e os comentários estruturais de G-code permanecem inalterados para evitar regressões e links quebrados. Os rótulos e o cabeçalho descritivo do programa CNC são apresentados com a nova identidade. As posições, estratégias e comandos de máquina não foram modificados.
+**Compatibilidade:** a página física `editor-usinagem-indexada.html`, o repositório, o endereço GitHub Pages, os identificadores internos (`pockets`, `simStage`, etc.) e os comentários estruturais de G-code permanecem inalterados para evitar regressões e links quebrados. A nomenclatura exibida na interface foi atualizada; o cabeçalho e os comandos do programa CNC permanecem idênticos aos da base homologada para facilitar a comparação de regressão. As posições, estratégias e comandos de máquina não foram modificados.
 
 
 Editor visual estático de usinagem indexada para Vectric Aspire e Mach3, baseado no **HTML original do protótipo Claude fornecido por Juarez Jr.** A interface, os quatro canvases originais e os fluxos foram mantidos em `editor-usinagem-indexada.html`. Não requer backend, pacotes JavaScript ou serviços externos.
