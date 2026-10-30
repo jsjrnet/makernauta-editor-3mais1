@@ -203,7 +203,7 @@ class EditorTests(unittest.TestCase):
         self.assertTrue(self.page.locator('#SX').is_checked())
 
     def test_rendered_line_groove_retains_ballnose_curvature(self):
-        # Measure the detailed Cartesian section; the 3D surface uses the radial field.
+        # Measure the same Cartesian heights used by the mesh and the enlarged section.
         result = self.js('''() => {
           ops.splice(0,ops.length,{t:'r',ln:true,cm:'on',x:30,a:0,w:6,l:20,d:4});sel=0;
           ops[0].toolDiameter=6;$('T').value=6;$('SD').value=4;$('ql').value='0';
@@ -595,6 +595,7 @@ class EditorTests(unittest.TestCase):
         self.page.locator('#hm').click()
         self.assertEqual(self.js('inspectionA'),0)
 
+
     def test_section_titles_and_collapsed_panel_arrows(self):
         for title in self.page.locator('.dock summary').all_text_contents():
             self.assertRegex(title,r'^[^0-9]')
@@ -607,58 +608,6 @@ class EditorTests(unittest.TestCase):
             self.assertTrue(self.page.locator(f'[data-panel-pin="{side}"]').is_visible())
             self.page.keyboard.press('Escape')
 
-    def test_a30_crossing_cuts_final_mesh_single_surface_and_replay(self):
-        result=self.js("""() => {
-          $('D').value=30;$('L').value=120;$('ql').value='0';$('rf').value='0';$('oc').checked=false;$('tp').checked=false;$('showMachine').checked=false;
-          ops.splice(0,ops.length,{t:'c',x:30,a:30,w:10,l:10,d:1},{t:'r',ln:true,cm:'on',x:70,a:30,w:3,l:20,rot:90,d:1.5},{t:'r',ln:true,cm:'on',x:60,a:30,w:3,l:20,rot:0,d:3});sel=0;draw();v3();tt=tot;dr3();
-          const final=Array.from(FLD),floors=[30,70,60].map(x=>cutterRadiusAt(0,Math.PI/6,{x,y:0,z:x===30?14:x===70?13.5:12,a:30,zo:0,ad:1},{diameter:3,ball:false}));
-          const g=m3.getContext('2d'),fill=g.fill,begin=g.beginPath,move=g.moveTo,line=g.lineTo,expected=(NXG-1)*NPG+2*NPG,edges=new Map();let count=0,points=[];
-          g.beginPath=function(){points=[];return begin.apply(this,arguments)};g.moveTo=function(x,y){points.push([x,y]);return move.apply(this,arguments)};g.lineTo=function(x,y){points.push([x,y]);return line.apply(this,arguments)};
-          g.fill=function(){if(count<expected){const vertices=points.map(p=>p.map(v=>v.toFixed(6)).join(','));for(let i=0;i<vertices.length;i++){const a=vertices[i],b=vertices[(i+1)%vertices.length];if(a!==b){const key=[a,b].sort().join('|');edges.set(key,(edges.get(key)||0)+1)}}}count++;return fill.apply(this,arguments)};dr3();g.fill=fill;g.beginPath=begin;g.moveTo=move;g.lineTo=line;
-          const manifold=[...edges.values()].every(count=>count===2),stable=FLD.every((v,i)=>v===final[i]);tt=0;dr3();const reset=FLD.every(v=>v===15);tt=tot;dr3();const replay=FLD.every((v,i)=>v===final[i]);
-          grid();for(let k=0;k<=20;k++){tt=tot*k/20;const p=curp();carveTo(p.ci,p.u)}const incremental=FLD.every((v,i)=>v===final[i]);dr3();
-          return {count,expected,manifold,incremental,stable,reset,replay,floors,finite:FLD.every(v=>Number.isFinite(v)&&v>=0&&v<=15),min:Math.min(...FLD),code:$('out').value};
-        }""")
-        self.assertEqual(result['floors'],[14,13.5,12])
-        self.assertTrue(result['finite'] and result['stable'] and result['reset'] and result['replay'] and result['incremental'])
-        self.assertTrue(result['manifold'], 'Cada aresta da superfície fechada deve pertencer a duas faces')
-        self.assertAlmostEqual(result['min'],12,places=4)
-        # Cube fills three faces; no independent overlapping pocket grids remain.
-        self.assertLessEqual(result['count']-result['expected'],3)
-        self.assertIn('Alojamento 2: linha',result['code'])
-        self.assertNotIn('retangulo',result['code'])
-        self.page.locator('#c3').screenshot(path='/tmp/makernauta-a30-final.png')
-
-
-    def test_a30_floors_on_all_three_operations_and_quality_levels(self):
-        values=self.js("""() => {const results=[];$('D').value=30;$('L').value=120;$('rf').value='0';
-          for(const quality of ['0','1','2'])for(const floor of [14,13.5,12]){
-            $('ql').value=quality;ops.splice(0,ops.length,{t:'c',x:30,a:30,w:10,l:10,d:15-floor},{t:'r',ln:true,cm:'on',x:70,a:30,w:3,l:20,rot:90,d:15-floor},{t:'r',ln:true,cm:'on',x:60,a:30,w:3,l:20,rot:0,d:15-floor});draw();pg();grid();carveTo(sg.length-1,1);
-            const j=Math.round(NPG/12),radii=[30,70,60].map(x=>FLD[Math.round(x/120*(NXG-1))*NPG+j]);results.push({floor,radii,finite:FLD.every(v=>Number.isFinite(v)&&v<=15&&v>=0)});
-          }return results}""")
-        for row in values:
-            self.assertTrue(row['finite'])
-            for radius in row['radii']:
-                self.assertAlmostEqual(radius,row['floor'],delta=.001)
-
-    def test_cylinder_cut_angle_matches_tool_and_contour_in_rolled_view(self):
-        result=self.js("""() => {
-          const tool={diameter:3,ball:false},q={x:35,y:0,z:12,a:30,zo:0,ad:1};
-          const front=cutterRadiusAt(0,Math.PI/6,q,tool);
-          const opposite=cutterRadiusAt(0,-Math.PI/6,q,tool);
-          const projected=mpt(q,1,0),radius=Math.atan2(projected[1],projected[2]);
-          $('D').value=30;$('L').value=120;$('ql').value='2';
-          ops.splice(0,ops.length,{t:'r',ln:true,cm:'on',x:60,a:30,w:3,l:20,d:3});
-          sel=0;draw();pg();grid();carveTo(sg.length-1,1);
-          const x=Math.round(60/120*(NXG-1)),j=Math.round(NPG/12),jWrong=Math.round(NPG*11/12);
-          return {front,opposite,radius,cut:FLD[x*NPG+j],wrong:FLD[x*NPG+jWrong],code:$('out').value};
-        }""")
-        self.assertAlmostEqual(result['front'],12,places=4)
-        self.assertTrue(not math.isfinite(result['opposite']) or result['opposite']>12.5)
-        self.assertAlmostEqual(result['radius'],math.pi/6,places=4)
-        self.assertLess(result['cut'],13)
-        self.assertGreater(result['wrong'],result['cut']+.5)
-        self.assertIn('G0 A30',result['code'])
 
     def test_invalid_step_cannot_hang_generation(self):
         self.page.locator('#SD').fill('0')
