@@ -242,6 +242,7 @@ class EditorTests(unittest.TestCase):
         self.assertIn('ponta hemisférica', self.page.locator('#helpBody').text_content())
         self.page.keyboard.press('Escape')
         before=self.page.locator('#ST').is_checked()
+        self.page.locator('#depthAdvanced > summary').click()
         self.page.locator('[data-help-for="ST"]').click()
         self.assertEqual(self.page.locator('#ST').is_checked(),before)
         self.page.get_by_role('button',name='Fechar',exact=True).click()
@@ -478,6 +479,7 @@ class EditorTests(unittest.TestCase):
 
     def test_stl_aspire_and_pocket_stages_and_per_operation_reference(self):
         self.load_reference_stl()
+        self.page.locator('#depthAdvanced > summary').click()
         self.page.locator('#ST').check()
         self.assertTrue(self.js('ops[0].stlDepth'))
         self.page.locator('#addC').click()
@@ -608,6 +610,39 @@ class EditorTests(unittest.TestCase):
             self.assertTrue(self.page.locator(f'[data-panel-pin="{side}"]').is_visible())
             self.page.keyboard.press('Escape')
 
+
+    def test_embedded_stl_examples_and_groups_preserve_nc(self):
+        before=self.page.locator('#out').input_value()
+        for model in ['cylinder','lure']:
+            self.page.locator('#sampleSTL').select_option(model)
+            self.page.locator('#loadSampleSTL').click()
+            self.assertTrue(self.page.locator('#sti').text_content().startswith('EXEMPLO INCORPORADO'))
+            self.assertEqual(self.js('TRI.length/9'),4160)
+            self.assertAlmostEqual(self.js('TLEN'),100,places=3)
+            self.assertEqual(self.page.locator('#out').input_value(),before)
+            self.assertEqual(self.page.locator('#D').input_value(),'30')
+            self.assertEqual(self.page.locator('#L').input_value(),'120')
+            self.assertEqual(self.page.locator('#vm').input_value(),'4')
+            self.assertTrue(self.js('Number.isFinite(Math.max(...TGT))'))
+        self.assertEqual(self.js('new DataView(sampleSTLBuffer("lure")).getUint32(80,true)'),4160)
+        self.assertEqual(self.page.locator('#mapSection #GS').count(),1)
+        self.assertEqual(self.page.locator('#mapSection #yy').count(),1)
+        self.assertEqual(self.page.locator('#pocketSection #GS').count(),0)
+        self.assertEqual(self.page.locator('#pocketSection .op-group').count(),4)
+        self.assertEqual(self.page.locator('#pocketSection #T').count(),1)
+        self.assertEqual(self.page.locator('#pocketSection #ST').count(),1)
+        self.assertEqual(self.page.locator('#out').input_value(),before)
+
+    def test_navigation_opens_collapsed_section_without_changing_program(self):
+        before=self.page.locator('#out').input_value()
+        self.page.locator('#simulationSection > summary').click()
+        self.assertFalse(self.page.locator('#simulationSection').evaluate('(e)=>e.open'))
+        self.page.locator('[data-go="simulationSection"]').click()
+        self.assertTrue(self.page.locator('#simulationSection').evaluate('(e)=>e.open'))
+        self.page.locator('[data-go="pocketSection"]').click()
+        self.assertTrue(self.page.locator('#pocketSection').evaluate('(e)=>e.open'))
+        self.assertEqual(self.page.locator('#out').input_value(),before)
+        self.assertIn('Girar A',self.page.locator('.a-inspection').text_content())
 
     def test_invalid_step_cannot_hang_generation(self):
         self.page.locator('#SD').fill('0')
