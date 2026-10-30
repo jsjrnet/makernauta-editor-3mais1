@@ -54,6 +54,33 @@ test('HTTP preview verification requires exact SHA, branch and HTML content hash
   assert.equal(await verifyPreview(origin, pr, config, async url => new Response(url.includes('preview-manifest') ? JSON.stringify(manifest) : 'wrong HTML')), false);
   assert.equal(await verifyPreview(origin, pr, config, async () => new Response('login', { status: 403 })), false);
 });
+test('Cloudflare clean HTML URL permits exactly one same-origin canonical redirect', async () => {
+  for (const status of [301, 302, 307, 308]) {
+    const calls = [];
+    const redirected = async (url, options) => {
+      calls.push(url);
+      if (url.includes('preview-manifest')) return new Response(JSON.stringify(manifest));
+      if (url.includes('.html?')) {
+        assert.equal(options.redirect, 'manual');
+        return new Response(null, { status, headers: { location: `/editor-usinagem-indexada?commit=${sha}` } });
+      }
+      assert.equal(options.redirect, 'error');
+      return new Response(html);
+    };
+    assert.equal(await verifyPreview(origin, pr, config, redirected), true);
+    assert.equal(calls.length, 3);
+  }
+  for (const location of [`https://evil.test/editor-usinagem-indexada?commit=${sha}`, `/login?commit=${sha}`, '/editor-usinagem-indexada', `/editor-usinagem-indexada?commit=${older}`, `/editor-usinagem-indexada?commit=${sha}#login`, `https://${config.project}.pages.dev/editor-usinagem-indexada?commit=${sha}`]) {
+    let calls = 0;
+    const rejected = async url => {
+      calls++;
+      return url.includes('preview-manifest') ? new Response(JSON.stringify(manifest)) : new Response(null, { status: 308, headers: { location } });
+    };
+    assert.equal(await verifyPreview(origin, pr, config, rejected), false);
+    assert.equal(calls, 2);
+  }
+  assert.equal(await verifyPreview(origin, pr, config, async url => url.includes('preview-manifest') ? new Response(JSON.stringify(manifest)) : new Response(null, { status: 308, headers: { location: `/editor-usinagem-indexada?commit=${sha}` } })), false);
+});
 test('functional approval must be human, explicit and for the latest SHA', () => {
   assert.equal(functionalApproval([review], sha, 'jsjrnet'), true);
   for (const replacement of [{ commit_id: older }, { user: { login: 'bot' } }, { state: 'COMMENTED' }, { body: 'Não homologado funcionalmente' }, { body: 'CI verde' }]) assert.equal(functionalApproval([{ ...review, ...replacement }], sha, 'jsjrnet'), false);
