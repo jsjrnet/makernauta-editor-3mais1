@@ -545,7 +545,7 @@ class EditorTests(unittest.TestCase):
     def test_visual_fixture_toggle_preserves_removal_and_export_baselines(self):
         self.assertEqual(hashlib.sha256(self.page.locator('#out').input_value().encode()).hexdigest(),'3e5b3159db84a38fc62469a8437606a8f6f58dcb5d19877980a98f5672dfcb97')
         self.js("$('addR').click();$('T').value=4;$('T').oninput();$('addL').click();$('HT').value='1';$('HT').oninput();$('Z0').value='1';draw();v3()")
-        self.assertEqual(hashlib.sha256(self.page.locator('#out').input_value().encode()).hexdigest(),'bb2baf3f976a19cdd2c03d7170426b1d13abeebce14ecf9de57519078034175e')
+        self.assertEqual(hashlib.sha256(self.page.locator('#out').input_value().replace('Alojamento 3: linha','Alojamento 3: retangulo').encode()).hexdigest(),'bb2baf3f976a19cdd2c03d7170426b1d13abeebce14ecf9de57519078034175e')
         self.js("tt=tot;dr3();window.visualBefore={field:FLD,values:Array.from(FLD),code:$('out').value,path:JSON.stringify(sg)}")
         self.page.locator('#showMachine').uncheck()
         self.page.locator('#showMachine').check()
@@ -582,6 +582,32 @@ class EditorTests(unittest.TestCase):
             self.assertTrue(page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
             page.locator('[data-section="simulation"]').screenshot(path='/tmp/makernauta-machine-mobile.png')
         finally:context.close()
+
+    def test_visual_a_controls_never_change_program_or_material(self):
+        self.js("tt=tot;dr3();window.beforeInspection={code:$('out').value,ops:JSON.stringify(ops),field:Array.from(FLD),time:tt,angle:VW.fo,tip:VW.machine.tailstockTip}")
+        self.page.locator('#aRight').click()
+        self.assertTrue(self.js("$('out').value===beforeInspection.code&&JSON.stringify(ops)===beforeInspection.ops&&tt===beforeInspection.time&&FLD.every((v,i)=>v===beforeInspection.field[i])"))
+        self.assertAlmostEqual(self.js('VW.fo-beforeInspection.angle'),math.pi/12)
+        self.assertEqual(self.js('VW.machine.tailstockTip'),self.js('beforeInspection.tip'))
+        self.page.locator('#aLeft').click()
+        self.assertEqual(self.js('inspectionA'),0)
+        self.page.locator('#aRight').click()
+        self.page.locator('#hm').click()
+        self.assertEqual(self.js('inspectionA'),0)
+
+
+    def test_section_titles_and_collapsed_panel_arrows(self):
+        for title in self.page.locator('.dock summary').all_text_contents():
+            self.assertRegex(title,r'^[^0-9]')
+        for side in ['left','right']:
+            self.page.locator(f'[data-panel-pin="{side}"]').click()
+            tab=self.page.locator(f'[data-panel-tab="{side}"]')
+            self.assertTrue(tab.is_visible())
+            self.assertIn(tab.evaluate("el => getComputedStyle(el, '::before').content"),['"›"','"‹"'])
+            tab.click()
+            self.assertTrue(self.page.locator(f'[data-panel-pin="{side}"]').is_visible())
+            self.page.keyboard.press('Escape')
+
 
     def test_invalid_step_cannot_hang_generation(self):
         self.page.locator('#SD').fill('0')
