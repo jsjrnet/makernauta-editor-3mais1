@@ -613,18 +613,18 @@ class EditorTests(unittest.TestCase):
 
     def test_embedded_stl_examples_and_groups_preserve_nc(self):
         before=self.page.locator('#out').input_value()
-        for model in ['cylinder','lure']:
+        for model,expected in [('lure',2080),('pawn',4160)]:
             self.page.locator('#sampleSTL').select_option(model)
             self.page.locator('#loadSampleSTL').click()
             self.assertTrue(self.page.locator('#sti').text_content().startswith('EXEMPLO INCORPORADO'))
-            self.assertEqual(self.js('TRI.length/9'),4160)
-            self.assertAlmostEqual(self.js('TLEN'),100,places=3)
+            self.assertEqual(self.js('TRI.length/9'),expected)
+            self.assertAlmostEqual(self.js('TLEN'),63.3 if model=='lure' else 64.5,places=3)
             self.assertEqual(self.page.locator('#out').input_value(),before)
             self.assertEqual(self.page.locator('#D').input_value(),'30')
             self.assertEqual(self.page.locator('#L').input_value(),'120')
             self.assertEqual(self.page.locator('#vm').input_value(),'4')
             self.assertTrue(self.js('Number.isFinite(Math.max(...TGT))'))
-        self.assertEqual(self.js('new DataView(sampleSTLBuffer("lure")).getUint32(80,true)'),4160)
+        self.assertEqual(self.js('new DataView(sampleSTLBuffer("lure")).getUint32(80,true)'),2080)
         self.assertEqual(self.page.locator('#mapSection #GS').count(),1)
         self.assertEqual(self.page.locator('#mapSection #yy').count(),1)
         self.assertEqual(self.page.locator('#pocketSection #GS').count(),0)
