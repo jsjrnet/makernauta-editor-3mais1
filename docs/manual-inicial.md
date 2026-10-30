@@ -6,7 +6,7 @@ O módulo atualmente disponível é **Usinagem Indexada 3+1**. O eixo A **posici
 ### 1. Preparar trabalho
 - Em **Configuração da peça e máquina**, informe **diâmetro e comprimento do material bruto**, e não as dimensões da peça acabada.
 - Defina o Z0 da máquina conforme a origem do trabalho. Na importação Aspire, a confirmação da referência é indispensável se não constar explicitamente nos comentários do G-code. **A simples altura dos movimentos não permite determinar com segurança a origem Z0.**
-- Importe o programa do Aspire em **Importação Aspire** e configure a fresa da escultura segundo a ferramenta real. O programa original não é convertido.
+- Importe o programa do Aspire em **Importação Aspire**. A área **Dados identificados no cabeçalho do Aspire** apresenta valores explicitamente declarados sobre o bruto e a ferramenta; **Aplicar dados reconhecidos** só copia os valores quando solicitado. Z0 exige confirmação independente. O programa original não é convertido.
 
 ### 2. Usar STL de referência ou exemplos incorporados
 - **Carregar exemplo → Isca Natan** carrega uma **aproximação de baixa resolução** construída por amostragem do STL original de cerca de 63 mm usado no teste. Não é uma cópia exata e **não corresponde necessariamente ao G-code Aspire**. O comprimento da isca real não deve ser confundido com o comprimento do bruto.
@@ -15,7 +15,7 @@ O módulo atualmente disponível é **Usinagem Indexada 3+1**. O eixo A **posici
 - **Escolher ficheiro** importa seu próprio STL; prefira este procedimento para comparar o resultado com a geometria de referência real.
 - **Nenhum STL sozinho usina a peça.** A remoção simulada é causada pelos movimentos de ferramenta.
 - **Copiar dimensões do STL (avançado)** altera as medidas do bruto; evite esse comando quando as dimensões originais do bruto do Aspire já forem conhecidas. O STL acabado costuma ser menor que o material de partida.
-- Os controles **Girar STL** e **Inverter o comprimento** ajudam na orientação; o alinhamento completo por deslocamento X ainda é um aprimoramento previsto.
+- Os controles **Girar STL**, **Inverter o comprimento** e **Deslocamento X do STL** permitem alinhar a referência visual sem modificar as coordenadas do G-code. Se **Usar superfície do STL como referência de profundidade** estiver ativada, o alinhamento influencia intencionalmente o cálculo.
 
 ### 3. Criar operações indexadas
 Na vista **Desenho da peça — vista desenrolada**, use **+ Círculo**, **+ Retângulo**, **+ Linha**. Selecione a operação para editar:
@@ -45,4 +45,4 @@ Em **Programa CNC gerado**, confira as mensagens de validação, ferramentas e o
 A peça e os parâmetros exibidos inicialmente são apenas **exemplos de interface**, não dados automaticamente reconhecidos de um trabalho real. Um futuro modo **Novo trabalho** deverá separar explicitamente uma demonstração de um projeto novo.
 
 ### 7. Próximos refinamentos ainda não concluídos na PR #7
-Interpretação assistida dos parâmetros do cabeçalho Aspire, deslocamento longitudinal do STL, caracterização das saliências de sobreposição no 3D e confirmação do sentido de giro dos controles. Nenhum desses itens autoriza mudar a estratégia CAM validada sem teste e nova homologação.
+Caracterização das saliências de sobreposição no 3D, confirmação do sentido de giro dos controles e projeto novo sem valores de demonstração. Nenhum desses itens autoriza mudar a estratégia CAM validada sem teste e nova homologação.
