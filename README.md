@@ -1,6 +1,22 @@
-# Makernauta — Editor de Usinagem Indexada 3+1
+# Makernauta — Usinagem Rotativa
 
-Editor visual estático para Vectric Aspire e Mach3, baseado no **HTML original do protótipo Claude fornecido por Juarez Jr.** A interface, os quatro canvases originais e os fluxos foram mantidos em `editor-usinagem-indexada.html`. Não requer backend, pacotes JavaScript ou serviços externos.
+**Módulo disponível:** Usinagem Indexada 3+1 — eixo A posiciona a peça e permanece parado durante cortes XYZ. O título **Usinagem Rotativa** identifica o projeto e não significa que o editor já gere trajetórias XZA/XYZA simultâneas. O módulo rotativo simultâneo é uma possibilidade futura, não implementada nesta versão.
+
+## Nomenclatura PT-BR do projeto
+
+- **Projeto:** Makernauta — Usinagem Rotativa.
+- **Módulo atual:** Usinagem Indexada 3+1.
+- **Operações de usinagem:** grupo de trabalhos de corte, não confundir com os comandos do eixo A.
+- **Geometrias:** círculo, retângulo e linha (rasgo). Quadrado pode ser representado por um retângulo de lados iguais; não há ferramenta independente de quadrado nesta versão.
+- **Estratégias disponíveis:** usinagem de contorno (sobre, por dentro, por fora) e usinagem de cavidade (bolsão). A estratégia de furação com broca, descrita no Aspire como **Drilling Toolpath**, não foi implementada.
+- **Parâmetros:** profundidade por passada, altura de segurança, ferramenta da operação e origem Z0.
+- **Simulação:** simulação de usinagem; **exportação:** programa CNC (.nc) para Mach3, experimental.
+- **Aspire:** importação opcional de G-code rotativo XZA para referência/simulação e composição dos programas, sem converter as operações indexadas em rotativas simultâneas.
+
+**Compatibilidade:** a página física `editor-usinagem-indexada.html`, o repositório, o endereço GitHub Pages, os identificadores internos (`pockets`, `simStage`, etc.) e os comentários estruturais de G-code permanecem inalterados para evitar regressões e links quebrados. A nomenclatura exibida na interface foi atualizada; o cabeçalho e os comandos do programa CNC permanecem idênticos aos da base homologada para facilitar a comparação de regressão. As posições, estratégias e comandos de máquina não foram modificados.
+
+
+Editor visual estático de usinagem indexada para Vectric Aspire e Mach3, baseado no **HTML original do protótipo Claude fornecido por Juarez Jr.** A interface, os quatro canvases originais e os fluxos foram mantidos em `editor-usinagem-indexada.html`. Não requer backend, pacotes JavaScript ou serviços externos.
 
 **Protótipo: G-code não homologado para execução física.** Os testes deste repositório verificam o software e sua geometria, sem validar máquina, pós-processador, fixação, colisões ou condições de corte.
 
