@@ -132,7 +132,7 @@ class EditorTests(unittest.TestCase):
         for ball in (False, True):
             result = self.page.evaluate('''ball => {
               const q={x:30,y:0,z:9,a:90},tool={diameter:6,ball};
-              const phi=(90+5)*Math.PI/180,r=cutterRadiusAt(0,phi,q,tool),delta=5*Math.PI/180;
+              const phi=(-90+5)*Math.PI/180,r=cutterRadiusAt(0,phi,q,tool),delta=5*Math.PI/180;
               return {r,y:r*Math.sin(delta),z:r*Math.cos(delta)};
             }''', ball)
             if ball:
@@ -152,7 +152,7 @@ class EditorTests(unittest.TestCase):
             $('DIR').value=dir;$('Z0').value=origin;grid();
             const i=Math.round((NXG-1)/2),x=i*P().L/(NXG-1),q={x,y:0,z:9-(+origin?15:0),a:angle*dir};
             carveSeg({p:q,q,r:false,h:0},0,1);
-            const j=Math.round(angle/360*NPG)%NPG,at=FLD[i*NPG+j],opposite=FLD[i*NPG+(j+NPG/2)%NPG];
+            const j=Math.round((((-angle%360)+360)%360)/360*NPG)%NPG,at=FLD[i*NPG+j],opposite=FLD[i*NPG+(j+NPG/2)%NPG];
             if(Math.abs(at-9)>1e-6||opposite!==15)failures.push({dir,origin,angle,at,opposite});
           }return failures;
         }''')
