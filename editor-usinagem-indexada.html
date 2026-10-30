@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Editor de usinagem indexada 3+1 · Makernauta (protótipo)</title>
+<title>Makernauta — Usinagem Rotativa | Módulo Indexado 3+1 (protótipo)</title>
 <style>
 :root{--bg:#f3f1ec;--pn:#fff;--tx:#1d2a2c;--mu:#66777a;--ln:#d5d9d6;--ac:#0b6b6f;--op:#c2410c;--ok:#e8efee;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
@@ -41,37 +41,37 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 
 .simulation-viewport{height:340px;min-height:240px;max-height:1000px;min-width:0;overflow:hidden}.simulation-viewport #c3{height:100%;width:100%;display:block}.simulation-resize{height:16px;cursor:ns-resize;touch-action:none;display:flex;align-items:center;justify-content:center;border:1px solid var(--ln);border-radius:0 0 5px 5px;background:var(--ok);margin-bottom:6px}.simulation-resize::after{content:'•••';letter-spacing:4px;color:var(--mu);line-height:1}.simulation-resize:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 </style></head><body>
-<header><h1>Editor de usinagem indexada (3+1)</h1>
-<p>O eixo A gira a peça e fica parado; X, Y e Z fazem o recorte. Arraste os alojamentos sobre o cilindro desenrolado: horizontal = posição ao longo da peça, vertical = ângulo do A.</p><button id="helpToggle" class="info-toggle" aria-pressed="false">ⓘ Informações dos parâmetros</button></header>
+<header><h1>Makernauta — Usinagem Rotativa</h1>
+<p><strong>Módulo atual: Usinagem Indexada 3+1.</strong> O eixo A posiciona a peça e permanece parado durante o corte XYZ. Arraste as operações na vista desenrolada: horizontal = comprimento da peça; vertical = ângulo de indexação A. A usinagem XZA simultânea ainda não é gerada neste módulo.</p><button id="helpToggle" class="info-toggle" aria-pressed="false">ⓘ Informações dos parâmetros</button></header>
 <div class="safety-strip"><button id="safetyButton" type="button" aria-haspopup="dialog">Aviso de segurança — Protótipo não homologado</button><small>G-code experimental · não homologado para CNC</small></div>
 <dialog id="safetyDialog" aria-labelledby="safetyTitle"><h2 id="safetyTitle">Aviso de segurança</h2><p><b>Protótipo, não validado em máquina.</b> O G-code gerado não é homologado para execução física e nunca foi testado numa CNC real. Antes de usinar, confira no backplot do Mach3 e rode no ar. Uso por sua conta e risco.</p><form method="dialog"><button autofocus>Fechar aviso</button></form></dialog>
 <main>
 <div class="col">
-<div class="pn"><h2>Cilindro desenrolado (ângulo × comprimento)</h2><div class="row" style="margin:0 0 8px"><button id="addC">+ Círculo</button><button id="addR">+ Retângulo</button><button id="addL">+ Linha (encaixe)</button><button id="del">Remover selecionado</button></div><canvas id="cv" height="330"></canvas>
+<div class="pn"><h2>Desenho da peça — vista desenrolada (comprimento × ângulo A)</h2><div class="row" style="margin:0 0 8px"><button id="addC">+ Círculo</button><button id="addR">+ Retângulo</button><button id="addL">+ Linha (encaixe)</button><button id="del">Remover selecionado</button></div><canvas id="cv" height="330"></canvas>
 </div>
 <div class="duo"><div class="pn"><h2>Vista de topo da seção</h2><canvas id="sec" height="250"></canvas></div>
-<div class="pn"><h2>Inspeção cartesiana XY (alojamento selecionado)</h2><canvas id="xy" height="200"></canvas><p class="warn">Laranja: contorno final. Verde tracejado: trajetória do centro da fresa. Círculo pequeno: a fresa. O contorno é cartesiano (arcos G3) e não depende da malha da simulação 3D.</p></div></div>
-<div class="pn"><h2>3D: peça, alojamentos e simulação do G-code (arraste para girar, role para ampliar)</h2><canvas id="c3" height="340" style="touch-action:none;cursor:grab"></canvas>
-<p id="viewStatus" class="warn" role="status"></p><label>Qualidade da simulação<select id="ql"><option value="0">Rápida</option><option value="1" selected>Média</option><option value="2">Alta (lenta)</option></select></label><label>Etapas simuladas<select id="simStage"><option value="all">Aspire + alojamentos (Z0 validado)</option><option value="sculpture">Somente escultura Aspire</option><option value="pockets">Somente alojamentos sobre o bruto</option></select></label><p id="simStatus" class="warn" role="status"></p><label>Desenrolado (A vira Y) ⟷ enrolado no cilindro<input id="mo" type="range" min="0" max="100" value="100" style="padding:0"></label>
-<div class="row"><button class="p" id="pl3">Simular G-code</button><button id="rs3">Reiniciar</button><button id="hm" title="Voltar à vista inicial">Vista inicial</button><label style="flex-direction:row;align-items:center;gap:6px">Vista<select id="rf"><option value="2" selected>Automática (peça parada ao editar, máquina ao simular)</option><option value="1">Máquina (fresa fixa, peça gira)</option><option value="0">Peça (cilindro fixo)</option></select></label><label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx)"><input id="tp" type="checkbox" checked>Percurso</label><label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx)"><input id="oc" type="checkbox" checked>Contornos</label></div>
+<div class="pn"><h2>Inspeção do percurso XYZ — operação selecionada</h2><canvas id="xy" height="200"></canvas><p class="warn">Laranja: contorno final. Verde tracejado: trajetória do centro da fresa. Círculo pequeno: a fresa. O contorno é cartesiano (arcos G3) e não depende da malha da simulação 3D.</p></div></div>
+<div class="pn"><h2>Simulação 3D — peça e trajetórias de usinagem (arraste para girar, role para ampliar)</h2><canvas id="c3" height="340" style="touch-action:none;cursor:grab"></canvas>
+<p id="viewStatus" class="warn" role="status"></p><label>Qualidade da simulação<select id="ql"><option value="0">Rápida</option><option value="1" selected>Média</option><option value="2">Alta (lenta)</option></select></label><label>Conteúdo da simulação<select id="simStage"><option value="all">Escultura Aspire + operações indexadas (Z0 compatível)</option><option value="sculpture">Apenas escultura importada do Aspire</option><option value="pockets">Apenas operações indexadas (a partir do bruto)</option></select></label><p id="simStatus" class="warn" role="status"></p><label>Desenrolado (A vira Y) ⟷ enrolado no cilindro<input id="mo" type="range" min="0" max="100" value="100" style="padding:0"></label>
+<div class="row"><button class="p" id="pl3">Simular usinagem</button><button id="rs3">Reiniciar</button><button id="hm" title="Voltar à vista inicial">Vista inicial</button><label style="flex-direction:row;align-items:center;gap:6px">Vista<select id="rf"><option value="2" selected>Automática (peça parada ao editar, máquina ao simular)</option><option value="1">Máquina (fresa fixa, peça gira)</option><option value="0">Peça (cilindro fixo)</option></select></label><label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx)"><input id="tp" type="checkbox" checked>Percurso</label><label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx)"><input id="oc" type="checkbox" checked>Contornos</label></div>
 <label style="flex-direction:row;align-items:center;gap:6px"><input id="showMachine" type="checkbox" checked>Fixação visual (chuck e contraponto)</label>
 <input id="sl3" type="range" min="0" max="1000" value="0" style="padding:0;width:100%;margin-top:6px" aria-label="Posição da simulação">
 <h2 style="margin-top:14px">Perfil da ferramenta e seção do corte</h2><canvas id="cutProfile" height="220" aria-label="Perfil das ferramentas e seção transversal do material simulado"></canvas>
 <p class="warn" id="cutStatus" aria-live="polite"></p></div>
-<div class="pn"><h2>G-code gerado (.nc para Mach3)</h2><textarea id="out" readonly aria-label="G-code"></textarea>
-<div class="row"><button class="p" id="cp">Copiar G-code</button><button id="download">Baixar .nc para Mach3</button></div>
+<div class="pn"><h2>Programa CNC gerado (.nc para Mach3)</h2><textarea id="out" readonly aria-label="G-code"></textarea>
+<div class="row"><button class="p" id="cp">Copiar programa CNC</button><button id="download">Baixar .nc para Mach3</button></div>
 <p class="warn">Antes de usinar: revise no backplot do Mach3 e rode no ar. Confirme se o Z0 e o A0 coincidem com a fixação usada no Aspire.</p></div>
 </div>
 <div class="col">
-<div class="pn" id="aspireSection"><h2>3. Escultura do Aspire (G-code rotativo XZA)</h2>
+<div class="pn" id="aspireSection"><h2>Importação Aspire — escultura rotativa XZA (opcional)</h2>
 <textarea id="sc" style="height:110px" placeholder="Cole aqui o .nc rotativo gerado no Aspire (opcional)" aria-label="G-code do Aspire"></textarea>
 <div class="row"><input id="fsc" type="file" accept=".nc,.txt,.tap,.gcode"></div>
 <div class="g" style="margin-top:8px">
-<label>Arquivo .nc gerado<select id="OM"><option value="1">Um só: escultura do Aspire + alojamentos</option><option value="0">Só os alojamentos (rodar depois da escultura)</option></select></label></div>
+<label>Programa CNC a exportar<select id="OM"><option value="1">Programa combinado: Aspire + operações indexadas</option><option value="0">Apenas operações indexadas (após a escultura)</option></select></label></div>
 <label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx);margin-top:8px"><input id="PZ" type="checkbox" checked>Pausar (M0) para trocar a fresa</label>
 <div class="g"><label>Fresa da escultura Aspire Ø (mm)<input id="TS" type="number" value="3" step="0.1"></label>
 <label>Tipo da fresa da escultura<select id="TY"><option value="1">Esférica (ball nose)</option><option value="0">Topo plana</option></select></label></div><p id="aspireReference" class="warn" role="status"></p><div class="row"><button id="confirmCenter">Confirmar arquivo: Z0 no centro</button><button id="confirmSurface">Confirmar arquivo: Z0 na superfície</button></div><p class="warn" id="si"></p></div>
-<div class="pn" id="stlSection"><h2>4. STL da isca (opcional)</h2>
+<div class="pn" id="stlSection"><h2>Modelo STL de referência (opcional)</h2>
 <div class="row"><input id="fst" type="file" accept=".stl"><button id="fit" title="Copia o diâmetro máximo e o comprimento do STL para os campos do bruto. Use só se não souber as medidas do Aspire.">Copiar Ø e L do STL para o bruto</button></div>
 <div class="g" style="margin-top:8px">
 <label>Girar STL (°)<input id="SR" type="number" value="0" step="5"></label>
@@ -80,22 +80,22 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 <label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx);margin-top:8px"><input id="SX" type="checkbox">Inverter o comprimento do STL</label>
 
 <p class="warn" id="sti">Sem STL: o material é o cilindro bruto. Comparar: vermelho = sobrou material; azul = cortou além do STL; verde = dentro de ±0,6 mm.</p></div>
-<div class="pn" id="machineSection"><h2>2. Peça e máquina</h2><div class="g">
-<label>Z0 dos alojamentos / Mach3<select id="Z0"><option value="0">Centro do eixo A</option><option value="1">Superfície do bruto</option></select></label><label>Diâmetro do bruto (mm)<input id="D" type="number" value="30" step="0.1"></label>
+<div class="pn" id="machineSection"><h2>Configuração da peça e máquina</h2><div class="g">
+<label>Z0 das operações indexadas / Mach3<select id="Z0"><option value="0">Centro do eixo A</option><option value="1">Superfície do bruto</option></select></label><label>Diâmetro do bruto (mm)<input id="D" type="number" value="30" step="0.1"></label>
 <label>Comprimento (mm)<input id="L" type="number" value="120" step="1"></label>
 
 <label>Rotação (rpm)<input id="S" type="number" value="18000"></label>
 <label>Avanço (mm/min)<input id="F" type="number" value="1200"></label>
 <label>Mergulho (mm/min)<input id="FP" type="number" value="400"></label>
-<label>Passada por camada (mm)<input id="SD" type="number" value="1.5" step="0.1"></label>
-<label>Folga de segurança (mm)<input id="SF" type="number" value="8" step="1"></label>
-<label>Sentido do A<select id="DIR"><option value="1">Normal (+)</option><option value="-1">Invertido (−)</option></select></label>
-</div><p class="warn">Ferramentas independentes: escultura Aspire e alojamentos. Z0 dos alojamentos definido nesta seção. A referência original do Aspire precisa ser identificada ou confirmada para combinar os programas. Com ballnose, o piso indica a ponta da ferramenta; a borda mantém o raio esférico.</p></div>
-<div class="pn" id="pocketSection"><h2>1. Alojamentos</h2><ul class="ops" id="list"></ul><h2 id="pt" style="margin:10px 0 0">Propriedades</h2>
+<label>Profundidade por passada (mm)<input id="SD" type="number" value="1.5" step="0.1"></label>
+<label>Altura de segurança (mm)<input id="SF" type="number" value="8" step="1"></label>
+<label>Sentido de rotação do eixo A<select id="DIR"><option value="1">Normal (+)</option><option value="-1">Invertido (−)</option></select></label>
+</div><p class="warn">Ferramentas independentes: escultura Aspire e operações indexadas. O Z0 das operações é definido nesta seção. A referência original do Aspire precisa ser identificada ou confirmada para combinar os programas. Com ballnose, o piso indica a ponta da ferramenta; a borda mantém o raio esférico.</p></div>
+<div class="pn" id="pocketSection"><h2>Operações de usinagem — cortes XYZ indexados</h2><ul class="ops" id="list"></ul><h2 id="pt" style="margin:10px 0 0">Parâmetros da operação</h2>
 
 <div class="g" style="margin-top:10px">
-<label>Fresa dos alojamentos Ø (mm)<input id="T" type="number" value="3" step="0.1"></label>
-<label>Tipo da fresa dos alojamentos<select id="HT"><option value="0">Topo reto (plana)</option><option value="1">Esférica (ballnose)</option></select></label>
+<label>Diâmetro da fresa desta operação (mm)<input id="T" type="number" value="3" step="0.1"></label>
+<label>Tipo de fresa desta operação<select id="HT"><option value="0">Topo reto (plana)</option><option value="1">Esférica (ballnose)</option></select></label>
 <label>Posição X (mm)<input id="x" type="number" step="0.5"></label>
 <label>Ângulo A (°)<input id="a" type="number" step="1"></label>
 <label>Y desenrolado (mm)<input id="yy" type="number" step="0.5"></label>
@@ -103,7 +103,7 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 <label id="ll">Comprimento (mm)<input id="l" type="number" step="0.5"></label>
 <label class="stl-depth" style="flex-direction:row;align-items:center;gap:6px;color:var(--tx);margin-top:4px"><input id="ST" type="checkbox">Usar STL como referência de profundidade (opcional)</label><label>Profundidade (mm)<input id="d" type="number" step="0.5"></label>
 <label>Piso Z no Mach3 (mm)<input id="fz" readonly></label>
-<label id="rotw">Ângulo da forma (°)<input id="rot" type="number" step="5" value="0"></label><label>Tipo de corte<select id="cm"><option value="p">Esvaziar (bolsão)</option><option value="on">Contorno sobre a linha</option><option value="in">Contorno por dentro</option><option value="out">Contorno por fora</option></select></label></div>
+<label id="rotw">Ângulo da forma (°)<input id="rot" type="number" step="5" value="0"></label><label>Estratégia de usinagem<select id="cm"><option value="p">Usinagem de cavidade (bolsão)</option><option value="on">Usinar sobre o contorno</option><option value="in">Usinar por dentro do contorno</option><option value="out">Usinar por fora do contorno</option></select></label></div>
 <div class="row" id="rotb"><button id="r0">Horizontal</button><button id="r90">Vertical</button><button id="r45">Diagonal 45°</button></div>
 <div class="g" style="margin-top:8px"><label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx)"><input id="GS" type="checkbox">Travar na grade</label><span></span><label>Grade X (mm)<input id="GX" type="number" value="10" min="1" step="1"></label><label>Grade A (°)<input id="GA" type="number" value="5" step="1"></label></div>
 <div class="err" id="err" role="alert"></div>
@@ -142,7 +142,7 @@ function drawSection(){if($('sec').getBoundingClientRect().width<1)return;const 
 function draw(regenerate=true){drawMap();drawSection();if(regenerate){gen();clearTimeout(vt);vt=setTimeout(v3,$('sc').value.length>2e4?200:0)}else{dr3();xyv2();if(m3.getBoundingClientRect().width<1)profileView()}}
 
 function lst(){const u=$('list');u.innerHTML='';ops.forEach((o,i)=>{const li=document.createElement('li'),b=document.createElement('button');b.textContent=`${o.ln?'Linha':o.t=='c'?'Círculo':'Retângulo'} ${i+1}: X${f(o.x)}  A${f(o.a)}° · ${operationTool(o).ball?'ballnose':'topo reto'} Ø${f(operationTool(o).diameter)}`;b.className=i==sel?'on':'';b.onclick=()=>{sel=i;lst();form();draw()};li.appendChild(b);u.appendChild(li)})}
-function form(){const o=ops[sel];if(!o)return;$('ST').checked=!!o.stlDepth;$('T').value=operationTool(o).diameter;$('HT').value=operationTool(o).ball?'1':'0';$('x').value=o.x;$('a').value=o.a;$('yy').value=f(o.a*Math.PI*P().D/360);$('w').value=o.w;$('l').value=o.l;$('d').value=o.d;$('ll').style.display=o.t=='r'?'':'none';$('lw').style.display=o.ln?'none':'';$('rot').value=o.rot||0;$('cm').value=o.ln&&(o.cm||'p')=='p'?'on':(o.cm||'p');$('rotw').style.display=$('rotb').style.display=o.t=='c'?'none':'';$('pt').textContent='Propriedades: '+(o.ln?'Linha':o.t=='c'?'Círculo':'Retângulo')+' '+(sel+1);$('lw').firstChild.textContent=o.t=='c'?'Diâmetro (mm)':'Largura tangencial (mm)';$('fz').value=f(P().D/2-o.d-machineOffset())}
+function form(){const o=ops[sel];if(!o)return;$('ST').checked=!!o.stlDepth;$('T').value=operationTool(o).diameter;$('HT').value=operationTool(o).ball?'1':'0';$('x').value=o.x;$('a').value=o.a;$('yy').value=f(o.a*Math.PI*P().D/360);$('w').value=o.w;$('l').value=o.l;$('d').value=o.d;$('ll').style.display=o.t=='r'?'':'none';$('lw').style.display=o.ln?'none':'';$('rot').value=o.rot||0;$('cm').value=o.ln&&(o.cm||'p')=='p'?'on':(o.cm||'p');$('rotw').style.display=$('rotb').style.display=o.t=='c'?'none':'';$('pt').textContent='Operação selecionada: '+(o.ln?'Linha':o.t=='c'?'Círculo':'Retângulo')+' '+(sel+1);$('lw').firstChild.textContent=o.t=='c'?'Diâmetro (mm)':'Largura tangencial (mm)';$('fz').value=f(P().D/2-o.d-machineOffset())}
 ['x','a','w','l','d'].forEach(k=>$(k).oninput=()=>{const o=ops[sel];if(!o)return;o[k]=+$(k).value;$('fz').value=f(P().D/2-o.d-machineOffset());lst();draw()});
 ['D','L','S','F','FP','SD','SF','DIR'].forEach(k=>$(k).oninput=()=>{form();draw()});
 ['T','HT'].forEach(id=>$(id).oninput=()=>{const o=ops[sel];if(!o)return;o.toolDiameter=+$('T').value;o.toolType=$('HT').value;lst();draw()});
@@ -164,7 +164,7 @@ function gen(){const p=P(),R=p.D/2,e=[];$('err').textContent='';
  pocketCode='';$('download').disabled=$('cp').disabled=true;if(['D','L','S','F','FP','SD','SF'].some(k=>!Number.isFinite(p[k])||p[k]<=0)||!Number.isFinite(+$('TS').value)||+$('TS').value<=0){$('out').value='';$('err').textContent='Informe medidas, ferramentas, avanços, passada e folga maiores que zero.';return}
  if(!FLD||GK!=gridKey())grid();
  if(ops.some(o=>!Number.isFinite(operationTool(o).diameter)||operationTool(o).diameter<=0)){$('out').value='';$('err').textContent='Cada alojamento precisa de diâmetro de fresa maior que zero.';return}
- let previousTool=null;const out=['(Gerado pelo Editor de usinagem indexada 3+1)',`(Bruto D${f(p.D)} x L${f(p.L)} | ferramentas por alojamento)`,'(PROTOTIPO: G-code nao homologado para execucao fisica)',`(Z0 = ${+$('Z0').value?'superficie do bruto':'centro do eixo A'})`,'G21 G90 G17 G40 G49 G80 G94 G91.1',`S${p.S} M3`];
+ let previousTool=null;const out=['(Gerado pelo Makernauta - Usinagem Rotativa | modulo indexado 3+1)',`(Bruto D${f(p.D)} x L${f(p.L)} | ferramentas por alojamento)`,'(PROTOTIPO: G-code nao homologado para execucao fisica)',`(Z0 = ${+$('Z0').value?'superficie do bruto':'centro do eixo A'})`,'G21 G90 G17 G40 G49 G80 G94 G91.1',`S${p.S} M3`];
  const zo=+$('Z0').value?R:0,zs=R+p.SF-zo;out.push(`G0 Z${f(zs)}`);
  ops.forEach((o,i)=>{const tool=operationTool(o),p={...P(),T:tool.diameter};if(![o.x,o.a,o.w,o.l,o.d,o.rot||0].every(Number.isFinite)||o.w<=0||o.l<=0||o.d<=0){e.push(`Alojamento ${i+1}: medidas inválidas.`);return}if(o.ln)o.w=p.T;const mn=o.t=='c'?o.w:Math.min(o.w,o.l);if((mn<=p.T&&!o.ln)||(o.ln&&o.l<=p.T)){e.push(`Alojamento ${i+1}: menor que a fresa (Ø${f(p.T)}).`);return}
   const Ro=sR(o),dm=Math.min(o.d,Ro-p.T/2-1),zf=Ro-dm;if(i==sel)$('fz').value=f(zf-zo);if(dm<o.d-1e-6)e.push('Alojamento '+(i+1)+': a superfície ali tem raio '+f(Ro)+' mm; a profundidade excede o limite de '+f(Math.max(dm,0))+' mm para a fresa não chegar ao eixo. Exportação bloqueada; ajuste a profundidade, a posição X ou a referência STL.');if(dm<=0)return;if(zf<=p.T/2){e.push(`Alojamento ${i+1}: piso muito perto do centro do eixo.`)}
@@ -191,9 +191,9 @@ m3.onpointerup=()=>m3.d=null;
 m3.onwheel=e=>{e.preventDefault();zm=Math.max(.3,Math.min(6,zm*(e.deltaY<0?1.1:.9)));dr3()};
 $('mo').oninput=()=>{mv=$('mo').value/100;dr3()};
 $('sl3').oninput=()=>{tt=$('sl3').value/1000*tot;dr3()};
-$('rs3').onclick=()=>{tt=0;pl=false;$('pl3').textContent='Simular G-code';dr3()};
-$('pl3').onclick=()=>{if(!sg.length)return;if($('vm').value==='2'&&TRI)$('vm').value='4';if(tt>=tot)tt=0;pl=!pl;$('pl3').textContent=pl?'Pausar':'Simular G-code';lt=performance.now();if(pl)requestAnimationFrame(tk)};
-function tk(ts){if(!pl)return;tt+=(ts-lt)/1000*tot/12;lt=ts;if(tt>=tot){tt=tot;pl=false;$('pl3').textContent='Simular G-code'}dr3();if(pl)requestAnimationFrame(tk)}
+$('rs3').onclick=()=>{tt=0;pl=false;$('pl3').textContent='Simular usinagem';dr3()};
+$('pl3').onclick=()=>{if(!sg.length)return;if($('vm').value==='2'&&TRI)$('vm').value='4';if(tt>=tot)tt=0;pl=!pl;$('pl3').textContent=pl?'Pausar':'Simular usinagem';lt=performance.now();if(pl)requestAnimationFrame(tk)};
+function tk(ts){if(!pl)return;tt+=(ts-lt)/1000*tot/12;lt=ts;if(tt>=tot){tt=tot;pl=false;$('pl3').textContent='Simular usinagem'}dr3();if(pl)requestAnimationFrame(tk)}
 function mph(x,f,r,t){const R=P().D/2,TP=2*Math.PI,u=((f%TP)+TP)%TP;return[x,(u*R-Math.PI*R)*(1-t)+r*Math.sin(u)*t,r*(1-t)+r*Math.cos(u)*t,u]}
 function operationTool(o=ops[sel]){return {diameter:o?.toolDiameter??3,ball:o?.toolType==='1'}}
 function toolFor(segment){return segment.h?operationTool(ops[segment.o??sel]):{diameter:+$('TS').value,ball:$('TY').value=='1'}}
@@ -202,7 +202,7 @@ function mpt(q,t,fo){const th=-q.a*(q.ad??P().dir)*Math.PI/180,c=Math.cos(th),s=
 function curp(){let ci=0;while(ci<cm.length-1&&cm[ci]<tt)ci++;const s=sg[ci],b=ci?cm[ci-1]:0,u=cm[ci]>b?Math.min(1,Math.max(0,(tt-b)/(cm[ci]-b))):1,cur={};for(const q of 'xyza')cur[q]=s.p[q]+(s.q[q]-s.p[q])*u;cur.zo=s.q.zo;cur.ad=s.q.ad;return{cur,ci,u}}
 let parsedSource='';
 function pg(){const code=simulationSource();const source=code+'|'+sourceReference()+'|'+$('simStage').value+'|'+JSON.stringify(ops)+'|'+$('TS').value+'|'+$('TY').value;
- if(source!==parsedSource){parsedSource=source;FLD=null;tt=0;pl=false;$('pl3').textContent='Simular G-code'}
+ if(source!==parsedSource){parsedSource=source;FLD=null;tt=0;pl=false;$('pl3').textContent='Simular usinagem'}
  sg=[];cm=[];let s={x:0,y:0,z:0,a:0},m=0,acc=0,oi=0,ph=($('simStage').value==='pockets'||!$('sc').value.trim())?1:0;
  code.split('\n').forEach(l=>{if(/FIM DA ESCULTURA/.test(l))ph=1;const mo=l.match(/Alojamento (\d+)/);if(mo)oi=+mo[1]-1;l=l.replace(/\([^)]*\)/g,'').split(';')[0].toUpperCase();const g=l.match(/G0*([0123])(?!\d)/);if(g)m=+g[1];const v=k=>{const r=l.match(new RegExp(k+'\\s*([-+]?\\d*\\.?\\d+)'));return r?+r[1]:null},n={};for(const k of 'xyza')n[k]=v(k.toUpperCase());if(n.x==null&&n.y==null&&n.z==null&&n.a==null)return;
   const t={zo:ph?machineOffset():(sourceReference()==='1'?P().D/2:0),ad:P().dir};for(const k of 'xyza')t[k]=n[k]==null?s[k]:n[k];if(!('zo' in s)){s.zo=t.zo;s.ad=t.ad;}const I=v('I'),J=v('J');
@@ -429,7 +429,7 @@ const parameterHelp={
  d:['Profundidade do alojamento','Distância em mm da superfície de referência até a ponta da ferramenta na camada final. A referência é o bruto, ou a superfície STL quando essa opção está marcada. A profundidade pode ser limitada perto do eixo; leia os avisos. Ballnose conserva a curvatura perto das bordas.'],
  fz:['Piso em Z','Valor calculado, somente leitura, para a ponta da ferramenta no final do alojamento, expresso no Z0 dos alojamentos/Mach3 da seção 2. Pode incluir o limite de profundidade próximo do eixo. Com ballnose, não significa que toda a largura ficará nessa mesma altura.'],
  rot:['Ângulo da forma','Rotação em graus do retângulo ou da linha no plano cartesiano local XY. Não gira o eixo A. Círculos não precisam dessa rotação.'],
- cm:['Tipo de corte','Esvaziar (bolsão): múltiplas trajetórias para remover o interior. Com ballnose, podem sobrar pequenas cristas entre passadas.\nSobre a linha: o centro da fresa percorre o contorno, removendo material dos dois lados.\nPor dentro: desloca o centro da fresa para o interior pela metade do diâmetro.\nPor fora: desloca para o exterior pela metade do diâmetro.\nEm linhas abertas, dentro/fora escolhe o lado do deslocamento.'],
+ cm:['Estratégia de usinagem','Usinagem de cavidade (bolsão): múltiplas trajetórias para remover o interior. Com ballnose, podem sobrar pequenas cristas entre passadas.\nSobre a linha: o centro da fresa percorre o contorno, removendo material dos dois lados.\nPor dentro: desloca o centro da fresa para o interior pela metade do diâmetro.\nPor fora: desloca para o exterior pela metade do diâmetro.\nEm linhas abertas, dentro/fora escolhe o lado do deslocamento.'],
  GS:['Travar na grade','Marcado: ao arrastar o alojamento, encaixa sua posição nos passos Grade X e Grade A.\nDesmarcado: o arraste usa os passos livres do editor. A digitação numérica continua disponível sem encaixe obrigatório.'],
  GX:['Grade X','Espaçamento em mm das linhas da grade ao longo da peça. Quando Travar na grade está marcado, também define o passo de X durante o arraste.'],
  GA:['Grade A','Passo angular em graus usado no arraste quando Travar na grade está marcado. Não altera a orientação de alojamentos já posicionados.'],
@@ -442,7 +442,7 @@ const parameterHelp={
  SR:['Rotação do STL','Gira somente o modelo STL ao redor do eixo X, em graus, para alinhar sua orientação angular. Não altera o G-code Aspire nem os ângulos dos alojamentos.'],
  SX:['Inverter comprimento do STL','Marcado: espelha a posição do STL ao longo de X para trocar as extremidades.\nDesmarcado: mantém o sentido inicial. Não espelha o programa Aspire.'],
  ST:['Referência de profundidade no STL','Esta opção pertence somente ao alojamento selecionado e é restaurada ao trocar de figura. Desmarcado por padrão: importar STL não muda a estratégia de corte. Marcado explicitamente e com STL: calcula a profundidade do alojamento a partir do raio alvo na sua posição X/A.\nDesmarcado ou sem STL: usa o raio do bruto. Confira avisos de limite e o piso calculado.'],
- ql:['Qualidade da simulação','Rápida: malha radial mais leve e menos detalhada.\nMédia: equilíbrio entre velocidade e detalhes.\nAlta: mais pontos, maior custo e melhor resolução.\nA seção detalhada dos alojamentos usa passo de 0,15 mm. A qualidade não muda o G-code exportado.'],
+ ql:['Qualidade da simulação' ,'Rápida: malha radial mais leve e menos detalhada.\nMédia: equilíbrio entre velocidade e detalhes.\nAlta: mais pontos, maior custo e melhor resolução.\nA seção detalhada dos alojamentos usa passo de 0,15 mm. A qualidade não muda o G-code exportado.'],
  vm:['Modo de visualização 3D','Material: mostra a remoção acumulada da simulação.\nSTL + Desbaste: sobrepõe o STL em azul tracejado, em raio X, ao material âmbar removido somente pelos percursos disponíveis. Não gera CAM.\nSTL alvo: mostra a peça desejada, não o resultado da fresa; por isso trocar a fresa não muda essa vista.\nComparar: destaca diferenças em relação ao STL, quando presente; a representação é aproximada.\nSó linhas: oculta a superfície e permite inspecionar os percursos.'],
  mo:['Desenrolar ou enrolar','À esquerda, desenrola a circunferência como ângulo × raio; à direita, mostra o cilindro. Não altera os percursos exportados.'],
  rf:['Referencial da vista','Automática: peça fixa durante edição, referência da máquina durante a simulação.\nMáquina: a peça gira com A e a ferramenta mantém sua orientação de máquina.\nPeça: mantém o cilindro fixo e transforma os movimentos da ferramenta ao redor dele.'],
@@ -450,7 +450,7 @@ const parameterHelp={
  oc:['Mostrar contornos','Marcado: mostra o contorno solicitado dos alojamentos. Antes de usinar, também mostra uma referência de profundidade.\nDesmarcado: oculta as referências geométricas para inspecionar o resultado real da simulação.'],
  sl3:['Posição da simulação','Avança ou retrocede ao longo do programa. O material é recalculado ao retroceder. A posição é uma proporção do percurso, não um tempo real de usinagem.'],
  out:['G-code gerado','Saída somente leitura para copiar ou baixar em .nc para Mach3. Inclui as configurações atuais. É um protótipo não homologado para execução física.'],
- addC:['Adicionar círculo','Cria um alojamento circular e seleciona suas propriedades. Ajuste diâmetro, profundidade, posição, ângulo A e tipo de corte.'],
+ addC:['Adicionar círculo','Cria uma operação circular indexada. Ajuste diâmetro, profundidade, posição, ângulo A e estratégia de usinagem.'],
  addR:['Adicionar retângulo','Cria um alojamento retangular. Comprimento, largura e rotação da forma são editáveis.'],
  addL:['Adicionar linha','Cria um encaixe em linha aberta. Em uma passada, ballnose deixa seção arredondada e topo plano deixa fundo reto. Use a seção ampliada para comparar o resultado.'],
  del:['Remover selecionado','Exclui somente o alojamento selecionado na lista. Os arquivos Aspire e STL permanecem carregados.'],
