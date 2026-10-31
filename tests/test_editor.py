@@ -686,6 +686,53 @@ class EditorTests(unittest.TestCase):
         self.assertEqual(self.page.locator('#out').input_value(),original)
         self.assertTrue(self.js('document.documentElement.scrollWidth <= innerWidth'))
 
+    def test_stage_header_navigation_and_active_indicator(self):
+        before=self.page.locator('#out').input_value()
+        ids=['machineSection','pocketSection','simulationSection','exportSection']
+        for id in ids:
+            self.assertEqual(self.page.locator(f'#{id} > summary .stage-step-nav').count(),1)
+            self.assertEqual(self.page.locator(f'#{id} > .section-body .stage-step-nav').count(),0)
+        self.assertEqual(self.page.locator('#machineSection .previous-step').count(),0)
+        self.assertEqual(self.page.locator('#exportSection .next-step').count(),0)
+        self.assertEqual(self.page.locator('[data-go="machineSection"]').get_attribute('aria-current'),'step')
+        for i in range(3):
+            self.page.locator(f'#{ids[i]} > summary .next-step').click()
+            self.assertEqual(self.page.locator(f'[data-go="{ids[i+1]}"]').get_attribute('aria-current'),'step')
+            self.assertIn('work-stage-active',self.page.locator(f'#{ids[i+1]}').get_attribute('class'))
+            self.assertIsNone(self.page.locator(f'[data-go="{ids[i]}"]').get_attribute('aria-current'))
+        for i in range(3,0,-1):
+            self.page.locator(f'#{ids[i]} > summary .previous-step').click()
+            self.assertEqual(self.page.locator(f'[data-go="{ids[i-1]}"]').get_attribute('aria-current'),'step')
+        self.assertEqual(self.page.locator('#out').input_value(),before)
+
+    def test_stage_header_buttons_do_not_toggle_source_or_jump_when_visible(self):
+        original=self.page.locator('#out').input_value()
+        self.page.set_viewport_size({'width':1600,'height':2200})
+        self.page.locator('[data-go="simulationSection"]').click()
+        before=self.js('scrollY')
+        self.page.locator('#simulationSection > summary .next-step').click()
+        self.assertEqual(self.js('scrollY'),before)
+        self.assertTrue(self.page.locator('#simulationSection').evaluate('(e)=>e.open'))
+        self.assertTrue(self.page.locator('#exportSection').evaluate('(e)=>e.open'))
+        self.assertEqual(self.page.locator('#out').input_value(),original)
+
+    def test_manual_integrated_and_accessible_without_network(self):
+        self.assertEqual(self.page.locator('.stage-nav #manualButton').count(),1)
+        self.assertEqual(self.page.locator('#manualDialog section').count(),5)
+        self.page.locator('#manualButton').click()
+        self.assertTrue(self.page.locator('#manualDialog').is_visible())
+        content=self.page.locator('#manualDialog').text_content()
+        self.assertIn('Preparar trabalho',content)
+        self.assertIn('Usinagem Indexada 3+1',content)
+        self.assertIn('não homologado',content)
+        self.page.locator('#manualDialog .manual-actions button').click()
+        self.assertFalse(self.page.locator('#manualDialog').is_visible())
+        self.page.set_viewport_size({'width':390,'height':844})
+        self.page.locator('#manualButton').click()
+        self.assertTrue(self.page.locator('#manualDialog').is_visible())
+        self.page.keyboard.press('Escape')
+        self.assertFalse(self.page.locator('#manualDialog').is_visible())
+
     def test_aspire_declared_parameters_are_reviewed_before_applied(self):
         code='(Material Size)\\n(X= 100.000, Z= 10.000)\\n(Diameter = 20.000 mm)\\n(Tools used in this file:)\\n(0 = Esferica 3.1mm)\\nG21 G90 G17\\nG0 X10 A0 Z5\\nG1 X20 A-90 Z-1\\nM30'
         self.page.locator('#sc').fill(code)
