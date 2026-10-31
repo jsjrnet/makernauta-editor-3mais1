@@ -41,7 +41,7 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 
 .simulation-viewport{height:340px;min-height:240px;max-height:1000px;min-width:0;overflow:hidden}.simulation-viewport #c3{height:100%;width:100%;display:block}.simulation-resize{height:16px;cursor:ns-resize;touch-action:none;display:flex;align-items:center;justify-content:center;border:1px solid var(--ln);border-radius:0 0 5px 5px;background:var(--ok);margin-bottom:6px}.simulation-resize::after{content:'•••';letter-spacing:4px;color:var(--mu);line-height:1}.simulation-resize:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .simulation-viewport{position:relative}.a-inspection{position:absolute;right:8px;bottom:8px;display:flex;gap:4px;align-items:center;background:var(--pn);border:1px solid var(--ln);border-radius:5px;padding:4px;font-size:12px}.a-inspection button{padding:3px 7px}.dock-tab::before{content:'›';display:inline-block;font-size:24px;font-weight:bold;margin-bottom:8px;writing-mode:horizontal-tb}.dock.right .dock-tab::before{content:'‹'}
-.stage-nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--ln);background:var(--pn)}.stage-nav button{font-size:13px}.stage-nav .info-toggle{margin:0 0 0 auto;flex:0 0 auto}.sim-visibility{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:7px 0 6px}.sim-visibility label{flex-direction:row;align-items:center;gap:5px;color:var(--tx);white-space:normal}.sim-visibility input{flex:none}@media(max-width:640px){header #safetyButton{width:auto}.stage-nav .info-toggle{margin-left:0}}.op-group{border:1px solid var(--ln);border-radius:7px;padding:10px;margin:9px 0}.op-group h3{margin:0 0 9px;font-size:13px;font-weight:700}.op-group .g{margin:0}.op-advanced{margin-top:9px;border:1px dashed var(--ln);border-radius:6px;padding:8px}.op-advanced summary,.map-preferences summary{cursor:pointer;font-size:13px;font-weight:600}.map-preferences{margin-top:9px;border-top:1px solid var(--ln);padding-top:8px}.sample-stl{padding:8px;background:var(--ok);border-radius:7px;margin:8px 0}.sample-stl .row{align-items:end}.sample-stl label{flex:1;min-width:170px}.example-note{font-size:12px;color:var(--mu)}
+.stage-nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--ln);background:var(--pn)}.stage-nav button{font-size:13px}.stage-nav .info-toggle{margin:0 0 0 auto;flex:0 0 auto}.stage-step-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--ln)}.stage-step-nav>span{font-size:12px;color:var(--mu);margin-right:auto}.stage-step-nav button{font-size:13px;padding:7px 10px}.stage-step-nav .next-step{background:var(--ac);color:var(--pn);border-color:var(--ac)}.stage-step-nav .next-step:focus-visible{outline:2px solid var(--tx);outline-offset:2px}.sim-visibility{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:7px 0 6px}.sim-visibility label{flex-direction:row;align-items:center;gap:5px;color:var(--tx);white-space:normal}.sim-visibility input{flex:none}@media(max-width:640px){header #safetyButton{width:auto}.stage-nav .info-toggle{margin-left:0}}.op-group{border:1px solid var(--ln);border-radius:7px;padding:10px;margin:9px 0}.op-group h3{margin:0 0 9px;font-size:13px;font-weight:700}.op-group .g{margin:0}.op-advanced{margin-top:9px;border:1px dashed var(--ln);border-radius:6px;padding:8px}.op-advanced summary,.map-preferences summary{cursor:pointer;font-size:13px;font-weight:600}.map-preferences{margin-top:9px;border-top:1px solid var(--ln);padding-top:8px}.sample-stl{padding:8px;background:var(--ok);border-radius:7px;margin:8px 0}.sample-stl .row{align-items:end}.sample-stl label{flex:1;min-width:170px}.example-note{font-size:12px;color:var(--mu)}
 </style></head><body>
 <header><h1>Makernauta — Usinagem Rotativa</h1>
 <p><strong>Módulo atual: Usinagem Indexada 3+1.</strong> O eixo A posiciona a peça e permanece parado durante o corte XYZ. Arraste as operações na vista desenrolada: horizontal = comprimento da peça; vertical = ângulo de indexação A. A usinagem XZA simultânea ainda não é gerada neste módulo.</p><button id="safetyButton" type="button" aria-haspopup="dialog">Aviso de segurança — Protótipo não homologado</button></header>
@@ -634,12 +634,44 @@ function installSimulationResize(){const canvas=$('c3'),viewport=document.create
  let lastHeight=0;new ResizeObserver(entries=>{const height=entries[0].contentRect.height;if(height!==lastHeight){lastHeight=height;redrawWorkspace()}}).observe(viewport)
 }
 
-installWorkspace();installSimulationResize();installParameterHelp();
-document.querySelectorAll('.stage-nav [data-go]').forEach(button=>{button.onclick=()=>{
- const target=$(button.dataset.go);if(!target)return;
- const dock=target.closest('.dock');if(dock&&!dock.classList.contains('pinned')&&!dock.classList.contains('temporary'))dock.querySelector('.dock-tab').click();
+// A single navigation handler is shared by the top menu and the previous/next
+// buttons inside each stage. These actions only change visible panels.
+const workStages=[
+ {id:'machineSection',title:'Preparar trabalho'},
+ {id:'pocketSection',title:'Criar operações'},
+ {id:'simulationSection',title:'Simular e inspecionar'},
+ {id:'exportSection',title:'Gerar CNC'}
+];
+function goToWorkStage(stageId){
+ const target=$(stageId);if(!target)return;
+ const dock=target.closest('.dock');
+ document.querySelectorAll('.dock.temporary').forEach(other=>{if(other!==dock)other.closeTemporary()});
+ if(dock&&!dock.classList.contains('pinned')&&!dock.classList.contains('temporary'))dock.querySelector('.dock-tab').click();
  if(target.tagName==='DETAILS')target.open=true;
  target.scrollIntoView({behavior:'smooth',block:'start'});
-}});
+ const summary=target.querySelector(':scope > summary');
+ if(summary)summary.focus({preventScroll:true});
+}
+function installWorkStageNavigation(){
+ for(let i=0;i<workStages.length;i++){
+  const stage=workStages[i],section=$(stage.id),content=section?.querySelector(':scope > .section-body');
+  if(!content)continue;
+  const bar=document.createElement('nav');bar.className='stage-step-nav';
+  bar.setAttribute('aria-label','Navegação da etapa '+(i+1)+' de '+workStages.length);
+  const caption=document.createElement('span');caption.textContent='Etapa '+(i+1)+' de '+workStages.length;bar.append(caption);
+  const addButton=(destination,label,className)=>{
+   const button=document.createElement('button');
+   button.type='button';button.textContent=label;button.className=className;
+   button.dataset.stageTarget=destination.id;
+   button.addEventListener('click',()=>goToWorkStage(destination.id));
+   bar.append(button)
+  };
+  if(i>0)addButton(workStages[i-1],'← Etapa anterior','previous-step');
+  if(i+1<workStages.length)addButton(workStages[i+1],'Próxima etapa →','next-step');
+  content.append(bar)
+ }
+}
+installWorkspace();installSimulationResize();installParameterHelp();installWorkStageNavigation();
+document.querySelectorAll('.stage-nav [data-go]').forEach(button=>{button.onclick=()=>goToWorkStage(button.dataset.go)});
 $('showMachine').onchange=dr3;lst();form();draw();
 </script></body></html>
