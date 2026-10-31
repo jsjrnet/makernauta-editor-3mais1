@@ -546,6 +546,51 @@ class EditorTests(unittest.TestCase):
         self.assertFalse(self.js("machineVisualGeometry(P(),0,0).faces.some(f=>f.group==='safety')"))
         self.assertEqual(self.page.locator('#out').input_value(),original_code)
 
+    def test_metallic_three_jaw_chuck_and_live_center_are_display_only(self):
+        self.js("tt=tot;dr3()")
+        code=self.page.locator('#out').input_value()
+        path=self.js("JSON.stringify(sg)")
+        material=self.js("Array.from(FLD)")
+        result=self.js("""() => {
+          const a=machineVisualGeometry(P(),0,0),b=machineVisualGeometry(P(),Math.PI/3,0);
+          const jaw=a.faces.filter(f=>f.group==='jaw');
+          const chuck=a.faces.filter(f=>f.group==='chuck');
+          const tail=a.faces.filter(f=>f.group==='tailstock');
+          const safe=a.faces.filter(f=>f.group==='safety');
+          return {
+            groups:Object.keys(a.faces.reduce((acc,f)=>(acc[f.group]=true,acc),{})),
+            jawCount:a.jaws.length,
+            jawFaces:jaw.length,
+            chuckFaces:chuck.length,
+            tailFaces:tail.length,
+            jawMaxX:Math.max(...jaw.flatMap(f=>f.points.map(v=>v[0]))),
+            chuckMaxX:Math.max(...chuck.flatMap(f=>f.points.map(v=>v[0]))),
+            tailMinX:Math.min(...tail.flatMap(f=>f.points.map(v=>v[0]))),
+            tailFixed:JSON.stringify(tail)===JSON.stringify(b.faces.filter(f=>f.group==='tailstock')),
+            chuckRotates:JSON.stringify(chuck)!==JSON.stringify(b.faces.filter(f=>f.group==='chuck')),
+            tip:a.tailstockTip,
+            extension:a.safetyExtension,
+            yellowMinX:Math.min(...safe.flatMap(f=>f.points.map(v=>v[0]))),
+            yellowMaxX:Math.max(...safe.flatMap(f=>f.points.map(v=>v[0])))
+          };
+        }""")
+        self.assertEqual(result['jawCount'],3)
+        self.assertEqual(set(result['groups']),{'chuck','jaw','tailstock','safety'})
+        self.assertGreater(result['jawFaces'],25)
+        self.assertGreater(result['chuckFaces'],140)
+        self.assertGreater(result['tailFaces'],140)
+        self.assertLess(result['jawMaxX'],0)
+        self.assertLess(result['chuckMaxX'],0)
+        self.assertGreater(result['tailMinX'],self.js('P().L'))
+        self.assertTrue(result['tailFixed'] and result['chuckRotates'])
+        self.assertAlmostEqual(result['tip'][0],self.js('P().L')+.15)
+        self.assertEqual(result['extension'],5)
+        self.assertAlmostEqual(result['yellowMinX'],-5)
+        self.assertAlmostEqual(result['yellowMaxX'],0)
+        self.assertEqual(self.page.locator('#out').input_value(),code)
+        self.assertEqual(self.js("JSON.stringify(sg)"),path)
+        self.assertEqual(self.js("Array.from(FLD)"),material)
+
     def test_stock_end_faces_are_solid_from_both_axis_directions(self):
         self.page.locator('#showMachine').uncheck()
         for angle in [-math.pi/2,math.pi/2]:
