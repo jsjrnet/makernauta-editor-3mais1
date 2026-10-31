@@ -499,7 +499,7 @@ class EditorTests(unittest.TestCase):
     def test_combined_aspire_indexed_radial_render_has_one_surface(self):
         # Uma unica casca radial: sem mascara retangular e sem faces XYZ extras por cima.
         # A malha cartesiana PK continua disponivel para a secao e a remocao FLD continua ativa.
-        self.page.locator('#sc').fill('(Z0 = centro)\\nG21 G90 G17\\nG0 X30 Y0 Z23 A0\\nG1 Z11 F200\\nG1 X60 A90 F1000\\nG0 Z23\\nM30')
+        self.page.locator('#sc').fill('(Z0 = centro)\nG21 G90 G17\nG0 X30 Y0 Z23 A0\nG1 Z11 F200\nG1 X60 A90 F1000\nG0 Z23\nM30')
         self.page.locator('#simStage').select_option('all')
         self.js("tt=tot;dr3()")
         export=self.page.locator('#out').input_value()
