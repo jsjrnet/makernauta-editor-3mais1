@@ -653,13 +653,17 @@ function machineVisualGeometry(p,partAngle,machineAngle){const R=p.D/2,L=p.L,E=v
  function box(x0,x1,r0,r1,halfWidth,angle,color,group){const points=[];for(const x of [x0,x1])for(const r of [r0,r1])for(const v of [-halfWidth,halfWidth])points.push(rotate([x,v,r],angle));for(const ids of [[0,1,3,2],[4,6,7,5],[0,4,5,1],[2,3,7,6],[0,2,6,4],[1,5,7,3]])face(ids.map(i=>points[i]),color,group)}
  cylinder(-R*1.35-E,-R*.25-E,R*1.4,R*1.4,[68,77,87],'chuck',partAngle);
  cylinder(-R*.28-E,-R*.1-E,R*1.32,R*1.32,[117,124,135],'chuck',partAngle);
- for(let j=0;j<3;j++){const angle=partAngle+j*2*Math.PI/3;box(-R*.18-E,R*.08-E,R*.91,R*1.32,R*.16,angle,[168,174,180],'jaw');jaws.push(rotate([0,0,R],angle))}
+ const jawRoot=-E-R*.25,jawBite=E>=5?2.5:Math.min(2.5,E/2),jawEnd=E>0?-E+jawBite:-.1,jawSpan=jawEnd-jawRoot;
+ const heelEnd=jawRoot+Math.min(jawSpan*.34,R*.12),stepStart=jawEnd-Math.min(jawSpan*.22,R*.15);
+ for(let j=0;j<3;j++){const angle=partAngle+j*2*Math.PI/3;box(jawRoot,heelEnd,R*.78,R*1.32,R*.22,angle,[174,180,186],'jaw');box(heelEnd-.12,stepStart,R*.96,R*1.22,R*.18,angle,[163,170,177],'jaw');box(stepStart-.12,jawEnd,R*.985,R*1.12,R*.145,angle,[188,193,198],'jaw');jaws.push(rotate([0,0,R],angle))}
  if(E>0)cylinder(-E,0,R,R,[240,198,48],'safety',partAngle);
- cylinder(L+.15,L+R*.85,0,R*.48,[157,164,170],'tailstock');
- cylinder(L+R*.85,L+R*1.25,R*.48,R*.48,[101,111,122],'tailstock');
- cylinder(L+R*1.25,L+R*2.15,R*.83,R*.83,[57,65,72],'tailstock');
- box(L+R*1.18,L+R*2.25,-R*1.22,-R*.48,R*.65,machineAngle,[62,72,81],'tailstock');
- return {faces,jaws,tailstockTip:[L+.15,0,0],partAngle,machineAngle,safetyExtension:E}
+ const noseBase=L+R*.58,bearingEnd=L+R*.92,bodyEnd=L+R*2.25;
+ cylinder(L+.02,noseBase,0,R*.21,[174,181,188],'tailstock');
+ cylinder(noseBase,bearingEnd,R*.21,R*.21,[105,114,123],'tailstock');
+ cylinder(L+R*.66,L+R*.74,R*.28,R*.28,[178,185,191],'tailstock');
+ cylinder(bearingEnd,bodyEnd,R*.64,R*.64,[83,94,105],'tailstock');
+ box(L+R*1.12,L+R*2.4,-R*1.22,-R*.46,R*.68,machineAngle,[62,72,81],'tailstock');
+ return {faces,jaws,tailstockTip:[L+.02,0,0],partAngle,machineAngle,safetyExtension:E}
 }
 function queueMachineFaces(queue,geometry){const {L,cw,sw,cp,sp}=VW;for(const face of geometry.faces){const points=face.points.map(q=>{const x=q[0]-L/2;return[x*cw-q[1]*sw,x*sw+q[1]*cw,q[2],0]});
  // Fan triangulation also handles circular end faces.
