@@ -3,6 +3,11 @@
 
 O módulo atualmente disponível é **Usinagem Indexada 3+1**. O eixo A **posiciona** a peça e permanece **parado** durante cortes XYZ. A importação do G-code rotativo XZA do Vectric Aspire permite simular uma escultura anterior, mas o Makernauta ainda não gera trajetórias XZA simultâneas.
 
+### Navegar entre as etapas
+- Na faixa superior, escolha diretamente **Preparar trabalho**, **Criar operações**, **Simular e inspecionar** ou **Gerar CNC**.
+- Dentro de cada etapa, use os botões **← Etapa anterior** e **Próxima etapa →** na parte inferior do painel. A primeira etapa tem somente **Próxima etapa** e a última somente **Etapa anterior**.
+- Os botões abrem automaticamente a seção de destino, inclusive quando ela estiver recolhida, sem alterar campos, operações ou G-code. No desktop, também abrem temporariamente um painel lateral que esteja oculto.
+
 ### 1. Preparar trabalho
 - Em **Configuração da peça e máquina**, informe **diâmetro e comprimento do material bruto**, e não as dimensões da peça acabada.
 - Defina o Z0 da máquina conforme a origem do trabalho. Na importação Aspire, a confirmação da referência é indispensável se não constar explicitamente nos comentários do G-code. **A simples altura dos movimentos não permite determinar com segurança a origem Z0.**
