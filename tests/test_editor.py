@@ -242,6 +242,7 @@ class EditorTests(unittest.TestCase):
         self.assertIn('ponta hemisférica', self.page.locator('#helpBody').text_content())
         self.page.keyboard.press('Escape')
         before=self.page.locator('#ST').is_checked()
+        self.page.locator('#depthAdvanced > summary').click()
         self.page.locator('[data-help-for="ST"]').click()
         self.assertEqual(self.page.locator('#ST').is_checked(),before)
         self.page.get_by_role('button',name='Fechar',exact=True).click()
@@ -478,6 +479,7 @@ class EditorTests(unittest.TestCase):
 
     def test_stl_aspire_and_pocket_stages_and_per_operation_reference(self):
         self.load_reference_stl()
+        self.page.locator('#depthAdvanced > summary').click()
         self.page.locator('#ST').check()
         self.assertTrue(self.js('ops[0].stlDepth'))
         self.page.locator('#addC').click()
@@ -494,6 +496,42 @@ class EditorTests(unittest.TestCase):
         self.assertTrue(self.js('sg.some(g=>g.h)&&sg.some(g=>!g.h)&&Object.keys(PK).length===2'))
         self.page.locator('[data-section="simulation"]').screenshot(path='/tmp/makernauta-stl-aspire-pockets.png')
 
+    def test_combined_aspire_indexed_radial_render_has_one_surface(self):
+        # Uma unica casca radial: sem mascara retangular e sem faces XYZ extras por cima.
+        # A malha cartesiana PK continua disponivel para a secao e a remocao FLD continua ativa.
+        self.page.locator('#sc').fill('(Z0 = centro)\nG21 G90 G17\nG0 X30 Y0 Z23 A0\nG1 Z11 F200\nG1 X60 A90 F1000\nG0 Z23\nM30')
+        self.page.locator('#simStage').select_option('all')
+        self.js("tt=tot;dr3()")
+        export=self.page.locator('#out').input_value()
+        result=self.js("""() => {
+          const reference=VW.machine,canvas=VW.g,fill=canvas.fill;
+          const initial=Array.from(FLD),program=JSON.stringify(sg);
+          let faces=0;
+          try {
+            VW.machine=null;canvas.fill=function(){faces++};
+            msh(FLD,0);
+          } finally {
+            canvas.fill=fill;VW.machine=reference;
+          }
+          return {
+            faces,expected:(NXG-1)*NPG+2*NPG,
+            radialChanged:FLD.some(v=>v<P().D/2-0.01),
+            pockets:Object.values(PK).filter(K=>K&&K.n).length,
+            hasAspire:sg.some(g=>!g.h&&!g.r),
+            hasIndexed:sg.some(g=>g.h&&!g.r),
+            sameField:initial.every((v,i)=>FLD[i]===v),
+            sameProgram:program===JSON.stringify(sg)
+          }
+        }""")
+        self.assertEqual(result['faces'],result['expected'])
+        self.assertGreater(result['pockets'],0)
+        self.assertTrue(result['radialChanged'])
+        self.assertTrue(result['hasAspire'] and result['hasIndexed'])
+        self.assertTrue(result['sameField'] and result['sameProgram'])
+        self.assertEqual(self.page.locator('#out').input_value(),export)
+        self.js('dr3()')
+        self.page.locator('#c3').screenshot(path='/tmp/makernauta-combined-single-radial-surface.png')
+
     def test_machine_visuals_align_and_rotate_without_moving_tailstock(self):
         result=self.js('''() => {
           const a=machineVisualGeometry(P(),0,0),b=machineVisualGeometry(P(),-Math.PI/2,0),seam=mph(0,-Math.PI/2,P().D/2,1);
@@ -508,6 +546,41 @@ class EditorTests(unittest.TestCase):
         self.page.locator('[data-section="simulation"]').screenshot(path='/tmp/makernauta-machine-stock.png')
         self.js("$('mo').value=0;$('mo').oninput()")
         self.assertIsNone(self.js('VW.machine'))
+
+    def test_yellow_visual_fixture_extension_is_not_a_cam_parameter(self):
+        self.js("tt=tot;dr3()")
+        original_code=self.page.locator('#out').input_value()
+        original_segments=self.js("JSON.stringify(sg)")
+        original_field=self.js("Array.from(FLD)")
+        self.assertEqual(self.page.locator('#FX').input_value(),'5')
+        self.page.locator('#FX').fill('7')
+        result=self.js("""() => {
+          const fixture=machineVisualGeometry(P(),0,0);
+          const yellow=fixture.faces.filter(f=>f.group==='safety');
+          const jaws=fixture.faces.filter(f=>f.group==='jaw');
+          return {
+            extension:fixture.safetyExtension,
+            yellowFaces:yellow.length,
+            yellowX:yellow.flatMap(f=>f.points.map(q=>q[0])),
+            color:yellow[0]?.color,
+            jawMaxX:Math.max(...jaws.flatMap(f=>f.points.map(q=>q[0]))),
+            chuckMaxX:Math.max(...fixture.faces.filter(f=>f.group==='chuck').flatMap(f=>f.points.map(q=>q[0])))
+          }
+        }""")
+        self.assertEqual(result['extension'],7)
+        self.assertGreater(result['yellowFaces'],0)
+        self.assertAlmostEqual(min(result['yellowX']),-7)
+        self.assertAlmostEqual(max(result['yellowX']),0)
+        self.assertLess(result['jawMaxX'],0)
+        self.assertLess(result['chuckMaxX'],0)
+        self.assertGreater(result['color'][0],result['color'][1])
+        self.assertGreater(result['color'][1],result['color'][2])
+        self.assertEqual(self.page.locator('#out').input_value(),original_code)
+        self.assertEqual(self.js("JSON.stringify(sg)"),original_segments)
+        self.assertEqual(self.js("Array.from(FLD)"),original_field)
+        self.page.locator('#FX').fill('0')
+        self.assertFalse(self.js("machineVisualGeometry(P(),0,0).faces.some(f=>f.group==='safety')"))
+        self.assertEqual(self.page.locator('#out').input_value(),original_code)
 
     def test_stock_end_faces_are_solid_from_both_axis_directions(self):
         self.page.locator('#showMachine').uncheck()
@@ -608,6 +681,195 @@ class EditorTests(unittest.TestCase):
             self.assertTrue(self.page.locator(f'[data-panel-pin="{side}"]').is_visible())
             self.page.keyboard.press('Escape')
 
+
+    def test_embedded_stl_examples_and_groups_preserve_nc(self):
+        before=self.page.locator('#out').input_value()
+        for model,expected in [('lure',2048),('pawn',4160)]:
+            self.page.locator('#sampleSTL').select_option(model)
+            self.page.locator('#loadSampleSTL').click()
+            self.assertTrue(self.page.locator('#sti').text_content().startswith('EXEMPLO INCORPORADO'),self.page.locator('#sti').text_content())
+            self.assertEqual(self.js('TRI.length/9'),expected)
+            self.assertAlmostEqual(self.js('TLEN'),63.3 if model=='lure' else 64.5,places=3)
+            self.assertEqual(self.page.locator('#out').input_value(),before)
+            self.assertEqual(self.page.locator('#D').input_value(),'30')
+            self.assertEqual(self.page.locator('#L').input_value(),'120')
+            self.assertEqual(self.page.locator('#vm').input_value(),'4')
+            self.assertTrue(self.js('Number.isFinite(Math.max(...TGT))'))
+        self.assertEqual(self.js('new DataView(sampleSTLBuffer("lure")).getUint32(80,true)'),2048)
+        self.assertTrue(self.js('''() => {
+          for(const model of ['lure','pawn']){const b=sampleSTLBuffer(model),v=new DataView(b),n=v.getUint32(80,true);for(let i=0;i<n;i++)for(let j=0;j<9;j++)if(!Number.isFinite(v.getFloat32(96+i*50+j*4,true)))return false}return true
+        }'''))
+
+        self.assertEqual(self.page.locator('#mapSection #GS').count(),1)
+        self.assertEqual(self.page.locator('#mapSection #yy').count(),1)
+        self.assertEqual(self.page.locator('#pocketSection #GS').count(),0)
+        self.assertEqual(self.page.locator('#pocketSection .op-group').count(),4)
+        self.assertEqual(self.page.locator('#pocketSection #T').count(),1)
+        self.assertEqual(self.page.locator('#pocketSection #ST').count(),1)
+        self.assertEqual(self.page.locator('#out').input_value(),before)
+
+    def test_navigation_opens_collapsed_section_without_changing_program(self):
+        before=self.page.locator('#out').input_value()
+        self.page.locator('#simulationSection > summary').click()
+        self.assertFalse(self.page.locator('#simulationSection').evaluate('(e)=>e.open'))
+        self.page.locator('[data-go="simulationSection"]').click()
+        self.assertTrue(self.page.locator('#simulationSection').evaluate('(e)=>e.open'))
+        self.page.locator('[data-go="pocketSection"]').click()
+        self.assertTrue(self.page.locator('#pocketSection').evaluate('(e)=>e.open'))
+        self.assertEqual(self.page.locator('#out').input_value(),before)
+        self.assertIn('Girar A',self.page.locator('.a-inspection').text_content())
+
+    def test_previous_next_buttons_walk_four_stages_and_preserve_nc(self):
+        before=self.page.locator('#out').input_value()
+        self.assertEqual(self.page.locator('.stage-step-nav').count(),4)
+        self.assertEqual(self.page.locator('#machineSection .previous-step').count(),0)
+        self.assertEqual(self.page.locator('#exportSection .next-step').count(),0)
+        self.assertEqual(self.page.locator('#machineSection .next-step').get_attribute('data-stage-target'),'pocketSection')
+        self.page.locator('#pocketSection > summary').click()
+        self.assertFalse(self.page.locator('#pocketSection').evaluate('(e)=>e.open'))
+        self.page.locator('#machineSection .next-step').click()
+        self.assertTrue(self.page.locator('#pocketSection').evaluate('(e)=>e.open'))
+        self.assertEqual(self.page.locator('body').evaluate("(e)=>document.activeElement.closest('details').id"),'pocketSection')
+        self.page.locator('#pocketSection .next-step').click()
+        self.assertTrue(self.page.locator('#simulationSection').evaluate('(e)=>e.open'))
+        self.page.locator('#simulationSection .next-step').click()
+        self.assertTrue(self.page.locator('#exportSection').evaluate('(e)=>e.open'))
+        self.page.locator('#exportSection .previous-step').click()
+        self.assertEqual(self.page.locator('body').evaluate("(e)=>document.activeElement.closest('details').id"),'simulationSection')
+        self.page.locator('#simulationSection .previous-step').click()
+        self.assertEqual(self.page.locator('body').evaluate("(e)=>document.activeElement.closest('details').id"),'pocketSection')
+        self.page.locator('#pocketSection .previous-step').click()
+        self.assertEqual(self.page.locator('body').evaluate("(e)=>document.activeElement.closest('details').id"),'machineSection')
+        self.assertEqual(self.page.locator('#out').input_value(),before)
+
+    def test_previous_next_from_temporary_dock_and_mobile(self):
+        original=self.page.locator('#out').input_value()
+        self.page.locator('[data-panel-pin="right"]').click()
+        self.assertFalse(self.page.locator('#rightDock').is_visible())
+        self.page.locator('#simulationSection .previous-step').click()
+        self.assertTrue(self.page.locator('#rightDock').is_visible())
+        self.assertTrue(self.page.locator('#pocketSection').evaluate('(e)=>e.open'))
+        self.page.locator('#pocketSection .previous-step').click()
+        self.assertFalse(self.page.locator('#rightDock').is_visible())
+        self.page.set_viewport_size({'width':390,'height':844})
+        self.page.locator('#machineSection .next-step').click()
+        self.assertTrue(self.page.locator('#pocketSection').evaluate('(e)=>e.open'))
+        self.assertEqual(self.page.locator('#out').input_value(),original)
+        self.assertTrue(self.js('document.documentElement.scrollWidth <= innerWidth'))
+
+    def test_stage_header_navigation_and_active_indicator(self):
+        before=self.page.locator('#out').input_value()
+        ids=['machineSection','pocketSection','simulationSection','exportSection']
+        for id in ids:
+            self.assertEqual(self.page.locator(f'#{id} > summary .stage-step-nav').count(),1)
+            self.assertEqual(self.page.locator(f'#{id} > .section-body .stage-step-nav').count(),0)
+        self.assertEqual(self.page.locator('#machineSection .previous-step').count(),0)
+        self.assertEqual(self.page.locator('#exportSection .next-step').count(),0)
+        self.assertEqual(self.page.locator('[data-go="machineSection"]').get_attribute('aria-current'),'step')
+        for i in range(3):
+            self.page.locator(f'#{ids[i]} > summary .next-step').click()
+            self.assertEqual(self.page.locator(f'[data-go="{ids[i+1]}"]').get_attribute('aria-current'),'step')
+            self.assertIn('work-stage-active',self.page.locator(f'#{ids[i+1]}').get_attribute('class'))
+            self.assertIsNone(self.page.locator(f'[data-go="{ids[i]}"]').get_attribute('aria-current'))
+        for i in range(3,0,-1):
+            self.page.locator(f'#{ids[i]} > summary .previous-step').click()
+            self.assertEqual(self.page.locator(f'[data-go="{ids[i-1]}"]').get_attribute('aria-current'),'step')
+        self.assertEqual(self.page.locator('#out').input_value(),before)
+
+    def test_stage_header_buttons_do_not_toggle_source_or_jump_when_visible(self):
+        original=self.page.locator('#out').input_value()
+        self.page.set_viewport_size({'width':1600,'height':2200})
+        self.page.locator('[data-go="simulationSection"]').click()
+        before=self.js('scrollY')
+        self.page.locator('#simulationSection > summary .next-step').click()
+        self.assertEqual(self.js('scrollY'),before)
+        self.assertTrue(self.page.locator('#simulationSection').evaluate('(e)=>e.open'))
+        self.assertTrue(self.page.locator('#exportSection').evaluate('(e)=>e.open'))
+        self.assertEqual(self.page.locator('#out').input_value(),original)
+
+    def test_manual_integrated_and_accessible_without_network(self):
+        self.assertEqual(self.page.locator('.stage-nav #manualButton').count(),1)
+        self.assertEqual(self.page.locator('#manualDialog section').count(),5)
+        self.page.locator('#manualButton').click()
+        self.assertTrue(self.page.locator('#manualDialog').is_visible())
+        content=self.page.locator('#manualDialog').text_content()
+        self.assertIn('Preparar trabalho',content)
+        self.assertIn('Usinagem Indexada 3+1',content)
+        self.assertIn('não homologado',content)
+        self.page.locator('#manualDialog .manual-actions button').click()
+        self.assertFalse(self.page.locator('#manualDialog').is_visible())
+        self.page.set_viewport_size({'width':390,'height':844})
+        self.page.locator('#manualButton').click()
+        self.assertTrue(self.page.locator('#manualDialog').is_visible())
+        self.page.keyboard.press('Escape')
+        self.assertFalse(self.page.locator('#manualDialog').is_visible())
+
+    def test_aspire_declared_parameters_are_reviewed_before_applied(self):
+        code='(Material Size)\\n(X= 100.000, Z= 10.000)\\n(Diameter = 20.000 mm)\\n(Tools used in this file:)\\n(0 = Esferica 3.1mm)\\nG21 G90 G17\\nG0 X10 A0 Z5\\nG1 X20 A-90 Z-1\\nM30'
+        self.page.locator('#sc').fill(code)
+        self.assertEqual(self.page.locator('#D').input_value(),'30')
+        self.assertIn('Diâmetro bruto: 20 mm',self.page.locator('#aspireDetected').text_content())
+        self.assertIn('Comprimento bruto: 100 mm',self.page.locator('#aspireDetected').text_content())
+        self.assertIn('Ø3.1 mm',self.page.locator('#aspireDetected').text_content())
+        self.assertIsNone(self.js('sourceReference()'))
+        self.page.locator('#applyAspireParams').click()
+        self.assertEqual(self.page.locator('#D').input_value(),'20')
+        self.assertEqual(self.page.locator('#L').input_value(),'100')
+        self.assertEqual(self.page.locator('#TS').input_value(),'3.1')
+        self.assertEqual(self.page.locator('#TY').input_value(),'1')
+        self.assertEqual(self.page.locator('#sc').input_value(),code)
+        self.assertIsNone(self.js('sourceReference()'))
+        self.assertEqual(self.page.locator('#out').input_value(),'')
+
+    def test_stl_position_offset_changes_reference_not_nc(self):
+        before=self.page.locator('#out').input_value()
+        self.page.locator('#sampleSTL').select_option('pawn')
+        self.page.locator('#loadSampleSTL').click()
+        self.assertEqual(self.page.locator('#out').input_value(),before)
+        snapshot=self.js('Array.from(TGT)')
+        self.page.locator('#OX').fill('10')
+        self.page.locator('#OX').dispatch_event('change')
+        self.assertEqual(self.page.locator('#out').input_value(),before)
+        self.assertEqual(self.page.locator('#OX').input_value(),'10')
+        self.assertNotEqual(self.js('Array.from(TGT)'),snapshot)
+
+    def test_pr7_layout_controls_and_sample_stl_restrictions(self):
+        self.assertEqual(self.page.locator('header #safetyButton').count(),1)
+        self.assertEqual(self.page.locator('.stage-nav #helpToggle').count(),1)
+        self.assertEqual(self.page.locator('.safety-strip').count(),0)
+        for item in ['tp','oc','showMachine']:
+            self.assertEqual(self.page.locator(f'.sim-visibility #{item}').count(),1)
+        self.assertEqual(self.page.locator('#downloadSampleSTL').count(),0)
+        self.assertEqual(self.page.locator('#sampleSTL option').nth(0).text_content().split(' — ')[0],'Isca artificial')
+        self.assertNotIn('Natan',self.page.locator('#stlSection').text_content())
+        self.page.locator('#safetyButton').click()
+        self.assertTrue(self.page.locator('#safetyDialog').is_visible())
+        self.page.keyboard.press('Escape')
+        self.page.locator('#helpToggle').click()
+        self.assertEqual(self.page.locator('#helpToggle').get_attribute('aria-pressed'),'true')
+
+    def test_aspire_encoding_restored_only_in_comments_and_export(self):
+        code='(Material Size)\n(X= 100.000, Z= 10.000)\n(Diameter = 20.000 mm)\n(0 = Esf�rica 3.1mm)\nN130 G00G21G17G90G40G49G80\nN140 G1 X30.5 A-90 Z-4 F1000\nM30'
+        result=self.js('''() => decodeAspireText(new TextEncoder().encode('(0 = Esf�rica 3.1mm)').buffer)''')
+        self.assertEqual(result['encoding'],'UTF-8')
+        self.assertIn('Esférica',result['text'])
+        restored=self.js("() => restoreAspireToolComment('(0 = Esf�rica 3.1mm)')")
+        self.assertEqual(restored,'(0 = Esférica 3.1mm)')
+        sample=code
+        self.page.locator('#fsc').set_input_files({'name':'teste.nc','mimeType':'text/plain','buffer':sample.encode('utf-8')})
+        self.page.wait_for_function("document.getElementById('sc').value.includes('Esférica')")
+        self.assertIn('Esférica 3.1mm',self.page.locator('#sc').input_value())
+        self.assertNotIn('Esf�rica',self.page.locator('#sc').input_value())
+        self.assertIn('N140 G1 X30.5 A-90 Z-4 F1000',self.page.locator('#sc').input_value())
+        self.assertEqual(self.page.locator('#D').input_value(),'30')
+        self.page.locator('#confirmCenter').click()
+        self.assertIn('Esférica 3.1mm',self.page.locator('#out').input_value())
+        self.assertIn('N140 G1 X30.5 A-90 Z-4 F1000',self.page.locator('#out').input_value())
+        self.assertIn('Codificação de importação: UTF-8',self.page.locator('#si').text_content())
+        legacy='(0 = Esférica 3.1mm)\nG21 G90 G17\nG1 X1 A0 Z-2\nM30'.encode('cp1252')
+        self.page.locator('#fsc').set_input_files({'name':'legacy.nc','mimeType':'text/plain','buffer':legacy})
+        self.page.wait_for_function("document.getElementById('si').textContent.includes('Windows-1252')")
+        self.assertIn('Esférica',self.page.locator('#sc').input_value())
 
     def test_invalid_step_cannot_hang_generation(self):
         self.page.locator('#SD').fill('0')
