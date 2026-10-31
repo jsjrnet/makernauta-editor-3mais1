@@ -265,6 +265,8 @@ function dr3(){const k=devicePixelRatio||1,rc=m3.getBoundingClientRect();if(rc.w
  VW={g,W,H,sc,cw,sw,cp,sp,L,t,fo};VW.machine=$('showMachine').checked&&t>.999?machineVisualGeometry(p,-fo,(C?C.cur.a*(C.cur.ad??p.dir)*Math.PI/180:0)-fo+inspectionA*Math.PI/180):null;const vmd=$('vm').value;$('viewStatus').textContent=vmd==='4'?(TRI?'STL + Desbaste: material âmbar removido pelos percursos; STL azul tracejado em raio X, sem remover material por si só.':'STL + Desbaste: importe um STL para sobrepor a referência; somente os percursos removem material.'):vmd==='2'?'STL de referência: geometria alvo, não é o resultado de uma usinagem.':vmd==='3'?'Comparação geométrica: material simulado × STL de referência.':vmd==='0'?'Percursos em linhas, sem representar a superfície removida.':'Material simulado: remoção calculada somente a partir dos percursos selecionados.';if(!FLD||GK!=gridKey())grid();
  if(vmd=='1'||vmd=='3'||vmd=='4'){if(C)carveTo(C.ci,C.u);msh(FLD,vmd=='3'?2:0);if(vmd==='4'&&TRI)drawSTLReference(poly,t,fo)}else if(vmd=='2'&&TGT)msh(TGT,1);
  if(vmd==='0'||(vmd==='2'&&!TGT))msh(FLD,0,true);
+  const guide=(VW.machine&&C&&vmd!=='2'&&sg[C.ci])?visualChuckClearance(C.cur,toolFor(sg[C.ci]),p):null;VW.chuckXClearance=guide;
+  if(guide!==null){$('viewStatus').textContent+=' Folga longitudinal X ilustrativa até a castanha: '+f(guide)+' mm. '+(guide<5?'ATENÇÃO: abaixo da margem visual de 5 mm.':'Margem visual X de 5 mm atendida.')+' Não verifica colisão real ou distância radial.';}
  if(vmd=='0'||vmd=='2')for(let j=0;j<24;j++)poly(Array.from({length:13},(_,i)=>mph(L*i/12,TP*j/24-fo,R,t)),mu,.4,1);
  poly(Array.from({length:13},(_,i)=>mph(L*i/12,-fo,R,t)),tx,.9,2.4);
  if(vmd=='0'||vmd=='2')for(let i=0;i<=12;i++)poly(Array.from({length:49},(_,j)=>mph(L*i/12,j==48?TP-1e-6:TP*j/48,R,t)),mu,.4,1);
@@ -421,7 +423,7 @@ function carveSeg(g,u0,u1){if(g.r)return;if(g.h&&g.o!=null)pcut(g,u0,u1);
 
 function carveTo(ci,u){if(!FLD)return;if(ci<CV.ci||(ci==CV.ci&&u<CV.u-1e-9)||CV.ci>=sg.length){FLD.fill(P().D/2);CV={ci:0,u:0};PK={};BS=null}
  for(let s=CV.ci;s<=ci;s++){const g=sg[s];if(!g)break;if(s==0&&!CV.u)NB=true;if(g.r)NB=true;else if(g.h&&!BS){BS=new Float32Array(FLD);NB=false}carveSeg(g,s==CV.ci?CV.u:0,s==ci?u:1)}CV={ci:ci,u:u}}
-function pocketHeight(K,i,j,o){const x=K.x0+i*.15,y=K.y0+j*.15;return Math.min(K.z[j*K.nx+i],sf(x,y,o.a))}
+function pocketHeight(K,i,j,o){const x=K.x0+i*.15,y=K.y0+j*.15;/* Use the same carved radial field as the visible shell, not the pre-pocket snapshot. */return Math.min(K.z[j*K.nx+i],sf(x,y,o.a,FLD))}
 function pocketSample(K,x,y,o){const gx=(x-K.x0)/.15,gy=(y-K.y0)/.15;if(gx<0||gy<0||gx>K.nx-1||gy>K.ny-1)return sf(x,y,o.a);
  const i=Math.min(K.nx-2,Math.floor(gx)),j=Math.min(K.ny-2,Math.floor(gy)),u=gx-i,v=gy-j;
  return (pocketHeight(K,i,j,o)*(1-u)+pocketHeight(K,i+1,j,o)*u)*(1-v)+(pocketHeight(K,i,j+1,o)*(1-u)+pocketHeight(K,i+1,j+1,o)*u)*v
@@ -647,6 +649,8 @@ function drawSTLReference(poly,t,fo){const rotation=(+$('SR').value||0)*Math.PI/
 ['SR','SX','OX'].forEach(id=>$(id).onchange=()=>{if(FLD)mkT();if(ops.some(o=>o.stlDepth))draw();else draw(false)});
 
 // Display-only solids. Never read by toolpath generation or material removal.
+// Signed axial gap between cutter envelope and forward illustrative jaw; not a 3D collision detector.
+function visualChuckClearance(q,tool,p){return q.x-tool.diameter/2-(p.D/2)*.08}
 function machineVisualGeometry(p,partAngle,machineAngle){const R=p.D/2,L=p.L,faces=[],jaws=[],rotate=(q,a)=>[q[0],q[1]*Math.cos(a)+q[2]*Math.sin(a),q[2]*Math.cos(a)-q[1]*Math.sin(a)];
  const face=(points,color,group)=>faces.push({points,color,group});
  function cylinder(x0,x1,r0,r1,color,group,phase=0){const n=36,ring=(x,r)=>Array.from({length:n},(_,i)=>rotate([x,r*Math.sin(i*2*Math.PI/n),r*Math.cos(i*2*Math.PI/n)],phase)),a=ring(x0,r0),b=ring(x1,r1);for(let i=0;i<n;i++){const j=(i+1)%n;face([a[i],a[j],b[j],b[i]],color,group)}face(a.slice().reverse(),color,group);face(b,color,group)}
