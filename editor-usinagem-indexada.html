@@ -706,7 +706,8 @@ function goToWorkStage(stageId){
   const rect=summary.getBoundingClientRect(),container=summary.closest('.dock-content');
   const topLimit=container?container.getBoundingClientRect().top:0;
   const bottomLimit=container?container.getBoundingClientRect().bottom:window.innerHeight;
-  if(rect.top<topLimit||rect.bottom>bottomLimit)summary.scrollIntoView({behavior:'instant',block:'nearest'});
+  // Ignore a small (< 24 px) edge clipping to avoid spurious page jumps between adjacent stage headers.
+   if(rect.top<topLimit-24||rect.bottom>bottomLimit+24)summary.scrollIntoView({behavior:'instant',block:'nearest'});
   summary.focus({preventScroll:true})
  }
 }
