@@ -697,8 +697,8 @@ class EditorTests(unittest.TestCase):
         result=self.js('''() => decodeAspireText(new TextEncoder().encode('(0 = Esf�rica 3.1mm)').buffer)''')
         self.assertEqual(result['encoding'],'UTF-8')
         self.assertIn('Esférica',result['text'])
-        restored=self.js('''() => restoreAspireToolComment('(0 = Esf�rica 3.1mm)\nN140 G1 X30.5 A-90 Z-4 F1000')''')
-        self.assertIn('N140 G1 X30.5 A-90 Z-4 F1000',restored)
+        restored=self.js("() => restoreAspireToolComment('(0 = Esf�rica 3.1mm)')")
+        self.assertEqual(restored,'(0 = Esférica 3.1mm)')
         sample=code
         self.page.locator('#fsc').set_input_files({'name':'teste.nc','mimeType':'text/plain','buffer':sample.encode('utf-8')})
         self.page.wait_for_function("document.getElementById('sc').value.includes('Esférica')")
