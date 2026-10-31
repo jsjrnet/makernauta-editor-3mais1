@@ -511,6 +511,41 @@ class EditorTests(unittest.TestCase):
         self.js("$('mo').value=0;$('mo').oninput()")
         self.assertIsNone(self.js('VW.machine'))
 
+    def test_yellow_visual_fixture_extension_is_not_a_cam_parameter(self):
+        self.js("tt=tot;dr3()")
+        original_code=self.page.locator('#out').input_value()
+        original_segments=self.js("JSON.stringify(sg)")
+        original_field=self.js("Array.from(FLD)")
+        self.assertEqual(self.page.locator('#FX').input_value(),'5')
+        self.page.locator('#FX').fill('7')
+        result=self.js("""() => {
+          const fixture=machineVisualGeometry(P(),0,0);
+          const yellow=fixture.faces.filter(f=>f.group==='safety');
+          const jaws=fixture.faces.filter(f=>f.group==='jaw');
+          return {
+            extension:fixture.safetyExtension,
+            yellowFaces:yellow.length,
+            yellowX:yellow.flatMap(f=>f.points.map(q=>q[0])),
+            color:yellow[0]?.color,
+            jawMaxX:Math.max(...jaws.flatMap(f=>f.points.map(q=>q[0]))),
+            chuckMaxX:Math.max(...fixture.faces.filter(f=>f.group==='chuck').flatMap(f=>f.points.map(q=>q[0])))
+          }
+        }""")
+        self.assertEqual(result['extension'],7)
+        self.assertGreater(result['yellowFaces'],0)
+        self.assertAlmostEqual(min(result['yellowX']),-7)
+        self.assertAlmostEqual(max(result['yellowX']),0)
+        self.assertLess(result['jawMaxX'],0)
+        self.assertLess(result['chuckMaxX'],0)
+        self.assertGreater(result['color'][0],result['color'][1])
+        self.assertGreater(result['color'][1],result['color'][2])
+        self.assertEqual(self.page.locator('#out').input_value(),original_code)
+        self.assertEqual(self.js("JSON.stringify(sg)"),original_segments)
+        self.assertEqual(self.js("Array.from(FLD)"),original_field)
+        self.page.locator('#FX').fill('0')
+        self.assertFalse(self.js("machineVisualGeometry(P(),0,0).faces.some(f=>f.group==='safety')"))
+        self.assertEqual(self.page.locator('#out').input_value(),original_code)
+
     def test_stock_end_faces_are_solid_from_both_axis_directions(self):
         self.page.locator('#showMachine').uncheck()
         for angle in [-math.pi/2,math.pi/2]:

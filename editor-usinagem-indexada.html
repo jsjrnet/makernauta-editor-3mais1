@@ -129,7 +129,7 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 <p class="warn" id="sti">Sem STL: o material é o cilindro bruto. Comparar: vermelho = sobrou material; azul = cortou além do STL; verde = dentro de ±0,6 mm.</p></div>
 <div class="pn" id="machineSection"><h2>Configuração da peça e máquina</h2><div class="g">
 <label>Z0 das operações indexadas / Mach3<select id="Z0"><option value="0">Centro do eixo A</option><option value="1">Superfície do bruto</option></select></label><label>Diâmetro do bruto (mm)<input id="D" type="number" value="30" step="0.1"></label>
-<label>Comprimento (mm)<input id="L" type="number" value="120" step="1"></label>
+<label>Comprimento (mm)<input id="L" type="number" value="120" step="1"></label><label>Extensão visual para fixação no chuck (mm) — amarela<input id="FX" type="number" value="5" min="0" max="100" step="1"></label>
 
 <label>Rotação (rpm)<input id="S" type="number" value="18000"></label>
 <label>Avanço (mm/min)<input id="F" type="number" value="1200"></label>
@@ -137,7 +137,7 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 <label>Profundidade por passada (mm)<input id="SD" type="number" value="1.5" step="0.1"></label>
 <label>Altura de segurança (mm)<input id="SF" type="number" value="8" step="1"></label>
 <label>Sentido de rotação do eixo A<select id="DIR"><option value="1">Normal (+)</option><option value="-1">Invertido (−)</option></select></label>
-</div><p class="warn">Ferramentas independentes: escultura Aspire e operações indexadas. O Z0 das operações é definido nesta seção. A referência original do Aspire precisa ser identificada ou confirmada para combinar os programas. Com ballnose, o piso indica a ponta da ferramenta; a borda mantém o raio esférico.</p></div>
+</div><p class="warn">A extensão amarela é somente uma representação de material adicional para fixação. Não aumenta o comprimento útil X, não altera o G-code e não garante ausência de colisão com a máquina.</p><p class="warn">Ferramentas independentes: escultura Aspire e operações indexadas. O Z0 das operações é definido nesta seção. A referência original do Aspire precisa ser identificada ou confirmada para combinar os programas. Com ballnose, o piso indica a ponta da ferramenta; a borda mantém o raio esférico.</p></div>
 <div class="pn" id="pocketSection"><h2>Operações de usinagem — cortes XYZ indexados</h2><ul class="ops" id="list"></ul><h2 id="pt" style="margin:10px 0 0">Parâmetros da operação</h2>
 
 <section class="op-group" aria-label="Geometria da operação"><h3>Geometria</h3>
@@ -192,6 +192,7 @@ function lst(){const u=$('list');u.innerHTML='';ops.forEach((o,i)=>{const li=doc
 function form(){const o=ops[sel];if(!o)return;$('ST').checked=!!o.stlDepth;$('T').value=operationTool(o).diameter;$('HT').value=operationTool(o).ball?'1':'0';$('x').value=o.x;$('a').value=o.a;$('yy').value=f(o.a*Math.PI*P().D/360);$('w').value=o.w;$('l').value=o.l;$('d').value=o.d;$('ll').style.display=o.t=='r'?'':'none';$('lw').style.display=o.ln?'none':'';$('rot').value=o.rot||0;$('cm').value=o.ln&&(o.cm||'p')=='p'?'on':(o.cm||'p');$('rotw').style.display=$('rotb').style.display=o.t=='c'?'none':'';$('pt').textContent='Operação selecionada: '+(o.ln?'Linha':o.t=='c'?'Círculo':'Retângulo')+' '+(sel+1);$('lw').firstChild.textContent=o.t=='c'?'Diâmetro (mm)':'Largura tangencial (mm)';$('fz').value=f(P().D/2-o.d-machineOffset())}
 ['x','a','w','l','d'].forEach(k=>$(k).oninput=()=>{const o=ops[sel];if(!o)return;o[k]=+$(k).value;$('fz').value=f(P().D/2-o.d-machineOffset());lst();draw()});
 ['D','L','S','F','FP','SD','SF','DIR'].forEach(k=>$(k).oninput=()=>{form();draw()});
+$('FX').oninput=()=>dr3(); // Fixação puramente visual: não executar gen(), v3() ou recalcular a malha.
 ['T','HT'].forEach(id=>$(id).oninput=()=>{const o=ops[sel];if(!o)return;o.toolDiameter=+$('T').value;o.toolType=$('HT').value;lst();draw()});
 $('addC').onclick=()=>{ops.push({t:'c',x:P().L/2,a:180,w:10,l:10,d:5});sel=ops.length-1;lst();form();draw()};
 $('addR').onclick=()=>{ops.push({t:'r',x:P().L/2,a:180,w:8,l:16,d:5});sel=ops.length-1;lst();form();draw()};
@@ -258,7 +259,7 @@ function pg(){const code=simulationSource();const source=code+'|'+sourceReferenc
  const R=P().D/2;sg.forEach(e=>{acc+=(Math.hypot(e.q.x-e.p.x,e.q.y-e.p.y,e.q.z-e.p.z,(e.q.a-e.p.a)*Math.PI/180*R)+.01)*(e.r?.15:1);cm.push(acc)});tot=acc;tt=Math.min(tt,tot);SP=sg.findIndex(e=>e.h);if(SP<0)SP=sg.length;}
 function v3(){pg();dr3();xyv2()}
 function dr3(){const k=devicePixelRatio||1,rc=m3.getBoundingClientRect();if(rc.width<1)return;m3.width=rc.width*k;m3.height=Math.round(rc.height*k);
- const g=m3.getContext('2d'),W=m3.width,H=m3.height,p=P(),R=p.D/2,L=p.L,TP=2*Math.PI,t=mv,cw=Math.cos(ya),sw=Math.sin(ya),cp=Math.cos(pa),sp=Math.sin(pa),ey=(1-t)*Math.PI*R+t*R,sc=zm*k*Math.min(rc.width/(Math.max(1,(L+R*3.6)*Math.abs(cw)+2*Math.max(ey,R*1.4)*Math.abs(sw))*1.2),rc.height/(Math.max(1,(L+R*3.6)*Math.abs(sw*sp)+2*Math.max(ey,R*1.4)*Math.abs(cw*sp)+2*R*1.4*Math.abs(cp))*1.2)),mu=css('--mu'),ac=css('--ac'),op=css('--op'),tx=css('--tx');
+ const g=m3.getContext('2d'),W=m3.width,H=m3.height,p=P(),R=p.D/2,L=p.L,VEX=visualFixtureExtension(),TP=2*Math.PI,t=mv,cw=Math.cos(ya),sw=Math.sin(ya),cp=Math.cos(pa),sp=Math.sin(pa),ey=(1-t)*Math.PI*R+t*R,sc=zm*k*Math.min(rc.width/(Math.max(1,(L+R*3.6+VEX)*Math.abs(cw)+2*Math.max(ey,R*1.4)*Math.abs(sw))*1.2),rc.height/(Math.max(1,(L+R*3.6+VEX)*Math.abs(sw*sp)+2*Math.max(ey,R*1.4)*Math.abs(cw*sp)+2*R*1.4*Math.abs(cp))*1.2)),mu=css('--mu'),ac=css('--ac'),op=css('--op'),tx=css('--tx');
  const pj=q=>{const x=q[0]-L/2,x1=x*cw-q[1]*sw,y1=x*sw+q[1]*cw;return[W/2+PX+x1*sc,H/2+PY-(y1*sp+q[2]*cp)*sc]};
  const poly=(a,col,al,w)=>{g.beginPath();a.forEach((q,i)=>{const s=pj(q);if(i&&!(t<.999&&Math.abs(q[3]-a[i-1][3])>Math.PI))g.lineTo(s[0],s[1]);else g.moveTo(s[0],s[1])});g.strokeStyle=col;g.globalAlpha=al;g.lineWidth=w*k;g.stroke();g.globalAlpha=1};
  const mm=rfv()=='1',C=sg.length?curp():null,fo=(mm&&C?C.cur.a*(C.cur.ad??p.dir)*Math.PI/180:0)+inspectionA*Math.PI/180;
@@ -647,18 +648,20 @@ function drawSTLReference(poly,t,fo){const rotation=(+$('SR').value||0)*Math.PI/
 ['SR','SX','OX'].forEach(id=>$(id).onchange=()=>{if(FLD)mkT();if(ops.some(o=>o.stlDepth))draw();else draw(false)});
 
 // Display-only solids. Never read by toolpath generation or material removal.
-function machineVisualGeometry(p,partAngle,machineAngle){const R=p.D/2,L=p.L,faces=[],jaws=[],rotate=(q,a)=>[q[0],q[1]*Math.cos(a)+q[2]*Math.sin(a),q[2]*Math.cos(a)-q[1]*Math.sin(a)];
+function visualFixtureExtension(){const v=Number($('FX').value);return Number.isFinite(v)?Math.max(0,Math.min(100,v)):5}
+function machineVisualGeometry(p,partAngle,machineAngle){const R=p.D/2,L=p.L,E=visualFixtureExtension(),faces=[],jaws=[],rotate=(q,a)=>[q[0],q[1]*Math.cos(a)+q[2]*Math.sin(a),q[2]*Math.cos(a)-q[1]*Math.sin(a)];
  const face=(points,color,group)=>faces.push({points,color,group});
  function cylinder(x0,x1,r0,r1,color,group,phase=0){const n=36,ring=(x,r)=>Array.from({length:n},(_,i)=>rotate([x,r*Math.sin(i*2*Math.PI/n),r*Math.cos(i*2*Math.PI/n)],phase)),a=ring(x0,r0),b=ring(x1,r1);for(let i=0;i<n;i++){const j=(i+1)%n;face([a[i],a[j],b[j],b[i]],color,group)}face(a.slice().reverse(),color,group);face(b,color,group)}
  function box(x0,x1,r0,r1,halfWidth,angle,color,group){const points=[];for(const x of [x0,x1])for(const r of [r0,r1])for(const v of [-halfWidth,halfWidth])points.push(rotate([x,v,r],angle));for(const ids of [[0,1,3,2],[4,6,7,5],[0,4,5,1],[2,3,7,6],[0,2,6,4],[1,5,7,3]])face(ids.map(i=>points[i]),color,group)}
- cylinder(-R*1.35,-R*.25,R*1.4,R*1.4,[57,65,72],'chuck',partAngle);
- cylinder(-R*.28,-R*.1,R*1.32,R*1.32,[87,97,108],'chuck',partAngle);
- for(let j=0;j<3;j++){const angle=partAngle+j*2*Math.PI/3;box(-R*.18,R*.08,R*.91,R*1.32,R*.16,angle,[151,160,168],'jaw');jaws.push(rotate([0,0,R],angle))}
+ cylinder(-R*1.35-E,-R*.25-E,R*1.4,R*1.4,[68,77,87],'chuck',partAngle);
+ cylinder(-R*.28-E,-R*.1-E,R*1.32,R*1.32,[117,124,135],'chuck',partAngle);
+ for(let j=0;j<3;j++){const angle=partAngle+j*2*Math.PI/3;box(-R*.18-E,R*.08-E,R*.91,R*1.32,R*.16,angle,[168,174,180],'jaw');jaws.push(rotate([0,0,R],angle))}
+ if(E>0)cylinder(-E,0,R,R,[240,198,48],'safety',partAngle);
  cylinder(L+.15,L+R*.85,0,R*.48,[157,164,170],'tailstock');
  cylinder(L+R*.85,L+R*1.25,R*.48,R*.48,[101,111,122],'tailstock');
  cylinder(L+R*1.25,L+R*2.15,R*.83,R*.83,[57,65,72],'tailstock');
  box(L+R*1.18,L+R*2.25,-R*1.22,-R*.48,R*.65,machineAngle,[62,72,81],'tailstock');
- return {faces,jaws,tailstockTip:[L+.15,0,0],partAngle,machineAngle}
+ return {faces,jaws,tailstockTip:[L+.15,0,0],partAngle,machineAngle,safetyExtension:E}
 }
 function queueMachineFaces(queue,geometry){const {L,cw,sw,cp,sp}=VW;for(const face of geometry.faces){const points=face.points.map(q=>{const x=q[0]-L/2;return[x*cw-q[1]*sw,x*sw+q[1]*cw,q[2],0]});
  // Fan triangulation also handles circular end faces.
