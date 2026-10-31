@@ -677,6 +677,43 @@ class EditorTests(unittest.TestCase):
         self.assertEqual(self.page.locator('#OX').input_value(),'10')
         self.assertNotEqual(self.js('Array.from(TGT)'),snapshot)
 
+    def test_pr7_layout_controls_and_sample_stl_restrictions(self):
+        self.assertEqual(self.page.locator('header #safetyButton').count(),1)
+        self.assertEqual(self.page.locator('.stage-nav #helpToggle').count(),1)
+        self.assertEqual(self.page.locator('.safety-strip').count(),0)
+        for item in ['tp','oc','showMachine']:
+            self.assertEqual(self.page.locator(f'.sim-visibility #{item}').count(),1)
+        self.assertEqual(self.page.locator('#downloadSampleSTL').count(),0)
+        self.assertEqual(self.page.locator('#sampleSTL option').nth(0).text_content().split(' — ')[0],'Isca artificial')
+        self.assertNotIn('Natan',self.page.locator('#stlSection').text_content())
+        self.page.locator('#safetyButton').click()
+        self.assertTrue(self.page.locator('#safetyDialog').is_visible())
+        self.page.keyboard.press('Escape')
+        self.page.locator('#helpToggle').click()
+        self.assertEqual(self.page.locator('#helpToggle').get_attribute('aria-pressed'),'true')
+
+    def test_aspire_encoding_restored_only_in_comments_and_export(self):
+        code='(Material Size)\\n(X= 100.000, Z= 10.000)\\n(Diameter = 20.000 mm)\\n(0 = Esf�rica 3.1mm)\\nN130 G00G21G17G90G40G49G80\\nN140 G1 X30.5 A-90 Z-4 F1000\\nM30'
+        result=self.js('''() => decodeAspireText(new TextEncoder().encode('(0 = Esf\\uFFFD rica 3.1mm)').buffer)''')
+        self.assertEqual(result['encoding'],'UTF-8')
+        restored=self.js('''() => restoreAspireToolComment('(0 = Esf\\uFFFD rica 3.1mm)\\nN140 G1 X30.5 A-90 Z-4 F1000')''')
+        self.assertIn('N140 G1 X30.5 A-90 Z-4 F1000',restored)
+        sample=code.replace('Esf�rica','Esf\ufffdrica')
+        self.page.locator('#fsc').set_input_files({'name':'teste.nc','mimeType':'text/plain','buffer':sample.encode('utf-8')})
+        self.page.wait_for_function("document.getElementById('sc').value.includes('Esférica')")
+        self.assertIn('Esférica 3.1mm',self.page.locator('#sc').input_value())
+        self.assertNotIn('Esf�rica',self.page.locator('#sc').input_value())
+        self.assertIn('N140 G1 X30.5 A-90 Z-4 F1000',self.page.locator('#sc').input_value())
+        self.assertEqual(self.page.locator('#D').input_value(),'30')
+        self.page.locator('#confirmCenter').click()
+        self.assertIn('Esférica 3.1mm',self.page.locator('#out').input_value())
+        self.assertIn('N140 G1 X30.5 A-90 Z-4 F1000',self.page.locator('#out').input_value())
+        self.assertIn('Codificação de importação: UTF-8',self.page.locator('#si').text_content())
+        legacy='(0 = Esférica 3.1mm)\\nG21 G90 G17\\nG1 X1 A0 Z-2\\nM30'.encode('cp1252')
+        self.page.locator('#fsc').set_input_files({'name':'legacy.nc','mimeType':'text/plain','buffer':legacy})
+        self.page.wait_for_function("document.getElementById('si').textContent.includes('Windows-1252')")
+        self.assertIn('Esférica',self.page.locator('#sc').input_value())
+
     def test_invalid_step_cannot_hang_generation(self):
         self.page.locator('#SD').fill('0')
         self.assertEqual(self.page.locator('#out').input_value(),'')
