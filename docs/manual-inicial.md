@@ -5,8 +5,10 @@ O módulo atualmente disponível é **Usinagem Indexada 3+1**. O eixo A **posici
 
 ### Navegar entre as etapas
 - Na faixa superior, escolha diretamente **Preparar trabalho**, **Criar operações**, **Simular e inspecionar** ou **Gerar CNC**.
-- Dentro de cada etapa, use os botões **← Etapa anterior** e **Próxima etapa →** na parte inferior do painel. A primeira etapa tem somente **Próxima etapa** e a última somente **Etapa anterior**.
-- Os botões abrem automaticamente a seção de destino, inclusive quando ela estiver recolhida, sem alterar campos, operações ou G-code. No desktop, também abrem temporariamente um painel lateral que esteja oculto.
+- Os botões **‹ Anterior** e **Próxima ›** ficam agora **no cabeçalho** de cada etapa, ao lado do título, e não no rodapé. A primeira tem apenas Próxima; a última, apenas Anterior.
+- Ao navegar, a etapa ativa é realçada no cabeçalho e na barra superior. O sistema só reposiciona a tela quando o destino não estiver visível, evitando saltos entre áreas próximas. Painéis laterais ocultos são abertos quando necessário.
+- O botão **📖 Manual do sistema**, disponível na barra superior, abre este guia diretamente no editor, mesmo sem conexão externa. A ajuda pontual de cada parâmetro continua no botão **Informações dos parâmetros**.
+- Navegar entre etapas não altera campos, operações, ferramentas ou G-code.
 
 ### 1. Preparar trabalho
 - Em **Configuração da peça e máquina**, informe **diâmetro e comprimento do material bruto**, e não as dimensões da peça acabada.
