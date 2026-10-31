@@ -693,12 +693,13 @@ class EditorTests(unittest.TestCase):
         self.assertEqual(self.page.locator('#helpToggle').get_attribute('aria-pressed'),'true')
 
     def test_aspire_encoding_restored_only_in_comments_and_export(self):
-        code='(Material Size)\\n(X= 100.000, Z= 10.000)\\n(Diameter = 20.000 mm)\\n(0 = Esf�rica 3.1mm)\\nN130 G00G21G17G90G40G49G80\\nN140 G1 X30.5 A-90 Z-4 F1000\\nM30'
-        result=self.js('''() => decodeAspireText(new TextEncoder().encode('(0 = Esf\\uFFFD rica 3.1mm)').buffer)''')
+        code='(Material Size)\n(X= 100.000, Z= 10.000)\n(Diameter = 20.000 mm)\n(0 = Esf�rica 3.1mm)\nN130 G00G21G17G90G40G49G80\nN140 G1 X30.5 A-90 Z-4 F1000\nM30'
+        result=self.js('''() => decodeAspireText(new TextEncoder().encode('(0 = Esf�rica 3.1mm)').buffer)''')
         self.assertEqual(result['encoding'],'UTF-8')
-        restored=self.js('''() => restoreAspireToolComment('(0 = Esf\\uFFFD rica 3.1mm)\\nN140 G1 X30.5 A-90 Z-4 F1000')''')
+        self.assertIn('Esférica',result['text'])
+        restored=self.js('''() => restoreAspireToolComment('(0 = Esf�rica 3.1mm)\nN140 G1 X30.5 A-90 Z-4 F1000')''')
         self.assertIn('N140 G1 X30.5 A-90 Z-4 F1000',restored)
-        sample=code.replace('Esf�rica','Esf\ufffdrica')
+        sample=code
         self.page.locator('#fsc').set_input_files({'name':'teste.nc','mimeType':'text/plain','buffer':sample.encode('utf-8')})
         self.page.wait_for_function("document.getElementById('sc').value.includes('Esférica')")
         self.assertIn('Esférica 3.1mm',self.page.locator('#sc').input_value())
@@ -709,7 +710,7 @@ class EditorTests(unittest.TestCase):
         self.assertIn('Esférica 3.1mm',self.page.locator('#out').input_value())
         self.assertIn('N140 G1 X30.5 A-90 Z-4 F1000',self.page.locator('#out').input_value())
         self.assertIn('Codificação de importação: UTF-8',self.page.locator('#si').text_content())
-        legacy='(0 = Esférica 3.1mm)\\nG21 G90 G17\\nG1 X1 A0 Z-2\\nM30'.encode('cp1252')
+        legacy='(0 = Esférica 3.1mm)\nG21 G90 G17\nG1 X1 A0 Z-2\nM30'.encode('cp1252')
         self.page.locator('#fsc').set_input_files({'name':'legacy.nc','mimeType':'text/plain','buffer':legacy})
         self.page.wait_for_function("document.getElementById('si').textContent.includes('Windows-1252')")
         self.assertIn('Esférica',self.page.locator('#sc').input_value())
