@@ -537,6 +537,7 @@ $('fsc').onchange=e=>{
  reader.readAsArrayBuffer(f)
 };
 const parameterHelp={
+ manualButton:['Manual do sistema','Abre o manual integrado com um roteiro de preparação, operações indexadas, simulação, importação Aspire/STL e exportação experimental. Pode ser consultado sem conexão externa.'],
  applyAspireParams:['Aplicar parâmetros reconhecidos do Aspire','Copia apenas dimensões declaradas do bruto e informações explícitas da fresa para campos da interface. Não altera as coordenadas do arquivo nem define o Z0. Confira os valores antes de simular ou gerar CNC.'],
  OX:['Deslocamento X do STL','Move somente a referência STL ao longo do bruto, sem alterar o G-code importado ou os movimentos CNC. Com referência de profundidade pelo STL habilitada, o novo alinhamento passa a influenciar o cálculo dessa operação.'],
  sampleSTL:['Modelos STL de demonstração','Escolha a isca artificial ou o peão de xadrez. São modelos didáticos de uso interno para inspeção e testes; não correspondem ao G-code importado do Aspire.'],
