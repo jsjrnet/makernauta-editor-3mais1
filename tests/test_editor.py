@@ -800,6 +800,55 @@ class EditorTests(unittest.TestCase):
         self.page.wait_for_function("document.getElementById('si').textContent.includes('Windows-1252')")
         self.assertIn('Esférica',self.page.locator('#sc').input_value())
 
+    def test_combined_overlay_never_rises_above_carved_radial_material(self):
+        self.page.locator('#sc').fill('(Z0 = centro)\nG21 G90 G17\nG0 X15 Z18 A0\nG1 X30 Z11 A90 F600\nM30')
+        self.page.locator('#simStage').select_option('all')
+        original=self.page.locator('#out').input_value()
+        result=self.js('''() => {
+          tt=tot;dr3();
+          let overhang=0,count=0;
+          for(const key of Object.keys(PK)){
+            const K=PK[key],o=ops[key];
+            if(!K.n)continue;
+            for(let j=0;j<K.ny;j+=Math.max(1,Math.floor(K.ny/15)))
+              for(let i=0;i<K.nx;i+=Math.max(1,Math.floor(K.nx/15))){
+                const x=K.x0+i*.15,y=K.y0+j*.15;
+                const h=pocketHeight(K,i,j,o),shell=sf(x,y,o.a,FLD);
+                overhang=Math.max(overhang,h-shell);count++;
+              }
+          }
+          const oldBS=BS,oldFLD=FLD,R=P().D/2;
+          try{
+            BS=new Float32Array(FLD.length).fill(R);
+            FLD=new Float32Array(FLD.length).fill(R-2);
+            const K={x0:P().L/2,y0:0,nx:2,ny:2,z:new Float32Array(4).fill(1e9)};
+            const test=pocketHeight(K,0,0,ops[0]),radial=sf(K.x0,0,ops[0].a,FLD);
+            return {overhang,count,test,radial};
+          } finally {BS=oldBS;FLD=oldFLD}
+        }''')
+        self.assertGreater(result['count'],0)
+        self.assertLessEqual(result['overhang'],1e-6)
+        self.assertAlmostEqual(result['test'],result['radial'],delta=1e-6)
+        self.assertEqual(self.page.locator('#out').input_value(),original)
+
+    def test_chuck_axial_clearance_is_an_illustrative_warning_only(self):
+        before=self.page.locator('#out').input_value()
+        value=self.js('''() => {
+          const clearance=visualChuckClearance({x:10},{diameter:4},{D:30});
+          const alert=visualChuckClearance({x:2},{diameter:4},{D:30});
+          dr3();
+          return {clearance,alert,status:$('viewStatus').textContent,hasFixture:!!VW.machine,
+            current:VW.chuckXClearance};
+        }''')
+        self.assertAlmostEqual(value['clearance'],6.8)
+        self.assertAlmostEqual(value['alert'],-1.2)
+        self.assertTrue(value['hasFixture'])
+        self.assertIn('Folga longitudinal X ilustrativa',value['status'])
+        self.assertIn('Não verifica colisão real',value['status'])
+        self.page.locator('#showMachine').uncheck()
+        self.assertIsNone(self.js('VW.chuckXClearance'))
+        self.assertEqual(self.page.locator('#out').input_value(),before)
+
     def test_invalid_step_cannot_hang_generation(self):
         self.page.locator('#SD').fill('0')
         self.assertEqual(self.page.locator('#out').input_value(),'')
