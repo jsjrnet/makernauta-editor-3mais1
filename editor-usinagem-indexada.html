@@ -41,12 +41,49 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 
 .simulation-viewport{height:340px;min-height:240px;max-height:1000px;min-width:0;overflow:hidden}.simulation-viewport #c3{height:100%;width:100%;display:block}.simulation-resize{height:16px;cursor:ns-resize;touch-action:none;display:flex;align-items:center;justify-content:center;border:1px solid var(--ln);border-radius:0 0 5px 5px;background:var(--ok);margin-bottom:6px}.simulation-resize::after{content:'•••';letter-spacing:4px;color:var(--mu);line-height:1}.simulation-resize:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .simulation-viewport{position:relative}.a-inspection{position:absolute;right:8px;bottom:8px;display:flex;gap:4px;align-items:center;background:var(--pn);border:1px solid var(--ln);border-radius:5px;padding:4px;font-size:12px}.a-inspection button{padding:3px 7px}.dock-tab::before{content:'›';display:inline-block;font-size:24px;font-weight:bold;margin-bottom:8px;writing-mode:horizontal-tb}.dock.right .dock-tab::before{content:'‹'}
-.stage-nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--ln);background:var(--pn)}.stage-nav button{font-size:13px}.stage-nav .info-toggle{margin:0 0 0 auto;flex:0 0 auto}.stage-step-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--ln)}.stage-step-nav>span{font-size:12px;color:var(--mu);margin-right:auto}.stage-step-nav button{font-size:13px;padding:7px 10px}.stage-step-nav .next-step{background:var(--ac);color:var(--pn);border-color:var(--ac)}.stage-step-nav .next-step:focus-visible{outline:2px solid var(--tx);outline-offset:2px}.sim-visibility{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:7px 0 6px}.sim-visibility label{flex-direction:row;align-items:center;gap:5px;color:var(--tx);white-space:normal}.sim-visibility input{flex:none}@media(max-width:640px){header #safetyButton{width:auto}.stage-nav .info-toggle{margin-left:0}}.op-group{border:1px solid var(--ln);border-radius:7px;padding:10px;margin:9px 0}.op-group h3{margin:0 0 9px;font-size:13px;font-weight:700}.op-group .g{margin:0}.op-advanced{margin-top:9px;border:1px dashed var(--ln);border-radius:6px;padding:8px}.op-advanced summary,.map-preferences summary{cursor:pointer;font-size:13px;font-weight:600}.map-preferences{margin-top:9px;border-top:1px solid var(--ln);padding-top:8px}.sample-stl{padding:8px;background:var(--ok);border-radius:7px;margin:8px 0}.sample-stl .row{align-items:end}.sample-stl label{flex:1;min-width:170px}.example-note{font-size:12px;color:var(--mu)}
+.stage-nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--ln);background:var(--pn)}.stage-nav button{font-size:13px}.stage-nav .info-toggle{margin:0;flex:0 0 auto}.stage-nav .manual-button{margin-left:auto}.stage-nav [data-go].is-active{background:var(--ac);border-color:var(--ac);color:var(--pn);font-weight:600}
+.pn[data-work-stage] > summary{display:flex;align-items:center;gap:8px;list-style:none;flex-wrap:wrap}
+.pn[data-work-stage] > summary::-webkit-details-marker{display:none}
+.pn[data-work-stage] > summary::before{content:'▸';font-size:14px;color:var(--mu)}
+.pn[data-work-stage][open] > summary::before{content:'▾'}
+.work-stage-heading{flex:1 1 160px;min-width:0}
+.pn.work-stage-active > summary{background:var(--ok);box-shadow:inset 4px 0 0 var(--ac)}
+.pn.work-stage-active > summary .work-stage-heading{color:var(--ac)}
+.stage-step-nav{display:flex;gap:5px;align-items:center;margin-left:auto;flex:0 0 auto}
+.stage-step-nav button{font-size:12px;font-weight:500;padding:5px 8px}
+.stage-step-nav .next-step{border-color:var(--ac);color:var(--ac);font-weight:600}
+.stage-step-nav button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.manual-dialog{width:min(750px,calc(100vw - 28px));max-height:85vh;overflow-y:auto}
+.manual-dialog nav{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.manual-dialog nav a{font-size:12px;color:var(--ac);padding:4px 8px;border:1px solid var(--ln);border-radius:5px}
+.manual-dialog h3{font-size:15px;margin:16px 0 6px}
+.manual-dialog ul{padding-left:20px}
+.manual-dialog .manual-actions{display:flex;justify-content:flex-end;margin-top:14px}
+@media(max-width:640px){.stage-nav .manual-button{margin-left:0}.stage-step-nav{margin-left:0}.pn[data-work-stage] > summary{gap:7px}.work-stage-heading{flex-basis:100%}}.sim-visibility{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:7px 0 6px}.sim-visibility label{flex-direction:row;align-items:center;gap:5px;color:var(--tx);white-space:normal}.sim-visibility input{flex:none}@media(max-width:640px){header #safetyButton{width:auto}.stage-nav .info-toggle{margin-left:0}}.op-group{border:1px solid var(--ln);border-radius:7px;padding:10px;margin:9px 0}.op-group h3{margin:0 0 9px;font-size:13px;font-weight:700}.op-group .g{margin:0}.op-advanced{margin-top:9px;border:1px dashed var(--ln);border-radius:6px;padding:8px}.op-advanced summary,.map-preferences summary{cursor:pointer;font-size:13px;font-weight:600}.map-preferences{margin-top:9px;border-top:1px solid var(--ln);padding-top:8px}.sample-stl{padding:8px;background:var(--ok);border-radius:7px;margin:8px 0}.sample-stl .row{align-items:end}.sample-stl label{flex:1;min-width:170px}.example-note{font-size:12px;color:var(--mu)}
 </style></head><body>
 <header><h1>Makernauta — Usinagem Rotativa</h1>
 <p><strong>Módulo atual: Usinagem Indexada 3+1.</strong> O eixo A posiciona a peça e permanece parado durante o corte XYZ. Arraste as operações na vista desenrolada: horizontal = comprimento da peça; vertical = ângulo de indexação A. A usinagem XZA simultânea ainda não é gerada neste módulo.</p><button id="safetyButton" type="button" aria-haspopup="dialog">Aviso de segurança — Protótipo não homologado</button></header>
-<nav class="stage-nav" aria-label="Etapas do trabalho"><button type="button" data-go="machineSection">1. Preparar trabalho</button><button type="button" data-go="pocketSection">2. Criar operações</button><button type="button" data-go="simulationSection">3. Simular e inspecionar</button><button type="button" data-go="exportSection">4. Gerar CNC</button><button id="helpToggle" class="info-toggle" aria-pressed="false">ⓘ Informações dos parâmetros</button></nav>
+<nav class="stage-nav" aria-label="Etapas do trabalho"><button type="button" data-go="machineSection">1. Preparar trabalho</button><button type="button" data-go="pocketSection">2. Criar operações</button><button type="button" data-go="simulationSection">3. Simular e inspecionar</button><button type="button" data-go="exportSection">4. Gerar CNC</button><button id="manualButton" type="button" class="manual-button" aria-haspopup="dialog" aria-controls="manualDialog">📖 Manual do sistema</button><button id="helpToggle" class="info-toggle" aria-pressed="false">ⓘ Informações dos parâmetros</button></nav>
 <dialog id="safetyDialog" aria-labelledby="safetyTitle"><h2 id="safetyTitle">Aviso de segurança</h2><p><b>Protótipo, não validado em máquina.</b> O G-code gerado não é homologado para execução física e nunca foi testado numa CNC real. Antes de usinar, confira no backplot do Mach3 e rode no ar. Uso por sua conta e risco.</p><form method="dialog"><button autofocus>Fechar aviso</button></form></dialog>
+<dialog id="manualDialog" class="manual-dialog" aria-labelledby="manualTitle">
+<h2 id="manualTitle">Manual Makernauta — Usinagem Rotativa</h2>
+<p>Guia inicial do módulo <strong>Usinagem Indexada 3+1</strong>. As quatro etapas podem ser acessadas pela barra superior ou pelos controles Anterior/Próxima no cabeçalho de cada etapa. A etapa ativa fica destacada. Consulte também as informações individuais dos parâmetros.</p>
+<nav aria-label="Índice do manual"><a href="#guidePrepare">Preparar</a><a href="#guideOperations">Operações</a><a href="#guideSimulate">Simular</a><a href="#guideExport">Gerar CNC</a><a href="#guideSafety">Segurança</a></nav>
+<section id="guidePrepare"><h3>1. Preparar trabalho</h3>
+<p>Informe o diâmetro e o comprimento do <strong>material bruto</strong>, não as dimensões da peça acabada. Defina a origem Z0 usada pela CNC. Ao importar G-code XZA do Aspire, confira as medidas e a ferramenta identificadas no cabeçalho. Use <strong>Aplicar dados reconhecidos</strong> somente após revisar os valores. Se o Z0 não estiver explicitamente declarado, confirme-o no projeto do Aspire: a altura dos movimentos não comprova essa referência.</p>
+<p>Você pode importar seu STL ou carregar os exemplos internos <strong>Isca artificial</strong> e <strong>Peão de xadrez</strong>. Eles servem apenas para testes, não são oferecidos para download e não representam o G-code Aspire automaticamente. O STL é referência de geometria, não um programa de usinagem. Girar, inverter e deslocar o STL em X ajusta sua posição; quando a opção de profundidade baseada no STL está ativada, o alinhamento influencia o cálculo.</p></section>
+<section id="guideOperations"><h3>2. Criar operações indexadas</h3>
+<p>Na vista desenrolada, adicione círculo, retângulo ou linha. A posição <strong>X</strong> corresponde ao comprimento da peça; <strong>A</strong>, ao ângulo de indexação. A grade de desenho possui controles próprios. Em cada operação, ajuste Geometria, Posicionamento, Estratégia/Profundidade e Ferramenta. Use a opção avançada de profundidade baseada no STL apenas com a referência corretamente alinhada.</p>
+<p><strong>Regra 3+1:</strong> o eixo A posiciona a peça e permanece parado durante os cortes cartesianos XYZ.</p></section>
+<section id="guideSimulate"><h3>3. Simular e inspecionar</h3>
+<p>Selecione escultura Aspire, operações indexadas ou ambas. Avance o controle de tempo e alterne Percurso, Contornos e Fixação visual. Use Girar A para inspecionar a vista em passos de 15° — esse controle não altera o programa da máquina. As vistas desenrolada, seção e inspeção XY ajudam a examinar a geometria.</p>
+<p>Se surgirem saliências na simulação combinada, trate-as como <strong>pendência de inspeção gráfica</strong>; não presuma que a trajetória CNC produziu uma rebarba real.</p></section>
+<section id="guideExport"><h3>4. Gerar programa CNC</h3>
+<p>Confira a compatibilidade de Z0, a ferramenta e a necessidade de pausa para troca de fresa. O arquivo combinado preserva a escultura rotativa importada e acrescenta as operações indexadas. Na leitura de arquivos Aspire, os comentários podem ser decodificados como UTF-8 ou Windows-1252. Revise o texto e os comandos antes de exportar.</p></section>
+<section id="guideSafety"><h3>Segurança e limitações</h3>
+<p><strong>Este software é um protótipo experimental não homologado para execução física.</strong> O módulo não gera escultura XZA coordenada; essa escultura precisa vir do Aspire. Verifique o programa por simulação/backplot independente, confira origens, ferramentas e fixações. Não execute o .nc diretamente na CNC com base apenas na prévia 3D do Makernauta.</p></section>
+<form method="dialog" class="manual-actions"><button type="submit">Fechar manual</button></form>
+</dialog>
 <main>
 <div class="col">
 <div class="pn" id="mapSection"><h2>Desenho da peça — vista desenrolada (comprimento × ângulo A)</h2><div class="row" style="margin:0 0 8px"><button id="addC">+ Círculo</button><button id="addR">+ Retângulo</button><button id="addL">+ Linha (encaixe)</button><button id="del">Remover selecionado</button></div><canvas id="cv" height="330"></canvas>
@@ -634,44 +671,71 @@ function installSimulationResize(){const canvas=$('c3'),viewport=document.create
  let lastHeight=0;new ResizeObserver(entries=>{const height=entries[0].contentRect.height;if(height!==lastHeight){lastHeight=height;redrawWorkspace()}}).observe(viewport)
 }
 
-// A single navigation handler is shared by the top menu and the previous/next
-// buttons inside each stage. These actions only change visible panels.
+// Single navigation controller for top buttons and per-stage header buttons.
+// Only visibility, focus and the active indicator are modified; CAM state is untouched.
 const workStages=[
  {id:'machineSection',title:'Preparar trabalho'},
  {id:'pocketSection',title:'Criar operações'},
  {id:'simulationSection',title:'Simular e inspecionar'},
  {id:'exportSection',title:'Gerar CNC'}
 ];
+function indicateWorkStage(stageId){
+ for(const stage of workStages){
+  const active=stage.id===stageId,section=$(stage.id),tab=document.querySelector('.stage-nav [data-go="'+stage.id+'"]');
+  section?.classList.toggle('work-stage-active',active);
+  tab?.classList.toggle('is-active',active);
+  if(tab){if(active)tab.setAttribute('aria-current','step');else tab.removeAttribute('aria-current')}
+ }
+}
 function goToWorkStage(stageId){
  const target=$(stageId);if(!target)return;
  const dock=target.closest('.dock');
  document.querySelectorAll('.dock.temporary').forEach(other=>{if(other!==dock)other.closeTemporary()});
  if(dock&&!dock.classList.contains('pinned')&&!dock.classList.contains('temporary'))dock.querySelector('.dock-tab').click();
- if(target.tagName==='DETAILS')target.open=true;
- target.scrollIntoView({behavior:'smooth',block:'start'});
+ if(target.tagName==='DETAILS'&&!target.open)target.open=true;
+ indicateWorkStage(stageId);
  const summary=target.querySelector(':scope > summary');
- if(summary)summary.focus({preventScroll:true});
+ // Do not use smooth scrolling: the target may already be alongside the current stage.
+ // Reposition only if its header is outside the visible area of the page or dock.
+ if(summary){
+  const rect=summary.getBoundingClientRect(),container=summary.closest('.dock-content');
+  const topLimit=container?container.getBoundingClientRect().top:0;
+  const bottomLimit=container?container.getBoundingClientRect().bottom:window.innerHeight;
+  if(rect.top<topLimit||rect.bottom>bottomLimit)summary.scrollIntoView({behavior:'instant',block:'nearest'});
+  summary.focus({preventScroll:true})
+ }
 }
 function installWorkStageNavigation(){
- for(let i=0;i<workStages.length;i++){
-  const stage=workStages[i],section=$(stage.id),content=section?.querySelector(':scope > .section-body');
-  if(!content)continue;
-  const bar=document.createElement('nav');bar.className='stage-step-nav';
-  bar.setAttribute('aria-label','Navegação da etapa '+(i+1)+' de '+workStages.length);
-  const caption=document.createElement('span');caption.textContent='Etapa '+(i+1)+' de '+workStages.length;bar.append(caption);
-  const addButton=(destination,label,className)=>{
+ workStages.forEach((stage,i)=>{
+  const section=$(stage.id),summary=section?.querySelector(':scope > summary');
+  if(!summary)return;
+  section.dataset.workStage=String(i+1);
+  const heading=document.createElement('span');
+  heading.className='work-stage-heading';
+  heading.textContent=summary.textContent;
+  const nav=document.createElement('span');
+  nav.className='stage-step-nav';
+  nav.setAttribute('role','group');
+  nav.setAttribute('aria-label','Atalhos da etapa '+(i+1)+' de '+workStages.length);
+  const make=(target,label,cssName,aria)=>{
    const button=document.createElement('button');
-   button.type='button';button.textContent=label;button.className=className;
-   button.dataset.stageTarget=destination.id;
-   button.addEventListener('click',()=>goToWorkStage(destination.id));
-   bar.append(button)
+   button.type='button';button.textContent=label;button.className=cssName;
+   button.dataset.stageTarget=target.id;
+   button.setAttribute('aria-label',aria+': '+target.title);
+   button.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();goToWorkStage(target.id)});
+   button.addEventListener('keydown',e=>e.stopPropagation());
+   nav.append(button)
   };
-  if(i>0)addButton(workStages[i-1],'← Etapa anterior','previous-step');
-  if(i+1<workStages.length)addButton(workStages[i+1],'Próxima etapa →','next-step');
-  content.append(bar)
- }
+  if(i>0)make(workStages[i-1],'‹ Anterior','previous-step','Ir para a etapa anterior');
+  if(i+1<workStages.length)make(workStages[i+1],'Próxima ›','next-step','Ir para a próxima etapa');
+  summary.replaceChildren(heading,nav);
+  summary.addEventListener('click',()=>indicateWorkStage(stage.id));
+  summary.addEventListener('keydown',e=>{if(e.target===summary&&(e.key==='Enter'||e.key===' '))indicateWorkStage(stage.id)});
+ });
+ indicateWorkStage(workStages[0].id)
 }
 installWorkspace();installSimulationResize();installParameterHelp();installWorkStageNavigation();
 document.querySelectorAll('.stage-nav [data-go]').forEach(button=>{button.onclick=()=>goToWorkStage(button.dataset.go)});
+$('manualButton').onclick=()=>$('manualDialog').showModal();
 $('showMachine').onchange=dr3;lst();form();draw();
 </script></body></html>
