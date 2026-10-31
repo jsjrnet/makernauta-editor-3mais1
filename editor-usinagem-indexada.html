@@ -472,7 +472,33 @@ function simulationSource(){const stage=$('simStage').value,sc=$('sc').value;if(
 $('simStage').onchange=()=>{FLD=null;v3()};
 $('sc').oninput=()=>{FLD=null;sci();draw()};
 ['Z0','OM','PZ'].forEach(i=>$(i).onchange=draw);
-$('fsc').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('sc').value=r.result;FLD=null;sci();draw()};r.readAsText(f)};
+// Import with explicit text decoding: UTF-8 first, Windows-1252 for older Vectric/Mach3 files.
+// The real uploaded 2026-10-30 test program already contains U+FFFD in a tool comment;
+// recover only this known tool word, never rewrite coordinates or other CNC commands.
+function restoreAspireToolComment(text){
+ return text.replace(/\([^)]*\)|;[^\r\n]*/g,comment=>comment.replace(/Esf(?:�|Ã©|ÃƒÂ©)rica/gi,'Esférica'))
+}
+function decodeAspireText(buffer){
+ const bytes=new Uint8Array(buffer);
+ let text,encoding='UTF-8';
+ try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes)}
+ catch(_){text=new TextDecoder('windows-1252').decode(bytes);encoding='Windows-1252'}
+ const restored=restoreAspireToolComment(text);
+ return {text:restored,encoding,recovered:restored!==text}
+}
+$('fsc').onchange=e=>{
+ const f=e.target.files[0];if(!f)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const result=decodeAspireText(reader.result);
+   $('sc').value=result.text;FLD=null;sci();draw();
+   const note=result.recovered?' Recuperado somente o comentário conhecido da fresa esférica; o arquivo original já continha caractere ilegível.':'';
+   $('si').textContent+=' Codificação de importação: '+result.encoding+'.'+note
+  }catch(err){$('si').textContent='Falha na leitura do arquivo Aspire: '+err.message}
+ };
+ reader.readAsArrayBuffer(f)
+};
 const parameterHelp={
  applyAspireParams:['Aplicar parâmetros reconhecidos do Aspire','Copia apenas dimensões declaradas do bruto e informações explícitas da fresa para campos da interface. Não altera as coordenadas do arquivo nem define o Z0. Confira os valores antes de simular ou gerar CNC.'],
  OX:['Deslocamento X do STL','Move somente a referência STL ao longo do bruto, sem alterar o G-code importado ou os movimentos CNC. Com referência de profundidade pelo STL habilitada, o novo alinhamento passa a influenciar o cálculo dessa operação.'],
