@@ -496,6 +496,42 @@ class EditorTests(unittest.TestCase):
         self.assertTrue(self.js('sg.some(g=>g.h)&&sg.some(g=>!g.h)&&Object.keys(PK).length===2'))
         self.page.locator('[data-section="simulation"]').screenshot(path='/tmp/makernauta-stl-aspire-pockets.png')
 
+    def test_combined_aspire_indexed_radial_render_has_one_surface(self):
+        # Uma unica casca radial: sem mascara retangular e sem faces XYZ extras por cima.
+        # A malha cartesiana PK continua disponivel para a secao e a remocao FLD continua ativa.
+        self.page.locator('#sc').fill('(Z0 = centro)\\nG21 G90 G17\\nG0 X30 Y0 Z23 A0\\nG1 Z11 F200\\nG1 X60 A90 F1000\\nG0 Z23\\nM30')
+        self.page.locator('#simStage').select_option('all')
+        self.js("tt=tot;dr3()")
+        export=self.page.locator('#out').input_value()
+        result=self.js("""() => {
+          const reference=VW.machine,canvas=VW.g,fill=canvas.fill;
+          const initial=Array.from(FLD),program=JSON.stringify(sg);
+          let faces=0;
+          try {
+            VW.machine=null;canvas.fill=function(){faces++};
+            msh(FLD,0);
+          } finally {
+            canvas.fill=fill;VW.machine=reference;
+          }
+          return {
+            faces,expected:(NXG-1)*NPG+2*NPG,
+            radialChanged:FLD.some(v=>v<P().D/2-0.01),
+            pockets:Object.values(PK).filter(K=>K&&K.n).length,
+            hasAspire:sg.some(g=>!g.h&&!g.r),
+            hasIndexed:sg.some(g=>g.h&&!g.r),
+            sameField:initial.every((v,i)=>FLD[i]===v),
+            sameProgram:program===JSON.stringify(sg)
+          }
+        }""")
+        self.assertEqual(result['faces'],result['expected'])
+        self.assertGreater(result['pockets'],0)
+        self.assertTrue(result['radialChanged'])
+        self.assertTrue(result['hasAspire'] and result['hasIndexed'])
+        self.assertTrue(result['sameField'] and result['sameProgram'])
+        self.assertEqual(self.page.locator('#out').input_value(),export)
+        self.js('dr3()')
+        self.page.locator('#c3').screenshot(path='/tmp/makernauta-combined-single-radial-surface.png')
+
     def test_machine_visuals_align_and_rotate_without_moving_tailstock(self):
         result=self.js('''() => {
           const a=machineVisualGeometry(P(),0,0),b=machineVisualGeometry(P(),-Math.PI/2,0),seam=mph(0,-Math.PI/2,P().D/2,1);
