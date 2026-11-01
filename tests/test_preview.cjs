@@ -21,14 +21,16 @@ const fetcher = async url => new Response(url.includes('preview-manifest') ? JSO
 test('build publishes only static editor files and provenance without editing sources', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'makernauta-preview-'));
   try {
-    for (const file of ['index.html', 'editor-usinagem-indexada.html']) fs.writeFileSync(path.join(root, file), `<html>${file}</html>`);
+    for (const file of ['index.html', 'editor-usinagem-indexada.html', 'licenca.html', 'LICENSE.md']) fs.writeFileSync(path.join(root, file), `<html>${file}</html>`);
     fs.writeFileSync(path.join(root, '.env'), 'do-not-publish');
     const before = fs.readFileSync(path.join(root, 'editor-usinagem-indexada.html'));
     const result = buildPreview({ root, sha, branch: pr.head.ref });
-    assert.deepEqual(fs.readdirSync(path.join(root, '_preview_site')).sort(), ['_headers', 'editor-usinagem-indexada.html', 'index.html', 'preview-manifest.json']);
+    assert.deepEqual(fs.readdirSync(path.join(root, '_preview_site')).sort(), ['LICENSE.md', '_headers', 'editor-usinagem-indexada.html', 'index.html', 'licenca.html', 'preview-manifest.json']);
     assert.deepEqual(fs.readFileSync(path.join(root, '_preview_site/editor-usinagem-indexada.html')), before);
     assert.deepEqual(fs.readFileSync(path.join(root, 'editor-usinagem-indexada.html')), before);
     assert.equal(result.commit, sha);
+    assert.match(result.files['licenca.html'], /^[a-f0-9]{64}$/);
+    assert.match(result.files['LICENSE.md'], /^[a-f0-9]{64}$/);
     fs.writeFileSync(path.join(root, '_preview_site/stale.txt'), 'stale');
     buildPreview({ root, sha, branch: pr.head.ref });
     assert.equal(fs.existsSync(path.join(root, '_preview_site/stale.txt')), false);
