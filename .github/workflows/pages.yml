@@ -28,7 +28,7 @@ jobs:
       - name: Preparar somente os arquivos públicos
         run: |
           mkdir -p _site
-          cp index.html editor-usinagem-indexada.html _site/
+          cp index.html editor-usinagem-indexada.html licenca.html LICENSE.md _site/
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
