@@ -1,6 +1,6 @@
 # MAKERNAUTA — LICENÇA PROPRIETÁRIA DE SOFTWARE
 
-**Versão 1.0 — minuta para aprovação**  
+**Versão 1.0 — aprovada pelo titular**  
 **Titular:** Juarez de Souza Junior (pessoa física)  
 **Copyright © 2026 Juarez de Souza Junior. Todos os direitos reservados.**
 
@@ -59,6 +59,3 @@ O acesso público à demonstração ou ao repositório não transforma o Makerna
 
 Esta licença não afirma registro de software no INPI, registro de marca, patente, certificação de segurança ou exclusividade sobre ideias, métodos e elementos não protegíveis por direitos autorais.
 
----
-
-**Aviso:** este texto é uma minuta de licença proprietária personalizada, pendente de aprovação do titular e recomendavelmente de revisão jurídica antes da publicação definitiva.
