@@ -2,6 +2,12 @@
 
 **Módulo disponível:** Usinagem Indexada 3+1 — eixo A posiciona a peça e permanece parado durante cortes XYZ. O título **Usinagem Rotativa** identifica o projeto e não significa que o editor já gere trajetórias XZA/XYZA simultâneas. O módulo rotativo simultâneo é uma possibilidade futura, não implementada nesta versão.
 
+## Licenciamento e propriedade intelectual
+
+**Software proprietário.** Copyright © 2026 Juarez de Souza Junior. Todos os direitos reservados.
+
+A demonstração pública do Makernauta pode ser acessada para avaliação, nos termos da [Licença Proprietária Makernauta](LICENSE.md). O acesso público ao sistema ou ao código-fonte não concede autorização geral para redistribuir, modificar, hospedar cópias ou explorar comercialmente seus componentes protegidos. Colaborações e utilizações adicionais dependem de autorização expressa do titular. Direitos de terceiros e exceções legais permanecem preservados.
+
 ## Nomenclatura PT-BR do projeto
 
 - **Projeto:** Makernauta — Usinagem Rotativa.
