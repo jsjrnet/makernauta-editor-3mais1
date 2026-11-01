@@ -2,6 +2,12 @@
 
 **Módulo disponível:** Usinagem Indexada 3+1 — eixo A posiciona a peça e permanece parado durante cortes XYZ. O título **Usinagem Rotativa** identifica o projeto e não significa que o editor já gere trajetórias XZA/XYZA simultâneas. O módulo rotativo simultâneo é uma possibilidade futura, não implementada nesta versão.
 
+## Licenciamento e propriedade intelectual
+
+**Software proprietário.** Copyright © 2026 Juarez de Souza Junior. Todos os direitos reservados.
+
+A demonstração pública do Makernauta pode ser acessada para avaliação, nos termos da [Licença Proprietária Makernauta](LICENSE.md). O editor exibe um aviso discreto no rodapé e permite consultar o documento completo pela janela **Licença e direitos autorais**, também disponível na [página pública da licença](licenca.html). O acesso público ao sistema ou ao código-fonte não concede autorização geral para redistribuir, modificar, hospedar cópias ou explorar comercialmente seus componentes protegidos. Colaborações e utilizações adicionais dependem de autorização expressa do titular. Direitos de terceiros e exceções legais permanecem preservados.
+
 ## Nomenclatura PT-BR do projeto
 
 - **Projeto:** Makernauta — Usinagem Rotativa.
@@ -67,7 +73,7 @@ Pode-se selecionar um Chromium já instalado com `CHROMIUM_PATH=/usr/bin/chromiu
 
 ## GitHub Pages
 
-Pull requests são validados sem deploy. A incorporação à `main` requer aprovação; esta atualização não é incorporada nem publicada automaticamente pelo agente. O workflow `.github/workflows/pages.yml` testa e publica somente `index.html` e `editor-usinagem-indexada.html` após push na `main`. O job tenta habilitar Pages com fonte GitHub Actions. Se a política do repositório impedir a ativação automática, selecione **Settings → Pages → Source → GitHub Actions** e execute novamente o workflow.
+Pull requests são validados sem deploy. A incorporação à `main` requer aprovação; esta atualização não é incorporada nem publicada automaticamente pelo agente. O workflow `.github/workflows/pages.yml` testa e publica somente `index.html`, `editor-usinagem-indexada.html`, `licenca.html` e `LICENSE.md` após push na `main`. O job tenta habilitar Pages com fonte GitHub Actions. Se a política do repositório impedir a ativação automática, selecione **Settings → Pages → Source → GitHub Actions** e execute novamente o workflow.
 
 Endereço previsto após a publicação bem-sucedida:
 

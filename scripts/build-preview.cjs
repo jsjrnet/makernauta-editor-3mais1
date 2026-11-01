@@ -14,7 +14,7 @@ function buildPreview({ root = process.cwd(), output = '_preview_site', sha, bra
   fs.rmSync(destination, { recursive: true, force: true });
   fs.mkdirSync(destination, { recursive: true });
   const files = {};
-  for (const name of ['index.html', 'editor-usinagem-indexada.html']) {
+  for (const name of ['index.html', 'editor-usinagem-indexada.html', 'licenca.html', 'LICENSE.md']) {
     const bytes = fs.readFileSync(path.join(root, name));
     fs.writeFileSync(path.join(destination, name), bytes);
     files[name] = crypto.createHash('sha256').update(bytes).digest('hex');

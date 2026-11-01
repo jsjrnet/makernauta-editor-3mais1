@@ -60,6 +60,14 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 .manual-dialog ul{padding-left:20px}
 .manual-dialog .manual-actions{display:flex;justify-content:flex-end;margin-top:14px}
 @media(max-width:640px){.stage-nav .manual-button{margin-left:0}.stage-step-nav{margin-left:0}.pn[data-work-stage] > summary{gap:7px}.work-stage-heading{flex-basis:100%}}.sim-visibility{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:7px 0 6px}.sim-visibility label{flex-direction:row;align-items:center;gap:5px;color:var(--tx);white-space:normal}.sim-visibility input{flex:none}@media(max-width:640px){header #safetyButton{width:auto}.stage-nav .info-toggle{margin-left:0}}.op-group{border:1px solid var(--ln);border-radius:7px;padding:10px;margin:9px 0}.op-group h3{margin:0 0 9px;font-size:13px;font-weight:700}.op-group .g{margin:0}.op-advanced{margin-top:9px;border:1px dashed var(--ln);border-radius:6px;padding:8px}.op-advanced summary,.map-preferences summary{cursor:pointer;font-size:13px;font-weight:600}.map-preferences{margin-top:9px;border-top:1px solid var(--ln);padding-top:8px}.sample-stl{padding:8px;background:var(--ok);border-radius:7px;margin:8px 0}.sample-stl .row{align-items:end}.sample-stl label{flex:1;min-width:170px}.example-note{font-size:12px;color:var(--mu)}
+.license-notice{display:inline-block;margin-top:4px}
+.license-notice button{display:inline;padding:0;border:0;background:transparent;color:var(--ac);text-decoration:underline;cursor:pointer;font:inherit}
+.license-notice button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.license-dialog{width:min(860px,calc(100vw - 28px));max-height:90vh}
+.license-dialog iframe{display:block;width:100%;height:min(55vh,560px);border:1px solid var(--ln);border-radius:5px;background:var(--pn)}
+.license-dialog p{font-size:13px}
+.license-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin-top:12px}
+.license-actions a{color:var(--ac)}
 </style></head><body>
 <header><h1>Makernauta — Usinagem Rotativa</h1>
 <p><strong>Módulo atual: Usinagem Indexada 3+1.</strong> O eixo A posiciona a peça e permanece parado durante o corte XYZ. Arraste as operações na vista desenrolada: horizontal = comprimento da peça; vertical = ângulo de indexação A. A usinagem XZA simultânea ainda não é gerada neste módulo.</p><button id="safetyButton" type="button" aria-haspopup="dialog">Aviso de segurança — Protótipo não homologado</button></header>
@@ -156,7 +164,13 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 <div class="err" id="err" role="alert"></div>
 <p class="warn">Profundidade a partir do bruto ou, com a opção STL ativa, da superfície alvo na posição do alojamento. O piso é cartesiano em Z; o limite perto do eixo aparece nos avisos.</p></div>
 </div></main>
-<footer class="cred">Ideia e desenvolvimento: <b>Juarez Jr. – Makernauta</b> · <a href="https://makernauta.com.br" target="_blank" rel="noopener">makernauta.com.br</a> · <a href="mailto:jjr@makernauta.com.br">jjr@makernauta.com.br</a> · <a href="https://wa.me/5532999522001" target="_blank" rel="noopener">WhatsApp (32) 99952-2001</a><br>Baseado na ideia do Wrapped Job Setup do Vectric Aspire. Protótipo em evolução.</footer>
+<footer class="cred">Ideia e desenvolvimento: <b>Juarez Jr. – Makernauta</b> · <a href="https://makernauta.com.br" target="_blank" rel="noopener">makernauta.com.br</a> · <a href="mailto:jjr@makernauta.com.br">jjr@makernauta.com.br</a> · <a href="https://wa.me/5532999522001" target="_blank" rel="noopener">WhatsApp (32) 99952-2001</a><br>Baseado na ideia do Wrapped Job Setup do Vectric Aspire. Protótipo em evolução.<br><span class="license-notice">© 2026 Juarez de Souza Junior. Todos os direitos reservados. Software proprietário. Demonstração pública para avaliação; outros usos exigem autorização, ressalvadas as exceções legais. <button id="licenseButton" type="button" aria-haspopup="dialog" aria-controls="licenseDialog">Licença e direitos autorais</button></span></footer>
+<dialog id="licenseDialog" class="license-dialog" aria-labelledby="licenseTitle">
+<h2 id="licenseTitle">Licença e direitos autorais — Makernauta</h2>
+<p>© 2026 Juarez de Souza Junior. Software proprietário. Consulte abaixo o texto integral da Licença Proprietária Makernauta 1.0.</p>
+<iframe src="licenca.html" title="Texto integral da Licença Proprietária Makernauta 1.0" loading="lazy"></iframe>
+<div class="license-actions"><a href="licenca.html" target="_blank" rel="noopener">Abrir licença em nova aba</a><form method="dialog"><button type="submit" autofocus>Fechar</button></form></div>
+</dialog>
 <dialog id="paramHelp" aria-labelledby="helpTitle"><h2 id="helpTitle"></h2><p id="helpBody"></p><form method="dialog"><button autofocus>Fechar</button></form></dialog>
 <script>
 const $=id=>document.getElementById(id);
@@ -536,6 +550,7 @@ $('fsc').onchange=e=>{
 };
 const parameterHelp={
  manualButton:['Manual do sistema','Abre o manual integrado com um roteiro de preparação, operações indexadas, simulação, importação Aspire/STL e exportação experimental. Pode ser consultado sem conexão externa.'],
+ licenseButton:['Licença e direitos autorais','Abre a janela com o texto integral da Licença Proprietária Makernauta 1.0 e um link para consultar sua página pública. A demonstração não concede direitos gerais de cópia, redistribuição, modificação ou exploração comercial, respeitadas as exceções legais.'],
  applyAspireParams:['Aplicar parâmetros reconhecidos do Aspire','Copia apenas dimensões declaradas do bruto e informações explícitas da fresa para campos da interface. Não altera as coordenadas do arquivo nem define o Z0. Confira os valores antes de simular ou gerar CNC.'],
  OX:['Deslocamento X do STL','Move somente a referência STL ao longo do bruto, sem alterar o G-code importado ou os movimentos CNC. Com referência de profundidade pelo STL habilitada, o novo alinhamento passa a influenciar o cálculo dessa operação.'],
  sampleSTL:['Modelos STL de demonstração','Escolha a isca artificial ou o peão de xadrez. São modelos didáticos de uso interno para inspeção e testes; não correspondem ao G-code importado do Aspire.'],
@@ -743,5 +758,6 @@ function installWorkStageNavigation(){
 installWorkspace();installSimulationResize();installParameterHelp();installWorkStageNavigation();
 document.querySelectorAll('.stage-nav [data-go]').forEach(button=>{button.onclick=()=>goToWorkStage(button.dataset.go)});
 $('manualButton').onclick=()=>$('manualDialog').showModal();
+$('licenseButton').onclick=()=>$('licenseDialog').showModal();
 $('showMachine').onchange=dr3;lst();form();draw();
 </script></body></html>
