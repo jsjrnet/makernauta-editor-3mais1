@@ -68,6 +68,47 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 .license-dialog p{font-size:13px}
 .license-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin-top:12px}
 .license-actions a{color:var(--ac)}
+
+/* IHC: orientação compacta e inspeções integradas, sem alterar os dados CNC. */
+.map-canvas-frame{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0}
+.orientation-panel{position:relative;z-index:2;width:max-content;max-width:100%;border:1px solid var(--ln);border-radius:7px;background:var(--pn)}
+.orientation-panel[data-corner="right"]{align-self:flex-end}
+.orientation-panel>summary{cursor:pointer;list-style:none;padding:5px 8px;font-size:12px;font-weight:600;color:var(--tx)}
+.orientation-panel>summary::-webkit-details-marker{display:none}
+.orientation-panel>summary::before{content:'▸';display:inline-block;width:14px;color:var(--mu)}
+.orientation-panel[open]>summary::before{content:'▾'}
+.orientation-body{display:grid;grid-template-columns:116px 30px;align-items:center;gap:4px 7px;padding:0 6px 5px}
+.orientation-body #sec{grid-column:1;width:116px;height:116px;max-width:100%;border:0;background:transparent}
+.orientation-corner{grid-column:2;grid-row:1;align-self:start;justify-self:center;width:30px;height:30px;padding:2px;font-size:13px;line-height:1}
+.orientation-info{grid-column:2;grid-row:1;align-self:end;justify-self:center}
+.orientation-caption{grid-column:1/-1;display:block;text-align:center;color:var(--mu);font-size:10px;line-height:1.25}
+.orientation-info>summary,.inspection-info>summary{display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;border:1px solid var(--ln);border-radius:50%;color:var(--ac);font-size:12px;font-weight:700;cursor:pointer;list-style:none}
+.orientation-info>summary::-webkit-details-marker,.inspection-info>summary::-webkit-details-marker{display:none}
+.orientation-info>p,.inspection-info>p{max-width:42ch;margin:5px 0 0;font-size:11px;line-height:1.4}
+.inspection-area{border:1px solid var(--ln);border-radius:7px;background:var(--pn);min-width:0}
+.inspection-area>summary{cursor:pointer;padding:8px 9px;font-size:13px;font-weight:600;list-style:none;background:var(--ok);border-radius:7px}
+.inspection-area>summary::-webkit-details-marker{display:none}
+.inspection-area>summary::before{content:'▸';display:inline-block;width:14px;color:var(--mu)}
+.inspection-area[open]>summary::before{content:'▾'}
+.inspection-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-items:start;padding:6px;min-width:0}
+.inspection-pair>.pn{min-width:0;border:1px solid var(--ln);border-radius:6px}
+.inspection-pair>.pn>summary{padding:4px 5px;font-size:11px;line-height:1.2;overflow-wrap:anywhere}
+.inspection-pair .section-body{padding:5px}
+.inspection-pair canvas{display:block;width:100%;max-width:100%;height:auto}
+.inspection-pair #xy{height:200px}
+.inspection-pair #toolProfile{height:220px}
+.inspection-info{margin-top:5px}
+.embedded-cut{margin-top:10px;border:1px solid var(--ln);border-radius:7px;background:var(--bg)}
+.embedded-cut>summary{padding:7px 9px;font-size:13px;background:var(--ok)}
+.embedded-cut>.section-body{padding:7px 9px}
+.embedded-cut #cutProfile{display:block;width:100%;max-width:560px;height:190px;margin:0 auto}
+.embedded-cut #cutStatus{max-width:80ch;margin:5px 0 0;min-height:1.5em;font-size:11px;line-height:1.35}
+#mapSection>.section-body>.row:first-child{display:flex;align-items:stretch;gap:6px;margin:0 0 8px!important}
+#mapSection>.section-body>.row:first-child>button{flex:1 1 0;min-width:0;min-height:36px;padding:6px 8px;font-size:12px;line-height:1.25}
+@media(min-width:1051px){main.workspace{--left-width:340px}}
+@media(max-width:1050px) and (min-width:801px){main.workspace{--left-width:280px}.inspection-pair{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:700px){.inspection-pair{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){.orientation-body{grid-template-columns:110px 30px}.orientation-body #sec{width:110px;height:110px}.embedded-cut #cutProfile{max-width:100%}#mapSection>.section-body>.row:first-child{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}#mapSection>.section-body>.row:first-child>button{width:100%}}
 </style></head><body>
 <header><h1>Makernauta — Usinagem Rotativa</h1>
 <p><strong>Módulo atual: Usinagem Indexada 3+1.</strong> O eixo A posiciona a peça e permanece parado durante o corte XYZ. Arraste as operações na vista desenrolada: horizontal = comprimento da peça; vertical = ângulo de indexação A. A usinagem XZA simultânea ainda não é gerada neste módulo.</p><button id="safetyButton" type="button" aria-haspopup="dialog">Aviso de segurança — Protótipo não homologado</button></header>
@@ -99,7 +140,7 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 <div class="g" style="margin-top:8px"><label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx)"><input id="GS" type="checkbox">Travar na grade</label><span></span><label>Grade X (mm)<input id="GX" type="number" value="10" min="1" step="1"></label><label>Grade A (°)<input id="GA" type="number" value="5" step="1"></label><label>Y desenrolado (mm) — alternativa ao ângulo A<input id="yy" type="number" step="0.5"></label></div>
 </details>
 </div>
-<div class="duo"><div class="pn"><h2>Vista de topo da seção</h2><canvas id="sec" height="250"></canvas></div>
+<div class="duo"><div class="pn"><h2>Orientação Aº</h2><canvas id="sec" height="250"></canvas></div>
 <div class="pn"><h2>Inspeção do percurso XYZ — operação selecionada</h2><canvas id="xy" height="200"></canvas><p class="warn">Laranja: contorno final. Verde tracejado: trajetória do centro da fresa. Círculo pequeno: a fresa. O contorno é cartesiano (arcos G3) e não depende da malha da simulação 3D.</p></div></div>
 <div class="pn" id="simulationSection"><h2>Simulação 3D — peça e trajetórias de usinagem (arraste para girar, role para ampliar)</h2><canvas id="c3" height="340" style="touch-action:none;cursor:grab"></canvas>
 <p id="viewStatus" class="warn" role="status"></p><label>Qualidade da simulação<select id="ql"><option value="0">Rápida</option><option value="1" selected>Média</option><option value="2">Alta (lenta)</option></select></label><label>Conteúdo da simulação<select id="simStage"><option value="all">Escultura Aspire + operações indexadas (Z0 compatível)</option><option value="sculpture">Apenas escultura importada do Aspire</option><option value="pockets">Apenas operações indexadas (a partir do bruto)</option></select></label><p id="simStatus" class="warn" role="status"></p><label>Desenrolado (A vira Y) ⟷ enrolado no cilindro<input id="mo" type="range" min="0" max="100" value="100" style="padding:0"></label>
@@ -148,7 +189,7 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 </div><p class="warn">A extensão amarela é somente uma representação de material adicional para fixação. Não aumenta o comprimento útil X, não altera o G-code e não garante ausência de colisão com a máquina.</p><p class="warn">Ferramentas independentes: escultura Aspire e operações indexadas. O Z0 das operações é definido nesta seção. A referência original do Aspire precisa ser identificada ou confirmada para combinar os programas. Com ballnose, o piso indica a ponta da ferramenta; a borda mantém o raio esférico.</p></div>
 <div class="pn" id="pocketSection"><h2>Operações de usinagem — cortes XYZ indexados</h2><ul class="ops" id="list"></ul><h2 id="pt" style="margin:10px 0 0">Parâmetros da operação</h2>
 
-<section class="op-group" aria-label="Geometria da operação"><h3>Geometria</h3>
+<section class="op-group" aria-label="Geometria da operação">
 <div class="g"><label id="lw">Diâmetro (mm)<input id="w" type="number" step="0.5"></label><label id="ll">Comprimento (mm)<input id="l" type="number" step="0.5"></label><label id="rotw">Ângulo da forma (°)<input id="rot" type="number" step="5" value="0"></label></div>
 <div class="row" id="rotb"><button id="r0">Horizontal</button><button id="r90">Vertical</button><button id="r45">Diagonal 45°</button></div></section>
 <section class="op-group" aria-label="Posicionamento da operação"><h3>Posicionamento</h3><div class="g">
@@ -193,10 +234,10 @@ else if(o.t=='c')g.ellipse(px,py,wx/2,wy/2,0,0,7);
 else{[[-1,-1],[1,-1],[1,1],[-1,1]].forEach((c2,i)=>{const q=Q2(c2[0]*o.l/2,c2[1]*o.w/2);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1])});g.closePath()}
 if(pc=='p'&&!o.ln)g.fill();g.globalAlpha=1;g.stroke();g.beginPath();g.moveTo(px-6*k,py);g.lineTo(px+6*k,py);g.moveTo(px,py-6*k);g.lineTo(px,py+6*k);g.stroke();});
 }
-function drawSection(){if($('sec').getBoundingClientRect().width<1)return;const p=P(),R=p.D/2;const s=$('sec'),k2=fit(s),h=s.getContext('2d'),cx=s.width/2,cy=s.height/2,rr=Math.min(s.height/2-14*k2,s.width/2)*.78;
+function drawSection(){const s=$('sec'),rect=s.getBoundingClientRect();if(rect.width<1||rect.height<1)return;const p=P(),R=p.D/2,k2=devicePixelRatio||1;s.width=Math.round(rect.width*k2);s.height=Math.round(rect.height*k2);const h=s.getContext('2d'),cx=s.width/2,cy=s.height/2,rr=Math.min(s.height/2-14*k2,s.width/2)*.78;
  h.clearRect(0,0,s.width,s.height);h.strokeStyle=css('--mu');h.lineWidth=k2;h.beginPath();h.arc(cx,cy,rr,0,7);h.stroke();
- for(let a=0;a<360;a+=10){const t2=(a-90)*Math.PI/180,l=(a%30==0?9:5)*k2;h.beginPath();h.moveTo(cx+rr*Math.cos(t2),cy+rr*Math.sin(t2));h.lineTo(cx+(rr+l)*Math.cos(t2),cy+(rr+l)*Math.sin(t2));h.stroke();if(a%30==0){h.fillStyle=css('--mu');h.font=(9*k2)+'px sans-serif';h.fillText(a+'°',cx+(rr+22*k2)*Math.cos(t2)-8*k2,cy+(rr+22*k2)*Math.sin(t2)+3*k2)}}
- h.fillStyle=css('--mu');h.font=(11*k2)+'px sans-serif';h.fillText('A=0° em cima',6*k2,14*k2);
+ for(let a=0;a<360;a+=10){const t2=(a-90)*Math.PI/180,l=(a%30==0?9:5)*k2;h.beginPath();h.moveTo(cx+rr*Math.cos(t2),cy+rr*Math.sin(t2));h.lineTo(cx+(rr+l)*Math.cos(t2),cy+(rr+l)*Math.sin(t2));h.stroke();if(a%30==0){h.fillStyle=css('--mu');h.font=(9*k2)+'px sans-serif';h.fillText(a+'°',cx+(rr+14*k2)*Math.cos(t2)-8*k2,cy+(rr+14*k2)*Math.sin(t2)+3*k2)}}
+ h.fillStyle=css('--mu');h.font=(11*k2)+'px sans-serif';
  ops.forEach((o,i)=>{const th=(o.a-90)*Math.PI/180,r0=rr*(1-o.d/R);h.strokeStyle=i==sel?css('--op'):css('--ac');h.lineWidth=(i==sel?3:2)*k2;
   h.beginPath();h.moveTo(cx+rr*Math.cos(th),cy+rr*Math.sin(th));h.lineTo(cx+Math.max(r0,0)*Math.cos(th),cy+Math.max(r0,0)*Math.sin(th));h.stroke()});
 }
@@ -321,7 +362,7 @@ function xyv2(){if($('xy').getBoundingClientRect().width<1)return;const c=$('xy'
  else if(o.t=='c'){const rr=cm=='p'?Math.max(0,(o.w-T)/2):o.w/2+off;g.beginPath();g.arc(W/2,H/2,rr*sc,0,7);g.stroke();tp=[rr,0]}
  else{const a=cm=='p'?Math.max(0,(o.l-T)/2):hx0+off,b=cm=='p'?Math.max(0,(o.w-T)/2):hy0+off;path(rect(a,b),1);tp=[a,b]}
  g.setLineDash([]);g.lineWidth=k;const z=Q(tp[0],tp[1]);g.beginPath();g.arc(z[0],z[1],T/2*sc,0,7);g.stroke();
- g.fillStyle=css('--mu');g.font=(11*k)+'px sans-serif';g.fillText((o.ln?'Linha '+o.l:o.t=='c'?'Círculo Ø'+o.w:'Retângulo '+o.l+' × '+o.w)+' mm | '+({p:'bolsão',on:'sobre a linha',in:'por dentro',out:'por fora'})[cm]+' | '+(o.rot||0)+'° | fresa Ø'+T,8*k,16*k)}
+ const description=(o.ln?'Linha '+o.l:o.t=='c'?'Círculo Ø'+o.w:'Retângulo '+o.l+' × '+o.w)+' mm | '+({p:'bolsão',on:'sobre a linha',in:'por dentro',out:'por fora'})[cm]+' | '+(o.rot||0)+'° | fresa Ø'+T+' mm';c.setAttribute('aria-label',description);c.title=description;g.fillStyle=css('--mu');g.font=(11*k)+'px sans-serif';g.fillText((o.ln?'Linha':o.t=='c'?'Círculo':'Retângulo')+' · '+({p:'bolsão',on:'contorno',in:'por dentro',out:'por fora'})[cm],8*k,16*k,Math.max(1,W-16*k))}
 function setRot(v){const o=ops[sel];if(!o)return;o.rot=v;$('rot').value=v;draw()}
 $('rot').oninput=()=>{const o=ops[sel];if(o){o.rot=+$('rot').value||0;draw()}};
 $('cm').onchange=()=>{const o=ops[sel];if(o){o.cm=$('cm').value;draw()}};
@@ -441,16 +482,16 @@ function pocketSample(K,x,y,o){const gx=(x-K.x0)/.15,gy=(y-K.y0)/.15;if(gx<0||gy
  const i=Math.min(K.nx-2,Math.floor(gx)),j=Math.min(K.ny-2,Math.floor(gy)),u=gx-i,v=gy-j;
  return (pocketHeight(K,i,j,o)*(1-u)+pocketHeight(K,i+1,j,o)*u)*(1-v)+(pocketHeight(K,i,j+1,o)*(1-u)+pocketHeight(K,i+1,j+1,o)*u)*v
 }
-function profileView(){drawToolProfile();if($('cutProfile').getBoundingClientRect().width<1)return;const canvas=$('cutProfile'),k=devicePixelRatio||1;canvas.width=canvas.getBoundingClientRect().width*k;canvas.height=220*k;const g=canvas.getContext('2d'),w=canvas.width/k,h=220;
+function profileView(){drawToolProfile();if($('cutProfile').getBoundingClientRect().width<1)return;const canvas=$('cutProfile'),k=devicePixelRatio||1;canvas.width=canvas.getBoundingClientRect().width*k;canvas.height=190*k;const g=canvas.getContext('2d'),w=canvas.width/k,h=190;
  g.scale(k,k);const tool=toolFor({h:1});g.font='12px sans-serif';
- const o=ops[sel],K=PK[sel],left=12,right=w-12,top=50,bottom=177;
+ const o=ops[sel],K=PK[sel],left=12,right=w-12,top=40,bottom=150;
  g.fillStyle=css('--tx');g.fillText('Material: seção transversal',left,18);
  if(!o){$('cutStatus').textContent='Adicione ou selecione um alojamento para inspecionar o corte.';return}
  const rtShape=(o.rot||0)*Math.PI/180,span=Math.max(tool.diameter*2,o.ln?tool.diameter*2:o.w+tool.diameter),radius=P().D/2,low=Math.max(0,sR(o)-o.d-1),zScale=Math.min((bottom-top)/Math.max(1,radius-low),(right-left)/span),X=v=>(left+right)/2+v*zScale,Y=z=>bottom-(z-low)*zScale;
  const samples=[];for(let n=0;n<=240;n++){const v=span*(n/240-.5),x=o.x-Math.sin(rtShape)*v,y=Math.cos(rtShape)*v,base=sf(x,y,o.a),z=K?pocketSample(K,x,y,o):base;samples.push({v,base,z})}
  g.beginPath();g.moveTo(X(-span/2),bottom);samples.forEach(q=>g.lineTo(X(q.v),Y(q.z)));g.lineTo(X(span/2),bottom);g.closePath();g.fillStyle='#deaa6e';g.fill();g.strokeStyle=css('--op');g.lineWidth=2;g.beginPath();samples.forEach((q,i)=>i?g.lineTo(X(q.v),Y(q.z)):g.moveTo(X(q.v),Y(q.z)));g.stroke();
  g.strokeStyle=css('--mu');g.setLineDash([4,4]);g.beginPath();samples.forEach((q,i)=>i?g.lineTo(X(q.v),Y(q.base)):g.moveTo(X(q.v),Y(q.base)));g.stroke();g.setLineDash([]);
- g.fillStyle=css('--mu');g.fillText('Largura '+f(span)+' mm',left,196);g.fillText('Escala X = Z (mm)',left,213);
+ g.fillStyle=css('--mu');g.fillText('Largura '+f(span)+' mm',left,168);g.fillText('Escala X = Z (mm)',left,186);
  $('cutStatus').textContent=(K&&K.n?'Seção do material removido na posição central do alojamento selecionado. Laranja: superfície simulada; tracejado: antes dos alojamentos. ':'Simule ou avance a barra para ver o material removido. ')+(tool.ball?'Ballnose: ponta hemisférica; uma linha deixa sulco arredondado. Várias passadas deixam cristas e podem produzir um fundo quase plano.':'Topo plano: base reta; uma linha deixa sulco com fundo plano.')
 }
 function msh(F,kind,onlyMachine=false){const {g,W,H,sc,cw,sw,cp,sp,L,t,fo}=VW,TP=2*Math.PI,Q=[];
@@ -644,19 +685,29 @@ function accordion(node,key){const heading=node.querySelector(':scope > h2');if(
 function installWorkspace(){
  try{const saved=JSON.parse(localStorage.getItem(workspaceKey)||'{}');for(const side of ['left','right'])if(typeof saved.panels?.[side]==='boolean')workspaceState.panels[side]=saved.panels[side];if(Number.isFinite(saved.simulationHeight))workspaceState.simulationHeight=Math.max(240,Math.min(1000,saved.simulationHeight));if(saved.sections&&typeof saved.sections==='object')for(const [key,value]of Object.entries(saved.sections))if(typeof value==='boolean')workspaceState.sections[key]=value}catch(_){}
  const main=document.querySelector('main'),center=main.firstElementChild,oldRight=main.lastElementChild;main.className='workspace';center.id='workspaceCenter';center.classList.add('workspace-center');
- const map=$('cv').closest('.pn'),simulation=$('c3').closest('.pn'),section=$('sec').closest('.pn'),xy=$('xy').closest('.pn'),code=$('out').closest('.pn'),aux=document.createElement('div');aux.className='auxiliary-grid';
+ const map=$('cv').closest('.pn'),simulation=$('c3').closest('.pn'),section=$('sec').closest('.pn'),xy=$('xy').closest('.pn'),code=$('out').closest('.pn');
  const cut=document.createElement('div'),tool=document.createElement('div');cut.className=tool.className='pn';cut.innerHTML='<h2>Seção do corte</h2>';tool.innerHTML='<h2>Perfil da ferramenta</h2><canvas id="toolProfile" height="220" aria-label="Perfil real da fresa do alojamento selecionado"></canvas>';
- const oldHeading=$('cutProfile').previousElementSibling;oldHeading.remove();cut.append($('cutProfile'),$('cutStatus'));aux.append(section,xy,tool,cut);const duo=center.querySelector('.duo');duo.remove();center.replaceChildren(map,simulation,aux,code);
+ const oldHeading=$('cutProfile').previousElementSibling;oldHeading.remove();cut.append($('cutProfile'),$('cutStatus'));
+ const canvas=$('cv'),mapFrame=document.createElement('div'),corner=document.createElement('button'),orientationInfo=document.createElement('details'),orientationInfoSummary=document.createElement('summary'),orientationInfoText=document.createElement('p'),orientationCaption=document.createElement('small');
+ mapFrame.className='map-canvas-frame';canvas.before(mapFrame);mapFrame.append(canvas);
+ const xyInfo=xy.querySelector('.warn');if(xyInfo){const info=document.createElement('details'),summary=document.createElement('summary');info.className='inspection-info';summary.setAttribute('aria-label','Informações sobre o percurso XYZ');summary.title='Informações sobre o percurso XYZ';summary.textContent='i';info.append(summary,xyInfo);xy.append(info)}
+ const inspectionArea=document.createElement('details'),inspectionHeading=document.createElement('summary'),inspectionPair=document.createElement('div');inspectionArea.className='inspection-area';inspectionArea.open=true;inspectionHeading.textContent='Inspeção XYZ e perfil da ferramenta';inspectionPair.className='inspection-pair';inspectionPair.append(xy,tool);inspectionArea.append(inspectionHeading,inspectionPair);inspectionArea.addEventListener('toggle',()=>{if(inspectionArea.open)requestAnimationFrame(()=>{xyv2();drawToolProfile()})});
  const sections={map,simulation,section,xy,tool,cut,code,machine:$('machineSection'),pocket:$('pocketSection'),aspire:$('aspireSection'),stl:$('stlSection')};for(const [key,node]of Object.entries(sections))sections[key]=accordion(node,key);
+ const orientation=sections.section,orientationBody=orientation.querySelector(':scope > .section-body');orientation.classList.add('orientation-panel');orientation.dataset.corner='left';orientationBody.classList.add('orientation-body');corner.type='button';corner.className='orientation-corner';corner.textContent='⇄';corner.setAttribute('aria-label','Mover painel de orientação para a direita');corner.title='Mover painel para a direita';orientationInfo.className='orientation-info';orientationInfoSummary.setAttribute('aria-label','Informações sobre a orientação angular');orientationInfoSummary.title='Informações sobre a orientação angular';orientationInfoSummary.textContent='i';orientationInfoText.textContent='O marcador de 0° corresponde ao topo da vista; as operações são posicionadas conforme o ângulo A.';orientationCaption.className='orientation-caption';orientationCaption.textContent='Vista de topo da seção';orientationInfo.append(orientationInfoSummary,orientationInfoText);orientationBody.prepend(corner,orientationInfo);orientationBody.append(orientationCaption);$('sec').setAttribute('aria-label','Vista de topo da seção; A=0° corresponde ao topo.');mapFrame.prepend(orientation);
+ corner.onclick=()=>{const right=orientation.dataset.corner==='left';orientation.dataset.corner=right?'right':'left';corner.setAttribute('aria-label','Mover painel de orientação para a '+(right?'esquerda':'direita'));corner.title='Mover painel para a '+(right?'esquerda':'direita');requestAnimationFrame(drawSection)};
+ const duo=center.querySelector('.duo');duo.remove();
+ // accordion() replaces each original panel with a <details>; keep those live nodes.
+ center.replaceChildren(sections.map,sections.simulation,sections.code);
+ sections.cut.classList.add('embedded-cut');sections.simulation.querySelector(':scope > .section-body').append(sections.cut);
  function dock(side,title,contents){const aside=document.createElement('aside'),tab=document.createElement('button'),frame=document.createElement('div'),bar=document.createElement('div'),label=document.createElement('strong'),pin=document.createElement('button'),collapse=document.createElement('button'),body=document.createElement('div');aside.className='dock '+side;aside.dataset.side=side;aside.setAttribute('aria-label',title);tab.type=pin.type=collapse.type='button';tab.className='dock-tab';tab.textContent=title;tab.dataset.panelTab=side;tab.setAttribute('aria-controls',side+'Dock');frame.id=side+'Dock';frame.className='dock-frame';bar.className='dock-bar';label.textContent=title;pin.textContent='📌';pin.dataset.panelPin=side;collapse.textContent=side==='left'?'‹':'›';collapse.dataset.panelCollapse=side;collapse.setAttribute('aria-label','Recolher painel '+title);body.className='dock-content';body.append(...contents);bar.append(label,pin,collapse);frame.append(bar,body);aside.append(tab,frame);
   function render(){const pinned=workspaceState.panels[side];aside.classList.toggle('pinned',pinned);main.dataset[side+'Pinned']=String(pinned);pin.textContent=pinned?'📌':'Fixar';pin.setAttribute('aria-pressed',String(pinned));pin.setAttribute('aria-label',(pinned?'Desafixar':'Fixar')+' painel '+title);pin.title=pinned?'Desafixar painel':'Fixar painel';tab.setAttribute('aria-expanded',String(pinned||aside.classList.contains('temporary')));frame.inert=!pinned&&!aside.classList.contains('temporary');redrawWorkspace()}
   tab.onclick=()=>{aside.classList.toggle('temporary');render();if(aside.classList.contains('temporary'))pin.focus()};pin.onclick=()=>{workspaceState.panels[side]=!workspaceState.panels[side];aside.classList.remove('temporary');rememberWorkspace();render();if(!workspaceState.panels[side])tab.focus()};collapse.onclick=()=>{workspaceState.panels[side]=false;aside.classList.remove('temporary');rememberWorkspace();render();tab.focus()};aside.closeTemporary=()=>{if(aside.classList.contains('temporary')){aside.classList.remove('temporary');render();tab.focus()}};render();return aside}
- main.prepend(dock('left','Peça e máquina',[sections.machine]));main.append(dock('right','Operações',[sections.pocket,sections.aspire,sections.stl]));oldRight.remove();
+ main.prepend(dock('left','Peça e máquina',[sections.machine,inspectionArea]));main.append(dock('right','Operações',[sections.pocket,sections.aspire,sections.stl]));oldRight.remove();
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.querySelector('dialog[open]'))document.querySelectorAll('.dock.temporary').forEach(d=>d.closeTemporary())});document.addEventListener('pointerdown',e=>document.querySelectorAll('.dock.temporary').forEach(d=>{if(!d.contains(e.target))d.closeTemporary()}));
  $('safetyButton').onclick=()=>$('safetyDialog').showModal();
  let previousWidth=0;const observer=new ResizeObserver(entries=>{const width=entries[0].contentRect.width;if(width!==previousWidth){previousWidth=width;redrawWorkspace()}});observer.observe(center);addEventListener('resize',redrawWorkspace)
 }
-function drawToolProfile(){const canvas=$('toolProfile');if(!canvas||canvas.getBoundingClientRect().width<1)return;const k=devicePixelRatio||1,w=canvas.getBoundingClientRect().width;canvas.width=w*k;canvas.height=220*k;const g=canvas.getContext('2d'),tool=operationTool(),r=tool.diameter/2,scale=Math.min(18,(w-30)/Math.max(tool.diameter,1)),cx=w/2,tip=160;g.scale(k,k);g.font='12px sans-serif';g.fillStyle=css('--tx');g.fillText((tool.ball?'Ballnose · ponta esférica':'Topo reto · ponta plana')+' Ø'+tool.diameter+' mm',10,22);g.beginPath();g.moveTo(cx-r*scale,48);g.lineTo(cx-r*scale,tip-(tool.ball?r*scale:0));if(tool.ball)g.arc(cx,tip-r*scale,r*scale,Math.PI,0,true);else g.lineTo(cx+r*scale,tip);g.lineTo(cx+r*scale,48);g.closePath();g.fillStyle=css('--pn');g.fill();g.strokeStyle=css('--ac');g.lineWidth=2;g.stroke();g.fillStyle=css('--mu');g.fillText('Ferramenta do alojamento selecionado',10,202)}
+function drawToolProfile(){const canvas=$('toolProfile');if(!canvas||canvas.getBoundingClientRect().width<1)return;const k=devicePixelRatio||1,w=canvas.getBoundingClientRect().width;canvas.width=w*k;canvas.height=220*k;const g=canvas.getContext('2d'),tool=operationTool(),r=tool.diameter/2,scale=Math.min(18,(w-30)/Math.max(tool.diameter,1)),cx=w/2,tip=160;g.scale(k,k);g.font='12px sans-serif';g.fillStyle=css('--tx');g.fillText((tool.ball?'Ballnose · ponta esférica':'Topo reto · ponta plana')+' Ø'+tool.diameter+' mm',10,22,Math.max(1,w-20));g.beginPath();g.moveTo(cx-r*scale,48);g.lineTo(cx-r*scale,tip-(tool.ball?r*scale:0));if(tool.ball)g.arc(cx,tip-r*scale,r*scale,Math.PI,0,true);else g.lineTo(cx+r*scale,tip);g.lineTo(cx+r*scale,48);g.closePath();g.fillStyle=css('--pn');g.fill();g.strokeStyle=css('--ac');g.lineWidth=2;g.stroke();g.fillStyle=css('--mu');g.fillText('Fresa selecionada',10,202,Math.max(1,w-20))}
 function drawSTLReference(poly,t,fo){const rotation=(+$('SR').value||0)*Math.PI/180,flipped=$('SX').checked,stride=Math.max(1,Math.ceil(TRI.length/9/5000));VW.g.save();VW.g.setLineDash([3*(devicePixelRatio||1),3*(devicePixelRatio||1)]);for(let i=0;i<TRI.length;i+=9*stride){const points=[];for(let j=0;j<3;j++){const offset=i+j*3,x=(flipped?TLEN-TRI[offset]:TRI[offset])+(+$('OX').value||0),y=TRI[offset+1],z=TRI[offset+2];points.push(mph(x,Math.atan2(y,z)+rotation-fo,Math.hypot(y,z),t))}points.push(points[0]);poly(points,'#1686cf',.55,.85)}VW.g.restore()}
 ['SR','SX','OX'].forEach(id=>$(id).onchange=()=>{if(FLD)mkT();if(ops.some(o=>o.stlDepth))draw();else draw(false)});
 
