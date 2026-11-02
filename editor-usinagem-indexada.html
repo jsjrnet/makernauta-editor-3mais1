@@ -191,6 +191,22 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 #workspaceCenter>[data-section="cut"] #cutStatus{font-size:11px;min-height:0}
 @media(max-width:800px){.inspection-pair{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
+
+/* PR13: manter as vistas ancoradas aos paineis pais sem overflow lateral */
+.workspace-center,.workspace-center>.pn,.workspace-center .section-body,#mapSection,.map-canvas-frame{min-width:0;max-width:100%}
+#mapSection .map-heading h2{white-space:normal;overflow-wrap:break-word;line-height:1.35}
+#mapSection .row{max-width:100%}
+#mapSection .map-canvas-frame #cv{display:block;width:100%;max-width:100%}
+#mapSection .orientation-popover[open] .orientation-content{width:205px!important;padding:6px!important}
+#mapSection .orientation-content #sec{height:165px!important;max-height:165px!important}
+#mapSection .orientation-tools{margin-bottom:3px}
+#simulationSection .embedded-cut{width:100%;max-width:100%;margin:10px 0 0;border:1px solid var(--ln);border-radius:7px}
+#simulationSection .embedded-cut>.section-body{padding:7px}
+#simulationSection .embedded-cut #cutProfile{height:175px;max-width:100%}
+#simulationSection .embedded-cut #cutStatus{font-size:11px;min-height:0}
+.inspection-pair{grid-template-columns:repeat(2,minmax(0,1fr));min-width:0}
+.inspection-pair>.pn{min-width:0}
+
 </style></head><body>
 <header><h1>Makernauta — Usinagem Rotativa</h1>
 <p><strong>Módulo atual: Usinagem Indexada 3+1.</strong> O eixo A posiciona a peça e permanece parado durante o corte XYZ. Arraste as operações na vista desenrolada: horizontal = comprimento da peça; vertical = ângulo de indexação A. A usinagem XZA simultânea ainda não é gerada neste módulo.</p><button id="safetyButton" type="button" aria-haspopup="dialog">Aviso de segurança — Protótipo não homologado</button></header>
@@ -768,8 +784,8 @@ function installWorkspace(){
  const main=document.querySelector('main'),center=main.firstElementChild,oldRight=main.lastElementChild;main.className='workspace';center.id='workspaceCenter';center.classList.add('workspace-center');
  const map=$('cv').closest('.pn'),simulation=$('c3').closest('.pn'),section=$('sec').closest('.orientation-popover'),xy=$('xy').closest('.auxiliary-inspection'),code=$('out').closest('.pn'),aux=document.createElement('div');aux.className='auxiliary-grid';
  const cut=document.createElement('div'),tool=document.createElement('div');cut.className=tool.className='pn';cut.innerHTML='<h2>Seção do corte</h2>';tool.innerHTML='<h2>Perfil da ferramenta</h2><canvas id="toolProfile" height="220" aria-label="Perfil real da fresa do alojamento selecionado"></canvas>';
- const oldHeading=$('cutProfile').previousElementSibling;oldHeading.remove();cut.append($('cutProfile'),$('cutStatus'));const duo=center.querySelector('.duo');duo?.remove();center.replaceChildren(map,simulation,cut,aux,code);
- const sections={map,simulation,section,xy,tool,cut,code,machine:$('machineSection'),pocket:$('pocketSection'),aspire:$('aspireSection'),stl:$('stlSection')};for(const [key,node]of Object.entries(sections))sections[key]=accordion(node,key);
+ const oldHeading=$('cutProfile').previousElementSibling;oldHeading.remove();cut.append($('cutProfile'),$('cutStatus'));const duo=center.querySelector('.duo');duo?.remove();center.replaceChildren(map,simulation,code);
+ const sections={map,simulation,section,xy,tool,cut,code,machine:$('machineSection'),pocket:$('pocketSection'),aspire:$('aspireSection'),stl:$('stlSection')};for(const [key,node]of Object.entries(sections))sections[key]=accordion(node,key);sections.cut.classList.add('embedded-cut');sections.simulation.querySelector(':scope > .section-body').append(sections.cut);
  function dock(side,title,contents){const aside=document.createElement('aside'),tab=document.createElement('button'),frame=document.createElement('div'),bar=document.createElement('div'),label=document.createElement('strong'),pin=document.createElement('button'),collapse=document.createElement('button'),body=document.createElement('div');aside.className='dock '+side;aside.dataset.side=side;aside.setAttribute('aria-label',title);tab.type=pin.type=collapse.type='button';tab.className='dock-tab';tab.textContent=title;tab.dataset.panelTab=side;tab.setAttribute('aria-controls',side+'Dock');frame.id=side+'Dock';frame.className='dock-frame';bar.className='dock-bar';label.textContent=title;pin.textContent='📌';pin.dataset.panelPin=side;collapse.textContent=side==='left'?'‹':'›';collapse.dataset.panelCollapse=side;collapse.setAttribute('aria-label','Recolher painel '+title);body.className='dock-content';body.append(...contents);bar.append(label,pin,collapse);frame.append(bar,body);aside.append(tab,frame);
   function render(){const pinned=workspaceState.panels[side];aside.classList.toggle('pinned',pinned);main.dataset[side+'Pinned']=String(pinned);pin.textContent=pinned?'📌':'Fixar';pin.setAttribute('aria-pressed',String(pinned));pin.setAttribute('aria-label',(pinned?'Desafixar':'Fixar')+' painel '+title);pin.title=pinned?'Desafixar painel':'Fixar painel';tab.setAttribute('aria-expanded',String(pinned||aside.classList.contains('temporary')));frame.inert=!pinned&&!aside.classList.contains('temporary');redrawWorkspace()}
   tab.onclick=()=>{aside.classList.toggle('temporary');render();if(aside.classList.contains('temporary'))pin.focus()};pin.onclick=()=>{workspaceState.panels[side]=!workspaceState.panels[side];aside.classList.remove('temporary');rememberWorkspace();render();if(!workspaceState.panels[side])tab.focus()};collapse.onclick=()=>{workspaceState.panels[side]=false;aside.classList.remove('temporary');rememberWorkspace();render();tab.focus()};aside.closeTemporary=()=>{if(aside.classList.contains('temporary')){aside.classList.remove('temporary');render();tab.focus()}};render();return aside}
