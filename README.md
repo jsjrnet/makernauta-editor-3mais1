@@ -8,6 +8,10 @@
 
 A demonstração pública do Makernauta pode ser acessada para avaliação, nos termos da [Licença Proprietária Makernauta](LICENSE.md). O editor exibe um aviso discreto no rodapé e permite consultar o documento completo pela janela **Licença e direitos autorais**, também disponível na [página pública da licença](licenca.html). O acesso público ao sistema ou ao código-fonte não concede autorização geral para redistribuir, modificar, hospedar cópias ou explorar comercialmente seus componentes protegidos. Colaborações e utilizações adicionais dependem de autorização expressa do titular. Direitos de terceiros e exceções legais permanecem preservados.
 
+## Pesquisa técnica e evolução CNC
+
+A [**Base de conhecimento e pesquisa CNC 3+1 / XYZA**](docs/pesquisa-tecnica/README.md) reúne o levantamento de repositórios, suas licenças, fontes técnicas, hipóteses de aprimoramento, fundamentos da futura usinagem simultânea, experimentos planejados e registros de decisão. Esta base é **documental**, não incorpora código externo nem autoriza alterar a fundação homologada. Qualquer integração funcional depende de PR própria, testes e homologação.
+
 ## Nomenclatura PT-BR do projeto
 
 - **Projeto:** Makernauta — Usinagem Rotativa.
