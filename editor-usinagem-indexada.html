@@ -151,6 +151,25 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .auxiliary-content{margin-top:10px}
 @media(max-width:600px){.orientation-popover[open] .orientation-content{right:0;width:min(270px,calc(100vw - 40px))}}
 \n/* PR13: inspecoes de apoio no painel esquerdo; legenda por informacao recolhivel */\n.dock.left [data-section="xy"] canvas,.dock.left [data-section="tool"] canvas{display:block;width:100%;max-width:100%}\n.inspection-info{margin-top:6px}\n.inspection-info>summary{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid var(--ln);border-radius:50%;font-size:14px;cursor:pointer;color:var(--mu);list-style:none}\n.inspection-info>summary::-webkit-details-marker{display:none}\n.inspection-info .warn{margin:6px 0 0}\n
+
+/* PR13 — geometria compacta e alinhamento nas vistas de apoio */
+#mapSection .orientation-popover[open] .orientation-content{width:205px!important;max-width:calc(100vw - 45px);padding:6px!important}
+#mapSection .orientation-popover>summary{font-size:11px;padding:4px 7px}
+#mapSection .orientation-tools{justify-content:flex-end;margin:0 0 3px}
+#mapSection .orientation-tools label{font-size:10px}
+#mapSection .orientation-tools select{font-size:10px;max-width:80px}
+#mapSection .orientation-content #sec{height:165px!important;max-height:165px;width:100%}
+#mapSection .orientation-caption{font-size:10px;text-align:center;display:block;margin:3px 0 0}
+.inspection-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;width:100%;min-width:0}
+.inspection-pair>.pn{min-width:0}
+.inspection-pair .pn>summary{overflow-wrap:anywhere;font-size:10px;line-height:1.25;padding:5px 4px}
+.inspection-pair .section-body{padding:4px}
+.inspection-pair #toolProfile{height:150px!important;min-height:0;width:100%}
+.inspection-pair #xy{width:100%;height:150px}
+#workspaceCenter>[data-section="cut"]{width:min(340px,100%);margin-top:-9px;border-radius:7px}
+#workspaceCenter>[data-section="cut"] #cutProfile{height:165px}
+#workspaceCenter>[data-section="cut"] #cutStatus{font-size:10px}
+#workspaceCenter>[data-section="cut"] .section-body{padding:6px}
 /* PR13 — refinamento compacto da orientacao e vistas de inspecao */
 #mapSection .orientation-popover[open] .orientation-content{width:min(248px,calc(100vw - 48px));padding:7px}
 .orientation-tools{gap:5px;margin-bottom:5px}
@@ -198,7 +217,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 </dialog>
 <main>
 <div class="col">
-<div class="pn" id="mapSection"><div class="map-heading"><h2>Desenho da peça — vista desenrolada (comprimento × ângulo A)</h2></div><div class="row" style="margin:0 0 8px"><button id="addC">+ Círculo</button><button id="addR">+ Retângulo</button><button id="addL">+ Linha (encaixe)</button><button id="del">Remover selecionado</button></div><div class="map-canvas-frame"><details class="orientation-popover" data-corner="left"><summary title="Mostrar ou ocultar orientação angular">Orientação A</summary><div class="orientation-content"><div class="orientation-tools"><strong>Orientação Aº</strong><label>Canto <select id="orientationCorner" aria-label="Posição da orientação A"><option value="left" selected>Esquerdo</option><option value="right">Direito</option></select></label></div><canvas id="sec" height="210"></canvas><small class="orientation-caption">Vista de topo da seção</small></div></details><canvas id="cv" height="330"></canvas></div>
+<div class="pn" id="mapSection"><div class="map-heading"><h2>Desenho da peça — vista desenrolada (comprimento × ângulo A)</h2></div><div class="row" style="margin:0 0 8px"><button id="addC">+ Círculo</button><button id="addR">+ Retângulo</button><button id="addL">+ Linha (encaixe)</button><button id="del">Remover selecionado</button></div><div class="map-canvas-frame"><details class="orientation-popover" data-corner="left"><summary title="Mostrar ou ocultar orientação angular">Orientação Aº</summary><div class="orientation-content"><div class="orientation-tools"><label>Canto <select id="orientationCorner" aria-label="Posição da orientação A"><option value="left" selected>Esquerdo</option><option value="right">Direito</option></select></label></div><canvas id="sec" height="170"></canvas><small class="orientation-caption">Vista de topo da seção</small></div></details><canvas id="cv" height="330"></canvas></div>
 <details class="map-preferences"><summary>Opções de posicionamento no mapa (grade e Y desenrolado)</summary>
 <div class="g" style="margin-top:8px"><label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx)"><input id="GS" type="checkbox">Travar na grade</label><span></span><label>Grade X (mm)<input id="GX" type="number" value="10" min="1" step="1"></label><label>Grade A (°)<input id="GA" type="number" value="5" step="1"></label><label>Y desenrolado (mm) — alternativa ao ângulo A<input id="yy" type="number" step="0.5"></label></div>
 </details>
@@ -754,7 +773,7 @@ function installWorkspace(){
  function dock(side,title,contents){const aside=document.createElement('aside'),tab=document.createElement('button'),frame=document.createElement('div'),bar=document.createElement('div'),label=document.createElement('strong'),pin=document.createElement('button'),collapse=document.createElement('button'),body=document.createElement('div');aside.className='dock '+side;aside.dataset.side=side;aside.setAttribute('aria-label',title);tab.type=pin.type=collapse.type='button';tab.className='dock-tab';tab.textContent=title;tab.dataset.panelTab=side;tab.setAttribute('aria-controls',side+'Dock');frame.id=side+'Dock';frame.className='dock-frame';bar.className='dock-bar';label.textContent=title;pin.textContent='📌';pin.dataset.panelPin=side;collapse.textContent=side==='left'?'‹':'›';collapse.dataset.panelCollapse=side;collapse.setAttribute('aria-label','Recolher painel '+title);body.className='dock-content';body.append(...contents);bar.append(label,pin,collapse);frame.append(bar,body);aside.append(tab,frame);
   function render(){const pinned=workspaceState.panels[side];aside.classList.toggle('pinned',pinned);main.dataset[side+'Pinned']=String(pinned);pin.textContent=pinned?'📌':'Fixar';pin.setAttribute('aria-pressed',String(pinned));pin.setAttribute('aria-label',(pinned?'Desafixar':'Fixar')+' painel '+title);pin.title=pinned?'Desafixar painel':'Fixar painel';tab.setAttribute('aria-expanded',String(pinned||aside.classList.contains('temporary')));frame.inert=!pinned&&!aside.classList.contains('temporary');redrawWorkspace()}
   tab.onclick=()=>{aside.classList.toggle('temporary');render();if(aside.classList.contains('temporary'))pin.focus()};pin.onclick=()=>{workspaceState.panels[side]=!workspaceState.panels[side];aside.classList.remove('temporary');rememberWorkspace();render();if(!workspaceState.panels[side])tab.focus()};collapse.onclick=()=>{workspaceState.panels[side]=false;aside.classList.remove('temporary');rememberWorkspace();render();tab.focus()};aside.closeTemporary=()=>{if(aside.classList.contains('temporary')){aside.classList.remove('temporary');render();tab.focus()}};render();return aside}
- const inspectionPair=document.createElement('div');inspectionPair.className='inspection-pair';inspectionPair.append(sections.xy,sections.tool);main.prepend(dock('left','Peça e máquina',[sections.machine,inspectionPair]));main.append(dock('right','Operações',[sections.pocket,sections.aspire,sections.stl]));oldRight.remove();
+ const inspectionPair=document.createElement('div');inspectionPair.className='inspection-pair';inspectionPair.append(sections.xy,sections.tool);sections.tool.querySelector('summary').textContent='Perfil da ferramenta';main.prepend(dock('left','Peça e máquina',[sections.machine,inspectionPair]));main.append(dock('right','Operações',[sections.pocket,sections.aspire,sections.stl]));oldRight.remove();
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.querySelector('dialog[open]'))document.querySelectorAll('.dock.temporary').forEach(d=>d.closeTemporary())});document.addEventListener('pointerdown',e=>document.querySelectorAll('.dock.temporary').forEach(d=>{if(!d.contains(e.target))d.closeTemporary()}));
  $('safetyButton').onclick=()=>$('safetyDialog').showModal();
  let previousWidth=0;const observer=new ResizeObserver(entries=>{const width=entries[0].contentRect.width;if(width!==previousWidth){previousWidth=width;redrawWorkspace()}});observer.observe(center);addEventListener('resize',redrawWorkspace)
