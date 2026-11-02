@@ -426,6 +426,9 @@ class EditorTests(unittest.TestCase):
         self.assertTrue(self.js('FLD===savedField&&tt===savedTime&&savedValues.every((v,i)=>v===FLD[i])'))
         self.assertEqual(self.js('[ya,pa,zm]'),[.7,.4,1.3])
         self.page.screenshot(path='/tmp/makernauta-aux-collapsed.png',full_page=True)
+        # XYZ and tool-profile accordions now live inside the retractable left dock.
+        self.page.locator('[data-panel-tab="left"]').click()
+        self.page.locator('[data-panel-pin="left"]').click()
         for key in ['section','xy','tool','cut']:
             self.page.locator(f'[data-section="{key}"] > summary').click()
         self.page.wait_for_timeout(100)
