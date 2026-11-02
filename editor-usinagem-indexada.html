@@ -122,6 +122,20 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 @media(max-width:480px){header{grid-template-columns:minmax(0,1fr)}header h1,header #safetyButton,header p{grid-column:1;grid-row:auto}header #safetyButton{justify-self:start}.auxiliary-grid .pn>summary::after{white-space:normal;text-align:right}}
 @media(hover:hover) and (pointer:fine){button:not(:disabled):hover{border-color:var(--ac)}}
 @media(pointer:coarse){.stage-nav button,.stage-step-nav button,.dock-tab{min-height:44px}.param-info{width:40px;height:40px}}
+
+/* PR13: painéis auxiliares de IHC, sem modificar os canvas nem o motor CNC */
+#mapSection{position:relative}
+.map-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.map-heading h2{flex:1;min-width:220px}
+.orientation-popover{position:relative;z-index:5;margin:0}
+.orientation-popover>summary{cursor:pointer;white-space:nowrap;font-size:12px;border:1px solid var(--ln);border-radius:7px;padding:6px 10px;background:var(--pn);color:var(--tx)}
+.orientation-popover[open] .orientation-content{position:absolute;right:0;top:calc(100% + 5px);width:min(300px,calc(100vw - 40px));padding:10px;background:var(--pn);border:1px solid var(--ln);border-radius:9px;box-shadow:0 8px 25px #0002}
+.orientation-content h3{font-size:12px;margin:0 0 6px}
+.orientation-content canvas{display:block;width:100%;height:auto;max-height:250px}
+.auxiliary-inspection{margin-top:10px}
+.auxiliary-inspection>summary{cursor:pointer;font-weight:600}
+.auxiliary-content{margin-top:10px}
+@media(max-width:600px){.orientation-popover[open] .orientation-content{right:0;width:min(270px,calc(100vw - 40px))}}
 </style></head><body>
 <header><h1>Makernauta — Usinagem Rotativa</h1>
 <p><strong>Módulo atual: Usinagem Indexada 3+1.</strong> O eixo A posiciona a peça e permanece parado durante o corte XYZ. Arraste as operações na vista desenrolada: horizontal = comprimento da peça; vertical = ângulo de indexação A. A usinagem XZA simultânea ainda não é gerada neste módulo.</p><button id="safetyButton" type="button" aria-haspopup="dialog">Aviso de segurança — Protótipo não homologado</button></header>
@@ -148,13 +162,12 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 </dialog>
 <main>
 <div class="col">
-<div class="pn" id="mapSection"><h2>Desenho da peça — vista desenrolada (comprimento × ângulo A)</h2><div class="row" style="margin:0 0 8px"><button id="addC">+ Círculo</button><button id="addR">+ Retângulo</button><button id="addL">+ Linha (encaixe)</button><button id="del">Remover selecionado</button></div><canvas id="cv" height="330"></canvas>
+<div class="pn" id="mapSection"><div class="map-heading"><h2>Desenho da peça — vista desenrolada (comprimento × ângulo A)</h2><details class="orientation-popover"><summary title="Mostrar ou ocultar orientação angular">Orientação A</summary><div class="orientation-content"><h3>Vista de topo da seção</h3><canvas id="sec" height="250"></canvas></div></details></div><div class="row" style="margin:0 0 8px"><button id="addC">+ Círculo</button><button id="addR">+ Retângulo</button><button id="addL">+ Linha (encaixe)</button><button id="del">Remover selecionado</button></div><canvas id="cv" height="330"></canvas>
 <details class="map-preferences"><summary>Opções de posicionamento no mapa (grade e Y desenrolado)</summary>
 <div class="g" style="margin-top:8px"><label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx)"><input id="GS" type="checkbox">Travar na grade</label><span></span><label>Grade X (mm)<input id="GX" type="number" value="10" min="1" step="1"></label><label>Grade A (°)<input id="GA" type="number" value="5" step="1"></label><label>Y desenrolado (mm) — alternativa ao ângulo A<input id="yy" type="number" step="0.5"></label></div>
 </details>
 </div>
-<div class="duo"><div class="pn"><h2>Vista de topo da seção</h2><canvas id="sec" height="250"></canvas></div>
-<div class="pn"><h2>Inspeção do percurso XYZ — operação selecionada</h2><canvas id="xy" height="200"></canvas><p class="warn">Laranja: contorno final. Verde tracejado: trajetória do centro da fresa. Círculo pequeno: a fresa. O contorno é cartesiano (arcos G3) e não depende da malha da simulação 3D.</p></div></div>
+<details class="pn auxiliary-inspection"><summary>Inspeção do percurso XYZ — operação selecionada</summary><div class="auxiliary-content"><canvas id="xy" height="200"></canvas><p class="warn">Laranja: contorno final. Verde tracejado: trajetória do centro da fresa. Círculo pequeno: a fresa. O contorno é cartesiano (arcos G3) e não depende da malha da simulação 3D.</p></div></details>
 <div class="pn" id="simulationSection"><h2>Simulação 3D — peça e trajetórias de usinagem (arraste para girar, role para ampliar)</h2><canvas id="c3" height="340" style="touch-action:none;cursor:grab"></canvas>
 <p id="viewStatus" class="warn" role="status"></p><label>Qualidade da simulação<select id="ql"><option value="0">Rápida</option><option value="1" selected>Média</option><option value="2">Alta (lenta)</option></select></label><label>Conteúdo da simulação<select id="simStage"><option value="all">Escultura Aspire + operações indexadas (Z0 compatível)</option><option value="sculpture">Apenas escultura importada do Aspire</option><option value="pockets">Apenas operações indexadas (a partir do bruto)</option></select></label><p id="simStatus" class="warn" role="status"></p><label>Desenrolado (A vira Y) ⟷ enrolado no cilindro<input id="mo" type="range" min="0" max="100" value="100" style="padding:0"></label>
 <div class="row"><button class="p" id="pl3">Simular usinagem</button><button id="rs3">Reiniciar</button><button id="hm" title="Voltar à vista inicial">Vista inicial</button><label style="flex-direction:row;align-items:center;gap:6px">Vista<select id="rf"><option value="2" selected>Automática (peça parada ao editar, máquina ao simular)</option><option value="1">Máquina (fresa fixa, peça gira)</option><option value="0">Peça (cilindro fixo)</option></select></label></div>
@@ -250,7 +263,7 @@ if(pc=='p'&&!o.ln)g.fill();g.globalAlpha=1;g.stroke();g.beginPath();g.moveTo(px-
 function drawSection(){if($('sec').getBoundingClientRect().width<1)return;const p=P(),R=p.D/2;const s=$('sec'),k2=fit(s),h=s.getContext('2d'),cx=s.width/2,cy=s.height/2,rr=Math.min(s.height/2-14*k2,s.width/2)*.78;
  h.clearRect(0,0,s.width,s.height);h.strokeStyle=css('--mu');h.lineWidth=k2;h.beginPath();h.arc(cx,cy,rr,0,7);h.stroke();
  for(let a=0;a<360;a+=10){const t2=(a-90)*Math.PI/180,l=(a%30==0?9:5)*k2;h.beginPath();h.moveTo(cx+rr*Math.cos(t2),cy+rr*Math.sin(t2));h.lineTo(cx+(rr+l)*Math.cos(t2),cy+(rr+l)*Math.sin(t2));h.stroke();if(a%30==0){h.fillStyle=css('--mu');h.font=(9*k2)+'px sans-serif';h.fillText(a+'°',cx+(rr+22*k2)*Math.cos(t2)-8*k2,cy+(rr+22*k2)*Math.sin(t2)+3*k2)}}
- h.fillStyle=css('--mu');h.font=(11*k2)+'px sans-serif';h.fillText('A=0° em cima',6*k2,14*k2);
+ h.fillStyle=css('--mu');h.font=(11*k2)+'px sans-serif';
  ops.forEach((o,i)=>{const th=(o.a-90)*Math.PI/180,r0=rr*(1-o.d/R);h.strokeStyle=i==sel?css('--op'):css('--ac');h.lineWidth=(i==sel?3:2)*k2;
   h.beginPath();h.moveTo(cx+rr*Math.cos(th),cy+rr*Math.sin(th));h.lineTo(cx+Math.max(r0,0)*Math.cos(th),cy+Math.max(r0,0)*Math.sin(th));h.stroke()});
 }
