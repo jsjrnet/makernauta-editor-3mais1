@@ -10,7 +10,7 @@ A demonstração pública do Makernauta pode ser acessada para avaliação, nos 
 
 ## Pesquisa técnica e evolução CNC
 
-A [**Base de conhecimento e pesquisa CNC 3+1 / XYZA**](docs/pesquisa-tecnica/README.md) reúne o levantamento de repositórios, suas licenças, fontes técnicas, hipóteses de aprimoramento, fundamentos da futura usinagem simultânea, experimentos planejados e registros de decisão. Esta base é **documental**, não incorpora código externo nem autoriza alterar a fundação homologada. Qualquer integração funcional depende de PR própria, testes e homologação.
+A [**Base de conhecimento e pesquisa CNC 3+1 / XYZA**](docs/pesquisa-tecnica/README.md) é um **acervo vivo**, que começa com o levantamento de repositórios, suas licenças, fontes técnicas, hipóteses de aprimoramento, fundamentos da futura usinagem simultânea, experimentos planejados e registros de decisão, mas **pode crescer com novas buscas, tecnologias e trilhas de pesquisa**. Seu [protocolo de evolução](docs/pesquisa-tecnica/protocolo-pesquisa-continua.md) orienta futuras atualizações por PR. Esta base é **documental**, não incorpora código externo nem autoriza alterar a fundação homologada. Qualquer integração funcional depende de PR própria, testes e homologação.
 
 ## Nomenclatura PT-BR do projeto
 
