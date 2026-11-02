@@ -4,7 +4,7 @@
 - **Status:** **Proposta — aguardando revisão e eventual incorporação da PR documental**
 - **Origem:** solicitação do proprietário do Makernauta de manter pesquisa útil e permanente no GitHub
 - **Fundação de origem:** `63df8e1df537af4cdf969de193395cbafe7f2113`
-- **Escopo:** documentação do Editor de Usinagem Indexada 3+1 e pesquisa futura de XYZA simultâneo
+- **Escopo inicial:** documentação do Editor de Usinagem Indexada 3+1 e pesquisa futura de XYZA simultâneo. **Escopo evolutivo:** novas trilhas técnicas relevantes para o Makernauta, conforme demandas e descobertas, sem limitação ao primeiro levantamento.
 
 ## Problema
 
@@ -25,6 +25,9 @@ Estabelecer uma área permanente `docs/pesquisa-tecnica/` que:
 5. Utilize ADRs para decisões de arquitetura relevantes.
 6. Mantenha o Editor 3+1 como base protegida e o XYZA como pesquisa independente.
 7. Subordine toda execução e merge às diretrizes existentes.
+8. Funcione como **base de conhecimento viva**: pesquisar e reavaliar continuamente conforme novas demandas, versões, licenças, vulnerabilidades e descobertas, sem delimitar uma data de encerramento.
+9. Após o merge da PR inicial, registrar **novas rodadas em PRs próprias**, mantendo a PR #11 como marco histórico e não como recipiente permanente de commits.
+10. Permitir **novas trilhas de pesquisa** justificadas por problemas reais do Makernauta, mantendo evidências, fontes, testes e decisões rastreáveis. Qualquer agendamento de buscas exige configuração/autorização à parte.
 
 ## Alternativas ponderadas
 
@@ -36,7 +39,7 @@ Estabelecer uma área permanente `docs/pesquisa-tecnica/` que:
 
 **Vantagens:** histórico consultável por colaboradores autorizados, melhor rastreio de licenças, testes mais objetivos e menor risco de refatoração precipitada.
 
-**Limites:** referências e licenças mudam; a pesquisa não substitui benchmark, revisão jurídica, ensaio na máquina ou atualizações manuais.
+**Limites:** referências e licenças mudam; a pesquisa não substitui benchmark, revisão jurídica, ensaio na máquina ou atualizações manuais. O caráter permanente da base não significa que já exista execução automática, monitoramento recorrente ou autorização de mudanças funcionais. O [protocolo de pesquisa contínua](../protocolo-pesquisa-continua.md) descreve como ampliar e revisar o acervo.
 
 ## Critérios de aceite para esta ADR
 
