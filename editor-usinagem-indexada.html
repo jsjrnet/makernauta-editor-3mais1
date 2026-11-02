@@ -68,6 +68,16 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 .license-dialog p{font-size:13px}
 .license-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin-top:12px}
 .license-actions a{color:var(--ac)}
+
+/* PR #13 — refinamento de UI sem mudanca CNC */
+label,.warn,.example-note{font-size:13px}
+.stage-step-nav button,.manual-dialog nav a{font-size:13px}
+input[type="checkbox"],input[type="radio"],input[type="range"]{accent-color:var(--ac)}
+button:disabled{cursor:not-allowed;opacity:.6}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.dock-tab:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+@media(hover:hover) and (pointer:fine){button:not(:disabled):hover{border-color:var(--ac)}}
+@media(pointer:coarse){.stage-nav button,.stage-step-nav button,.dock-tab{min-height:44px}.param-info{width:40px;height:40px}}
+@media(max-width:800px){label{font-size:14px}}
 </style></head><body>
 <header><h1>Makernauta — Usinagem Rotativa</h1>
 <p><strong>Módulo atual: Usinagem Indexada 3+1.</strong> O eixo A posiciona a peça e permanece parado durante o corte XYZ. Arraste as operações na vista desenrolada: horizontal = comprimento da peça; vertical = ângulo de indexação A. A usinagem XZA simultânea ainda não é gerada neste módulo.</p><button id="safetyButton" type="button" aria-haspopup="dialog">Aviso de segurança — Protótipo não homologado</button></header>
