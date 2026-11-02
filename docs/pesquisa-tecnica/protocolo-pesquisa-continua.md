@@ -35,9 +35,37 @@ Uma rodada de pesquisa pode ser disparada por:
 2. **Descoberta externa:** novo repositório, edição importante, artigo, manual, discussão técnica ou mudança de padrão.
 3. **Mudança de risco:** licença alterada, abandono de manutenção, vulnerabilidade, incompatibilidade ou dependência descontinuada.
 4. **Resultado experimental:** um teste revela novas perguntas, limitações ou alternativas.
-5. **Revisão periódica opcional:** revisão de fontes prioritárias, por exemplo mensal ou trimestral, **somente se agendada/autorizada separadamente**.
+5. **Bloqueio ou dificuldade de avanço:** ao encontrar um problema recorrente, limitação técnica, regressão difícil, falta de algoritmo, baixo desempenho ou dúvida de implementação, registrar o bloqueio como **gatilho de pesquisa direcionada** em vez de insistir em mudanças sem evidência.
+6. **Revisão periódica opcional:** varredura de fontes prioritárias, descobertas e tecnologias novas, em periodicidade **semanal, quinzenal ou mensal**, a ser escolhida pelo proprietário e **agendada/autorizada separadamente**.
 
-**O GitHub não fará pesquisas novas por conta própria apenas porque este documento existe.** A execução de buscas recorrentes precisa de uma rotina humana ou automação efetivamente configurada, com escopo, cadência, permissões e responsável. Um agendamento futuro deve preferir **relatórios e propostas de atualização**, nunca merge automático ou importação de código.
+### 3.1. Gatilho por dificuldade técnica — sob demanda
+
+Quando houver bloqueio durante nossos trabalhos, iniciar uma consulta técnica **naquele contexto**:
+
+1. Descrever o comportamento observado, entrada, cenário, resultado esperado, tentativa anterior, SHA/base e risco de regressão.
+2. Verificar primeiro se a base existente já responde à questão; consultar decisões, documentação do projeto e fontes anteriores.
+3. Se persistir lacuna, pesquisar repositórios, documentação de fabricantes, especificações e abordagens alternativas **adequadas ao problema específico**.
+4. Comparar alternativas, compatibilidade, licença, maturidade, riscos, testes possíveis e custo de integração.
+5. Registrar a descoberta e proposta de experimento. Se for necessária mudança durável na base, **abrir PR documental específica**, após a PR #11 estar integrada.
+6. Antes de alterar o editor, aplicar as regras de isolamento, CI e homologação; a pesquisa não autoriza mudar código nem fazer merge.
+
+**Dificuldade é gatilho de investigação, não licença para experimentar soluções diretamente na `main`.** Quando o bloqueio aparecer em uma conversa ativa, o estudo pode começar imediatamente naquela conversa; a identificação automática de bloqueios em outros ambientes exigiria monitoramento efetivamente configurado.
+
+### 3.2. Revisão periódica — opções de cadência
+
+| Cadência possível | Finalidade | Quando faz sentido |
+|---|---|---|
+| **Semanal (a cada 7 dias)** | Radar curto: lançamentos relevantes, correções, alertas de segurança e fontes prioritárias | Fase intensa de implementação ou questões urgentes |
+| **Quinzenal (a cada 14 dias)** | Revisão intermediária: novas bibliotecas, mudanças significativas e comparação com desafios recentes | Desenvolvimento ativo com necessidade moderada de novidades |
+| **Mensal (uma vez por mês)** | Pesquisa mais ampla: novas soluções, arquitetura, documentação, licenças e prioridades | Manutenção sustentável do acervo e pesquisa de longo prazo |
+
+**Recomendação inicial, não um agendamento:** pesquisa **mensal** mais abrangente, complementada por **pesquisa sob demanda sempre que houver dificuldade concreta**. Em períodos de desenvolvimento intensivo, o proprietário poderá preferir revisão quinzenal; revisão semanal só quando houver benefício claro. A decisão de frequência poderá ser alterada sem reescrever o histórico.
+
+Cada rodada periódica deverá produzir **relatório de descobertas**, incluindo: intervalo coberto, fontes novas e revisadas, mudanças de licença/risco, possíveis aplicações ao Makernauta, relação com dificuldades abertas, prioridade, lacunas e proposta de atualização da base. **Não repetir notícias nem atualizar arquivos apenas por obrigação de calendário.** Se nada relevante for encontrado, registrar "sem mudanças relevantes" com as fontes consultadas.
+
+### 3.3. Agendamento e limites operacionais
+
+**O GitHub não fará pesquisas novas por conta própria apenas porque este documento existe.** A execução de buscas recorrentes exige uma rotina humana ou uma automação efetivamente configurada, com frequência, horário/fuso, fontes e escopo, responsável e permissões definidos. Sem ativação, nenhuma consulta é executada entre conversas. Um agendamento futuro deve entregar **relatórios e propostas de atualização**, nunca merge automático, download/cópia de código, alteração de permissões ou implantação no site.
 
 ## 4. Ciclo obrigatório de investigação
 
