@@ -827,4 +827,13 @@ document.querySelectorAll('.stage-nav [data-go]').forEach(button=>{button.onclic
 $('manualButton').onclick=()=>$('manualDialog').showModal();
 $('licenseButton').onclick=()=>$('licenseDialog').showModal();
 $('showMachine').onchange=dr3;lst();form();draw();
+
+// PR13 — redesenhar os canvas quando painéis inicialmente ocultos forem abertos.
+// Sem alterar dados de operações, cálculo de ferramenta ou exportação CNC.
+document.querySelector('.orientation-popover')?.addEventListener('toggle', function(){
+  if(this.open) requestAnimationFrame(()=>drawSection());
+});
+document.querySelector('.auxiliary-inspection')?.addEventListener('toggle', function(){
+  if(this.open) requestAnimationFrame(()=>xyv2());
+});
 </script></body></html>
