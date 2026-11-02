@@ -82,6 +82,12 @@ Uma hipótese D2 **nunca** deve aparecer na interface como recurso D5.
 
 Esta base é auxiliar a `AGENTS.md`, `diretriz.md` e `LICENSE.md`. Alteração de código requer PR separada, fonte identificada, baseline, testes e homologação. Não habilitar publicação automática, alterar visibilidade do repositório ou fundir uma PR pelo fato de os documentos estarem bem escritos.
 
-## 8. Preservação de autoria do próprio Makernauta
+## 8. Renovação de fontes e preservação do histórico
+
+Esta base é **evolutiva e aberta a novos temas técnicos relevantes**. Revisitar projetos existentes e descobrir novas fontes são atividades legítimas, mas exigem **data da consulta, URL, versão/commit identificado e distinção entre evidência anterior e nova**. Quando uma fonte muda, registrar o que mudou e se isso afeta a recomendação, a compatibilidade ou as obrigações de licença; não apagar avaliações antigas como se nunca tivessem existido.
+
+Novos estudos devem seguir o [protocolo de pesquisa contínua](protocolo-pesquisa-continua.md), abrir novas PRs documentais e não modificar o sistema por conta própria. Pesquisas automáticas ou programadas não estão habilitadas por este documento; só podem existir com configuração e consentimento específicos. O inventário de componentes realmente **incorporados** deve permanecer separado do catálogo de projetos **apenas estudados**.
+
+## 9. Preservação de autoria do próprio Makernauta
 
 A redação técnica original produzida nesta pasta faz parte da documentação do Makernauta, observadas as licenças e direitos externos. Uma referência/citação não torna automaticamente o texto de terceiro "nosso". O conteúdo desta pasta não é oferta de licenciamento do código de terceiros.
