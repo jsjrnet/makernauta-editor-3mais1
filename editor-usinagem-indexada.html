@@ -69,15 +69,59 @@ main.workspace{--left-width:285px;--right-width:330px;display:grid;grid-template
 .license-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin-top:12px}
 .license-actions a{color:var(--ac)}
 
-/* PR #13 — refinamento de UI sem mudanca CNC */
-label,.warn,.example-note{font-size:13px}
-.stage-step-nav button,.manual-dialog nav a{font-size:13px}
+/* PR #13 — IHC: organizacao visual; nenhum comportamento CNC alterado */
+:root{--ui-space:10px;--ui-control:36px}
+header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 20px;align-items:center;padding:10px 16px 7px}
+header h1{grid-column:1;grid-row:1;margin:0;font:650 20px/1.25 "Segoe UI",Roboto,Arial,sans-serif}
+header #safetyButton{grid-column:2;grid-row:1;justify-self:end;max-width:100%}
+header p{grid-column:1/-1;max-width:none;margin:0;font-size:13px;line-height:1.45;color:var(--mu)}
+.stage-nav{gap:6px;padding:7px 14px;background:var(--pn);box-shadow:0 2px 8px #0000000a}
+.stage-nav button{padding:7px 10px;border-radius:6px;white-space:normal}
+.stage-nav [data-go].is-active{box-shadow:inset 0 -2px 0 #ffffff55}
+.stage-nav .manual-button{margin-left:auto}
+main.workspace{--left-width:310px;--right-width:345px;gap:12px;padding:10px 14px 18px}
+.workspace-center{gap:10px}
+.dock{top:10px}
+.dock-frame{border-radius:9px;background:var(--pn)}
+.dock-bar{padding:8px 10px;background:var(--ok)}
+.dock-bar button{min-width:34px;min-height:30px}
+.dock-content{padding:8px;gap:6px}
+.dock .pn>summary{padding:9px 10px}
+.pn>summary{line-height:1.35}
+.pn[open]>summary{background:var(--ok)}
+.pn.work-stage-active>summary{background:var(--ok)}
+.section-body{padding:10px}
+label{font-size:12.5px;line-height:1.3;gap:4px}
+.dock .g{gap:8px 9px;align-items:stretch}
+.dock .g>label{justify-content:flex-end}
+.dock .g input:not([type="checkbox"]):not([type="radio"]),.dock .g select{width:100%;min-height:var(--ui-control);flex-shrink:0}
 input[type="checkbox"],input[type="radio"],input[type="range"]{accent-color:var(--ac)}
 button:disabled{cursor:not-allowed;opacity:.6}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.dock-tab:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.dock .warn,.dock .example-note{font-size:12px;line-height:1.4}
+.op-group{border:0;border-top:1px solid var(--ln);border-radius:0;padding:9px 0;margin:2px 0 0}
+.op-group h3{margin:0 0 8px;font-size:13px}
+.op-group .g{row-gap:8px}
+.op-advanced{border-radius:6px}
+#pocketSection #pt{font-size:18px;line-height:1.3;margin:8px 0 4px!important}
+.sample-stl{padding:8px;margin:6px 0}
+.dock .row{gap:6px}
+.auxiliary-grid{gap:8px;align-items:start}
+.auxiliary-grid .pn{border-color:var(--ln);border-radius:8px;overflow:hidden}
+.auxiliary-grid .pn>summary{font-size:13px;display:flex;align-items:center;gap:5px;background:var(--ok);padding:8px 10px}
+.auxiliary-grid .pn>summary::after{margin-left:auto;font-size:11px;font-weight:500;color:var(--mu);white-space:nowrap}
+.auxiliary-grid [data-section="section"]>summary::after{content:"Orientacao A"}
+.auxiliary-grid [data-section="xy"]>summary::after{content:"Trajetoria"}
+.auxiliary-grid [data-section="tool"]>summary::after{content:"Geometria"}
+.auxiliary-grid [data-section="cut"]>summary::after{content:"Material"}
+.auxiliary-grid .section-body{padding:8px}
+.auxiliary-grid .warn{font-size:12px;line-height:1.4}
+@media(min-width:1450px){main.workspace{--left-width:330px;--right-width:365px}}
+@media(max-width:1050px) and (min-width:801px){main.workspace{--left-width:255px;--right-width:290px;gap:8px;padding-inline:8px}}
+@media(max-width:800px){main.workspace{padding:8px;gap:9px}.dock{position:static}.dock-content{max-height:none}header{padding:10px;gap:6px 8px}header h1{font-size:18px}header #safetyButton{font-size:11px}header p{font-size:12px}.stage-nav{padding:8px;gap:5px}.stage-nav .manual-button{margin-left:0}.dock .g{gap:8px 12px}label{font-size:13px}}
+@media(max-width:480px){header{grid-template-columns:minmax(0,1fr)}header h1,header #safetyButton,header p{grid-column:1;grid-row:auto}header #safetyButton{justify-self:start}.auxiliary-grid .pn>summary::after{white-space:normal;text-align:right}}
 @media(hover:hover) and (pointer:fine){button:not(:disabled):hover{border-color:var(--ac)}}
 @media(pointer:coarse){.stage-nav button,.stage-step-nav button,.dock-tab{min-height:44px}.param-info{width:40px;height:40px}}
-@media(max-width:800px){label{font-size:14px}}
 </style></head><body>
 <header><h1>Makernauta — Usinagem Rotativa</h1>
 <p><strong>Módulo atual: Usinagem Indexada 3+1.</strong> O eixo A posiciona a peça e permanece parado durante o corte XYZ. Arraste as operações na vista desenrolada: horizontal = comprimento da peça; vertical = ângulo de indexação A. A usinagem XZA simultânea ainda não é gerada neste módulo.</p><button id="safetyButton" type="button" aria-haspopup="dialog">Aviso de segurança — Protótipo não homologado</button></header>
@@ -139,22 +183,22 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <p class="example-note">Modelos apenas para testes dentro do Makernauta. Carregar substitui o STL de referência atual, sem alterar o G-code, bruto ou percursos. Não disponíveis para download.</p></div>
 <div class="row"><input id="fst" type="file" accept=".stl"><button id="fit" title="Atenção: copia medidas da geometria acabada, não as do material bruto usado no Aspire.">Copiar dimensões do STL (avançado)</button></div>
 <div class="g" style="margin-top:8px">
-<label>Girar STL (°)<input id="SR" type="number" value="0" step="5"></label><label>Deslocamento X do STL (mm)<input id="OX" type="number" value="0" step="0.5"></label>
+<label>Girar STL (°)<input id="SR" type="number" value="0" step="5"></label><label>Posição X do STL (mm)<input id="OX" type="number" value="0" step="0.5"></label>
 
 <label>Vista 3D<select id="vm"><option value="4">STL + Desbaste</option><option value="1" selected>Material (esculpindo)</option><option value="2">STL alvo</option><option value="3">Comparar material × STL</option><option value="0">Só linhas</option></select></label></div>
 <label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx);margin-top:8px"><input id="SX" type="checkbox">Inverter o comprimento do STL</label>
 
 <p class="warn" id="sti">Sem STL: o material é o cilindro bruto. Comparar: vermelho = sobrou material; azul = cortou além do STL; verde = dentro de ±0,6 mm.</p></div>
 <div class="pn" id="machineSection"><h2>Configuração da peça e máquina</h2><div class="g">
-<label>Z0 das operações indexadas / Mach3<select id="Z0"><option value="0">Centro do eixo A</option><option value="1">Superfície do bruto</option></select></label><label>Diâmetro do bruto (mm)<input id="D" type="number" value="30" step="0.1"></label>
-<label>Comprimento (mm)<input id="L" type="number" value="120" step="1"></label><label>Extensão visual para fixação no chuck (mm) — amarela<input id="FX" type="number" value="5" min="0" max="100" step="1"></label>
+<label>Z0 dos cortes XYZ (Mach3)<select id="Z0"><option value="0">Centro do eixo A</option><option value="1">Superfície do bruto</option></select></label><label>Diâmetro do bruto (mm)<input id="D" type="number" value="30" step="0.1"></label>
+<label>Comprimento (mm)<input id="L" type="number" value="120" step="1"></label><label>Extensão visual de fixação (mm)<input id="FX" type="number" value="5" min="0" max="100" step="1"></label>
 
 <label>Rotação (rpm)<input id="S" type="number" value="18000"></label>
 <label>Avanço (mm/min)<input id="F" type="number" value="1200"></label>
 <label>Mergulho (mm/min)<input id="FP" type="number" value="400"></label>
-<label>Profundidade por passada (mm)<input id="SD" type="number" value="1.5" step="0.1"></label>
+<label>Passada em Z (mm)<input id="SD" type="number" value="1.5" step="0.1"></label>
 <label>Altura de segurança (mm)<input id="SF" type="number" value="8" step="1"></label>
-<label>Sentido de rotação do eixo A<select id="DIR"><option value="1">Normal (+)</option><option value="-1">Invertido (−)</option></select></label>
+<label>Sentido do eixo A<select id="DIR"><option value="1">Normal (+)</option><option value="-1">Invertido (−)</option></select></label>
 </div><p class="warn">A extensão amarela é somente uma representação de material adicional para fixação. Não aumenta o comprimento útil X, não altera o G-code e não garante ausência de colisão com a máquina.</p><p class="warn">Ferramentas independentes: escultura Aspire e operações indexadas. O Z0 das operações é definido nesta seção. A referência original do Aspire precisa ser identificada ou confirmada para combinar os programas. Com ballnose, o piso indica a ponta da ferramenta; a borda mantém o raio esférico.</p></div>
 <div class="pn" id="pocketSection"><h2>Operações de usinagem — cortes XYZ indexados</h2><ul class="ops" id="list"></ul><h2 id="pt" style="margin:10px 0 0">Parâmetros da operação</h2>
 
@@ -165,7 +209,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 <label>Posição X (mm)<input id="x" type="number" step="0.5"></label><label>Ângulo A (°)<input id="a" type="number" step="1"></label></div></section>
 <section class="op-group" aria-label="Estratégia e profundidade"><h3>Estratégia e profundidade</h3>
 <div class="g"><label>Estratégia de usinagem<select id="cm"><option value="p">Usinagem de cavidade (bolsão)</option><option value="on">Usinar sobre o contorno</option><option value="in">Usinar por dentro do contorno</option><option value="out">Usinar por fora do contorno</option></select></label>
-<label>Profundidade (mm)<input id="d" type="number" step="0.5"></label><label>Piso Z calculado no Mach3 (mm)<input id="fz" readonly></label></div>
+<label>Profundidade (mm)<input id="d" type="number" step="0.5"></label><label>Piso Z no Mach3 (mm)<input id="fz" readonly></label></div>
 <details class="op-advanced" id="depthAdvanced"><summary>Referência de profundidade pelo STL (avançado)</summary>
 <label class="stl-depth" style="flex-direction:row;align-items:center;gap:6px;color:var(--tx);margin-top:8px"><input id="ST" type="checkbox">Usar superfície do STL como referência de profundidade</label>
 <p class="warn">Altera o cálculo da operação selecionada. Use somente com modelo STL corretamente alinhado ao bruto e ao G-code.</p></details></section>
