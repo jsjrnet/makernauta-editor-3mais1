@@ -132,18 +132,20 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .orientation-popover[open] .orientation-content{position:absolute;right:0;top:calc(100% + 5px);width:min(300px,calc(100vw - 40px));padding:10px;background:var(--pn);border:1px solid var(--ln);border-radius:9px;box-shadow:0 8px 25px #0002}
 .orientation-content h3{font-size:12px;margin:0 0 6px}
 .orientation-content canvas{display:block;width:100%;height:auto;max-height:250px}
-/* PR13: orientação no canto do desenho, e inspeção XYZ integrada ao painel */
-#mapSection .map-heading{position:relative;min-height:75px}
-#mapSection .orientation-popover{position:absolute;left:0;top:0;z-index:12}
-#mapSection .orientation-popover[data-corner="right"]{left:auto;right:0}
-#mapSection .map-heading h2{padding-top:42px;min-width:0}
-#mapSection .orientation-popover[open] .orientation-content{left:0;right:auto;z-index:20}
-#mapSection .orientation-popover[data-corner="right"][open] .orientation-content{left:auto;right:0}
+/* PR13: orientação sobreposta à área cinza do desenho, sem deslocar título nem controles */
+#mapSection .map-heading{display:block;min-height:0}
+#mapSection .map-heading h2{padding:0;min-width:0}
+#mapSection .map-canvas-frame{position:relative;min-width:0}
+#mapSection .orientation-popover{position:absolute;top:8px;right:8px;left:auto;z-index:12}
+#mapSection .orientation-popover[data-corner="left"]{left:8px;right:auto}
+#mapSection .orientation-popover[data-corner="right"]{right:8px;left:auto}
+#mapSection .orientation-popover>summary{background:var(--pn);box-shadow:0 1px 5px #0002}
+#mapSection .orientation-popover[open] .orientation-content{position:absolute;top:calc(100% + 5px);right:0;left:auto;z-index:20;width:min(300px,calc(100vw - 48px));padding:10px;background:var(--pn);border:1px solid var(--ln);border-radius:9px;box-shadow:0 8px 25px #0002}
+#mapSection .orientation-popover[data-corner="left"][open] .orientation-content{left:0;right:auto}
 .orientation-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .orientation-tools label{flex-direction:row;align-items:center;gap:6px}
 .orientation-tools select{padding:3px 5px;font-size:12px}
 #mapSection .auxiliary-inspection{margin-top:10px;border:1px solid var(--ln);border-radius:7px;padding:9px}
-
 .auxiliary-inspection{margin-top:10px}
 .auxiliary-inspection>summary{cursor:pointer;font-weight:600}
 .auxiliary-content{margin-top:10px}
@@ -174,7 +176,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 </dialog>
 <main>
 <div class="col">
-<div class="pn" id="mapSection"><div class="map-heading"><h2>Desenho da peça — vista desenrolada (comprimento × ângulo A)</h2><details class="orientation-popover" data-corner="left"><summary title="Mostrar ou ocultar orientação angular">Orientação A</summary><div class="orientation-content"><div class="orientation-tools"><strong>Vista de topo da seção</strong><label>Canto <select id="orientationCorner" aria-label="Posição da orientação A"><option value="left" selected>Esquerdo</option><option value="right">Direito</option></select></label></div><canvas id="sec" height="250"></canvas></div></details></div><div class="row" style="margin:0 0 8px"><button id="addC">+ Círculo</button><button id="addR">+ Retângulo</button><button id="addL">+ Linha (encaixe)</button><button id="del">Remover selecionado</button></div><canvas id="cv" height="330"></canvas>
+<div class="pn" id="mapSection"><div class="map-heading"><h2>Desenho da peça — vista desenrolada (comprimento × ângulo A)</h2></div><div class="row" style="margin:0 0 8px"><button id="addC">+ Círculo</button><button id="addR">+ Retângulo</button><button id="addL">+ Linha (encaixe)</button><button id="del">Remover selecionado</button></div><div class="map-canvas-frame"><details class="orientation-popover" data-corner="right"><summary title="Mostrar ou ocultar orientação angular">Orientação A</summary><div class="orientation-content"><div class="orientation-tools"><strong>Vista de topo da seção</strong><label>Canto <select id="orientationCorner" aria-label="Posição da orientação A"><option value="left">Esquerdo</option><option value="right" selected>Direito</option></select></label></div><canvas id="sec" height="250"></canvas></div></details><canvas id="cv" height="330"></canvas></div>
 <details class="map-preferences"><summary>Opções de posicionamento no mapa (grade e Y desenrolado)</summary>
 <div class="g" style="margin-top:8px"><label style="flex-direction:row;align-items:center;gap:6px;color:var(--tx)"><input id="GS" type="checkbox">Travar na grade</label><span></span><label>Grade X (mm)<input id="GX" type="number" value="10" min="1" step="1"></label><label>Grade A (°)<input id="GA" type="number" value="5" step="1"></label><label>Y desenrolado (mm) — alternativa ao ângulo A<input id="yy" type="number" step="0.5"></label></div>
 </details>
